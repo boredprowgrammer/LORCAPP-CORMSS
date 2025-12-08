@@ -38,20 +38,18 @@ function loadEnv($filePath) {
 
 // Load .env file from project root
 $envFile = __DIR__ . '/../.env';
-if (loadEnv($envFile)) {
-    error_log("Loaded .env file successfully from: $envFile");
-} else {
-    error_log("WARNING: .env file not found at: $envFile");
-}
+loadEnv($envFile);
 
 // Error Reporting - Environment-based configuration
 $appEnv = getenv('APP_ENV') ?: 'development';
 
 if ($appEnv === 'production') {
-    error_reporting(E_ALL);
+    // Production: Hide all errors from users
+    error_reporting(0);
     ini_set('display_errors', 0);
-    ini_set('log_errors', 1);
-    ini_set('error_log', __DIR__ . '/../logs/php_errors.log');
+    ini_set('display_startup_errors', 0);
+    ini_set('log_errors', 0);
+    ini_set('error_log', '/dev/null');
 } else {
     // Development only
     error_reporting(E_ALL);
@@ -139,11 +137,9 @@ define('ENCRYPTION_METHOD', 'AES-256-CBC');
 $masterKey = getenv('MASTER_KEY');
 if (empty($masterKey)) {
     if ($appEnv === 'production') {
-        error_log('CRITICAL SECURITY ERROR: MASTER_KEY environment variable not set');
-        die('Encryption configuration error. Please contact the system administrator.');
+        die('Configuration error. Please contact the system administrator.');
     } else {
         // Development fallback only
-        error_log('WARNING: Using default MASTER_KEY for development. DO NOT use in production!');
         $masterKey = 'DEVELOPMENT_ONLY_KEY_CHANGE_IN_PRODUCTION_' . hash('sha256', __DIR__);
     }
 }
@@ -153,11 +149,9 @@ define('MASTER_KEY', $masterKey);
 $chatKey = getenv('CHAT_MASTER_KEY');
 if (empty($chatKey)) {
     if ($appEnv === 'production') {
-        error_log('CRITICAL SECURITY ERROR: CHAT_MASTER_KEY environment variable not set');
-        die('Chat encryption configuration error. Please contact the system administrator.');
+        die('Configuration error. Please contact the system administrator.');
     } else {
         // Development fallback - derive from MASTER_KEY
-        error_log('WARNING: Using derived CHAT_MASTER_KEY for development. DO NOT use in production!');
         $chatKey = hash('sha256', $masterKey . '_chat_key_salt');
     }
 }
