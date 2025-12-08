@@ -1,0 +1,3 @@
+# Add Docker-specific ignores
+*.env.docker.local
+docker-compose.override.yml

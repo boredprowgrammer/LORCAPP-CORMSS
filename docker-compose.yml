@@ -1,0 +1,76 @@
+version: '3.8'
+
+services:
+  # PHP Apache Web Application
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: lorcapp-cormss-web
+    ports:
+      - "8080:80"
+    volumes:
+      - ./logs:/var/www/html/logs
+      - ./lorcapp/logs:/var/www/html/lorcapp/logs
+      - ./uploads:/var/www/html/uploads
+      - ./temp:/var/www/html/temp
+      - ./cache:/var/www/html/cache
+    environment:
+      - DB_HOST=db
+      - DB_NAME=${DB_NAME:-church_officers_db}
+      - DB_USER=${DB_USER:-root}
+      - DB_PASSWORD=${DB_PASSWORD:-rootpassword}
+      - DB_PORT=3306
+      - TZ=Asia/Manila
+    depends_on:
+      - db
+    networks:
+      - lorcapp-network
+    restart: unless-stopped
+
+  # MySQL Database
+  db:
+    image: mysql:8.0
+    container_name: lorcapp-cormss-db
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD:-rootpassword}
+      - MYSQL_DATABASE=${DB_NAME:-church_officers_db}
+      - MYSQL_USER=${DB_USER:-church_user}
+      - MYSQL_PASSWORD=${DB_PASSWORD:-church_pass}
+      - TZ=Asia/Manila
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      - ./database/church_officers_db.sql:/docker-entrypoint-initdb.d/02-data.sql
+    networks:
+      - lorcapp-network
+    restart: unless-stopped
+    command: --default-authentication-plugin=mysql_native_password
+
+  # phpMyAdmin (Optional - for database management)
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: lorcapp-cormss-phpmyadmin
+    ports:
+      - "8081:80"
+    environment:
+      - PMA_HOST=db
+      - PMA_PORT=3306
+      - PMA_USER=${DB_USER:-root}
+      - PMA_PASSWORD=${DB_PASSWORD:-rootpassword}
+      - UPLOAD_LIMIT=50M
+    depends_on:
+      - db
+    networks:
+      - lorcapp-network
+    restart: unless-stopped
+
+networks:
+  lorcapp-network:
+    driver: bridge
+
+volumes:
+  mysql-data:
+    driver: local

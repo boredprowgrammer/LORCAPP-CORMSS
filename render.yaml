@@ -1,0 +1,38 @@
+services:
+  - type: web
+    name: lorcapp-cormss
+    runtime: docker
+    repo: https://github.com/boredprowgrammer/LORCAPP-CORMSS.git
+    region: oregon # Choose: oregon, frankfurt, singapore, ohio
+    plan: free # or starter, standard, pro
+    branch: main
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /
+    envVars:
+      - key: DB_HOST
+        sync: false
+      - key: DB_NAME
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_PORT
+        value: 3306
+      - key: MASTER_KEY
+        generateValue: true
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: false
+      - key: TZ
+        value: Asia/Manila
+
+  # Optional: MySQL Database (requires paid plan)
+  # - type: database
+  #   name: lorcapp-db
+  #   plan: starter
+  #   databaseName: church_officers_db
+  #   user: church_user
