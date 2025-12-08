@@ -118,15 +118,7 @@ if (file_exists($lorcappEnv)) {
     error_log("LORCAPP: Loaded lorcapp .env from: " . $lorcappEnv);
 } elseif (file_exists($lorcappIncludesEnv)) {
     loadEnv($lorcappIncludesEnv);
-    error_log("LORCAPP: Loaded lorcapp/includes .env from: " . $lorcappIncludesEnv);
 }
-
-// Debug: Log what was loaded (before constants are defined)
-error_log("LORCAPP .env loading - AIVEN_HOST: " . (getenv('AIVEN_HOST') ?: 'NOT SET'));
-error_log("LORCAPP .env loading - AIVEN_DATABASE: " . (getenv('AIVEN_DATABASE') ?: 'NOT SET'));
-error_log("LORCAPP .env loading - AIVEN_SSL_MODE: " . (getenv('AIVEN_SSL_MODE') ?: 'NOT SET'));
-error_log("LORCAPP .env loading - ENCRYPTION_KEY: " . (getenv('ENCRYPTION_KEY') ? 'SET' : 'NOT SET'));
-error_log("LORCAPP .env loading - LORCAPP_ENCRYPTION_KEY: " . (getenv('LORCAPP_ENCRYPTION_KEY') ? 'SET' : 'NOT SET'));
 
 // Encryption keys - LORCAPP uses its own key to avoid conflicts
 // If LORCAPP_ENCRYPTION_KEY is not set, use ENCRYPTION_KEY as fallback
@@ -272,16 +264,8 @@ function getDbConnection() {
             // Set charset
             $conn->set_charset("utf8mb4");
             
-            // Log successful connection (for debugging)
-            if (APP_ENV === 'development') {
-                error_log("LORCAPP Database connected: " . LORCAPP_DB_HOST . ":" . $port . " (DB: " . LORCAPP_DB_NAME . ", SSL: " . LORCAPP_DB_SSL_MODE . ")");
-            }
-            
         } catch (Exception $e) {
-            error_log("LORCAPP Database connection error: " . $e->getMessage());
-            error_log("Connection details - Host: " . LORCAPP_DB_HOST . ", Port: " . $port . ", User: " . LORCAPP_DB_USER . ", DB: " . LORCAPP_DB_NAME . ", SSL: " . LORCAPP_DB_SSL_MODE);
-            
-            // Show detailed error in development
+            // Show detailed error in development only
             if (APP_ENV === 'development') {
                 die("Database connection error: " . $e->getMessage() . "<br>Host: " . LORCAPP_DB_HOST . ":" . $port . "<br>Database: " . LORCAPP_DB_NAME . "<br>SSL Mode: " . LORCAPP_DB_SSL_MODE);
             }

@@ -107,12 +107,11 @@ function decryptValue($encryptedValue) {
             
             if ($decrypted !== false) {
                 // Successfully decrypted legacy CBC data
-                error_log('Warning: Decrypted legacy CBC-encrypted data. Consider re-encrypting with GCM.');
                 return $decrypted;
             }
         }
         
-        error_log('Decryption failed: Data could not be decrypted with GCM or CBC');
+        // Decryption failed
         return null;
         
     } catch (Exception $e) {

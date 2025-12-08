@@ -5,6 +5,13 @@
  * Accessible from both LORCAPP and CORegistry with proper authentication
  */
 
+// Start output buffering to catch any errors
+ob_start();
+
+// Suppress all errors in production
+error_reporting(0);
+ini_set('display_errors', 0);
+
 // Start session if not already started
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
