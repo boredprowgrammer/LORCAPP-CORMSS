@@ -1,6 +1,5 @@
 # Environment files with sensitive data
 .env
-config/config.php
 lorcapp/.env
 
 # Logs
@@ -30,7 +29,6 @@ node_modules/
 Thumbs.db
 
 # Database local config
-config/database.local.php
 
 # Upload directories
 uploads/
