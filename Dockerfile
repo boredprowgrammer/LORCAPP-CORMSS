@@ -58,16 +58,20 @@ RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 775 /var/www/html/temp \
     && chmod -R 775 /var/www/html/cache
 
-# Render.com uses PORT environment variable
-# Configure Apache to listen on the PORT provided by Render
-RUN echo "Listen \${PORT:-80}" > /etc/apache2/ports.conf
+# Create startup script for dynamic port binding
+RUN echo '#!/bin/bash\n\
+PORT=${PORT:-80}\n\
+echo "Listen $PORT" > /etc/apache2/ports.conf\n\
+sed -i "s/<VirtualHost \*:80>/<VirtualHost *:$PORT>/g" /etc/apache2/sites-available/000-default.conf\n\
+exec apache2-foreground' > /usr/local/bin/start-apache.sh \
+    && chmod +x /usr/local/bin/start-apache.sh
 
-# Expose port (Render will map this dynamically)
-EXPOSE ${PORT:-80}
+# Expose port 80 by default (Render will override with PORT env var)
+EXPOSE 80
 
-# Health check
+# Health check - will check on the PORT provided by Render
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
     CMD curl -f http://localhost:${PORT:-80}/ || exit 1
 
-# Start Apache with dynamic port from Render
-CMD sed -i "s/80/${PORT:-80}/g" /etc/apache2/sites-available/000-default.conf && apache2-foreground
+# Start Apache with dynamic port configuration
+CMD ["/usr/local/bin/start-apache.sh"]
