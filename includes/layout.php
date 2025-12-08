@@ -1,32 +1,32 @@
+<?php
+// Generate nonce for inline scripts (CSP) - kept for backward compatibility
+$csp_nonce = base64_encode(random_bytes(16));
+
+// Content Security Policy - Balanced security with functionality
+// Note: 'unsafe-inline' and 'unsafe-eval' are required for Alpine.js and inline event handlers
+// Nonce is not used in script-src to allow 'unsafe-inline' to work
+// All CDN sources are explicitly whitelisted for maximum security
+$cspPolicy = "default-src 'self'; " .
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " .
+    "script-src-elem 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " .
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.tailwindcss.com; " .
+    "font-src 'self' https://fonts.gstatic.com; " .
+    "img-src 'self' data:; " .
+    "connect-src 'self' https://cdnjs.cloudflare.com; " .
+    "frame-ancestors 'none'; " .
+    "base-uri 'self'; " .
+    "form-action 'self'; " .
+    "object-src 'none'; " .
+    "upgrade-insecure-requests;";
+
+header("Content-Security-Policy: " . $cspPolicy);
+header("X-Content-Type-Options: nosniff");
+header("X-Frame-Options: DENY");
+header("Referrer-Policy: strict-origin-when-cross-origin");
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <?php
-    // Generate nonce for inline scripts (CSP) - kept for backward compatibility
-    $csp_nonce = base64_encode(random_bytes(16));
-    
-    // Content Security Policy - Balanced security with functionality
-    // Note: 'unsafe-inline' and 'unsafe-eval' are required for Alpine.js and inline event handlers
-    // Nonce is not used in script-src to allow 'unsafe-inline' to work
-    // All CDN sources are explicitly whitelisted for maximum security
-    $cspPolicy = "default-src 'self'; " .
-        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " .
-        "script-src-elem 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " .
-        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.tailwindcss.com; " .
-        "font-src 'self' https://fonts.gstatic.com; " .
-        "img-src 'self' data:; " .
-        "connect-src 'self' https://cdnjs.cloudflare.com; " .
-        "frame-ancestors 'none'; " .
-        "base-uri 'self'; " .
-        "form-action 'self'; " .
-        "object-src 'none'; " .
-        "upgrade-insecure-requests;";
-    
-    header("Content-Security-Policy: " . $cspPolicy);
-    header("X-Content-Type-Options: nosniff");
-    header("X-Frame-Options: DENY");
-    header("Referrer-Policy: strict-origin-when-cross-origin");
-    ?>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo isset($pageTitle) ? Security::escape($pageTitle) . ' - ' : ''; ?><?php echo APP_NAME; ?></title>
