@@ -1,0 +1,294 @@
+/**
+ * Auto-Save Notification Styles
+ */
+
+/* Save Status Indicator */
+#save-status {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: rgba(0, 0, 0, 0.8);
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    z-index: 9999;
+    display: none;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Notification Toast */
+.form-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    min-width: 300px;
+    max-width: 500px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    padding: 16px;
+    z-index: 10000;
+    animation: slideIn 0.3s ease;
+    transition: opacity 0.3s ease;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.notification-content {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.notification-icon {
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+.notification-message {
+    flex: 1;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #333;
+    white-space: pre-line;
+}
+
+.notification-close {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: none;
+    border: none;
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+    color: #999;
+    padding: 4px 8px;
+    transition: color 0.2s;
+}
+
+.notification-close:hover {
+    color: #333;
+}
+
+/* Notification Types */
+.notification-error {
+    border-left: 4px solid #ef4444;
+}
+
+.notification-error .notification-icon {
+    color: #ef4444;
+}
+
+.notification-success {
+    border-left: 4px solid #10b981;
+}
+
+.notification-success .notification-icon {
+    color: #10b981;
+}
+
+.notification-info {
+    border-left: 4px solid #3b82f6;
+}
+
+.notification-info .notification-icon {
+    color: #3b82f6;
+}
+
+/* Field Error Highlight */
+.field-error {
+    border-color: #ef4444 !important;
+    animation: shake 0.4s ease;
+    background-color: #fef2f2 !important;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-10px); }
+    75% { transform: translateX(10px); }
+}
+
+/* Draft Menu Container */
+.draft-menu-container {
+    position: fixed;
+    bottom: 80px;
+    right: 20px;
+    z-index: 9998;
+}
+
+/* Menu Button (3 Dots) */
+.draft-menu-btn {
+    width: 48px;
+    height: 48px;
+    background: white;
+    border: 2px solid #000;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.draft-menu-btn:hover {
+    background: #000;
+    color: #fff;
+    transform: rotate(90deg) scale(1.1);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+}
+
+.draft-menu-btn svg {
+    transition: all 0.3s ease;
+}
+
+/* Dropdown Menu */
+.draft-menu {
+    position: absolute;
+    bottom: 60px;
+    right: 0;
+    min-width: 280px;
+    background: white;
+    border: 2px solid #000;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+}
+
+.draft-menu-header {
+    background: #000;
+    color: #fff;
+    padding: 12px 16px;
+    font-weight: 700;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid #000;
+}
+
+.draft-menu-item {
+    width: 100%;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 16px;
+    background: white;
+    border: none;
+    border-bottom: 1px solid #e5e5e5;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+}
+
+.draft-menu-item:last-child {
+    border-bottom: none;
+}
+
+.draft-menu-item:hover {
+    background: #f9f9f9;
+    transform: translateX(-2px);
+}
+
+.draft-menu-item svg {
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.menu-item-title {
+    font-weight: 600;
+    font-size: 14px;
+    color: #000;
+    margin-bottom: 2px;
+}
+
+.menu-item-desc {
+    font-size: 12px;
+    color: #666;
+    line-height: 1.4;
+}
+
+.draft-menu-item-danger:hover {
+    background: #fef2f2;
+}
+
+.draft-menu-item-danger .menu-item-title {
+    color: #dc2626;
+}
+
+.draft-menu-item-danger svg {
+    stroke: #dc2626;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .form-notification {
+        top: 10px;
+        right: 10px;
+        left: 10px;
+        min-width: auto;
+        max-width: none;
+    }
+    
+    #save-status {
+        bottom: 10px;
+        right: 10px;
+        font-size: 11px;
+        padding: 6px 12px;
+    }
+    
+    .draft-menu-container {
+        bottom: 60px;
+        right: 10px;
+    }
+    
+    .draft-menu-btn {
+        width: 44px;
+        height: 44px;
+    }
+    
+    .draft-menu {
+        min-width: 260px;
+        right: 0;
+    }
+    
+    .menu-item-title {
+        font-size: 13px;
+    }
+    
+    .menu-item-desc {
+        font-size: 11px;
+    }
+}
+
+/* Loading Indicator */
+.saving-indicator {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border: 2px solid #fff;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-left: 8px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}

@@ -1,0 +1,22 @@
+CREATE DATABASE r2_01_records;
+
+USE r2_01_records;
+
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE records (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    personal_info JSON NOT NULL,
+    contact_info JSON NOT NULL,
+    family_background JSON NOT NULL,
+    household_info JSON NOT NULL,
+    educational_background JSON NOT NULL,
+    employment_background JSON NOT NULL,
+    character_references JSON NOT NULL,
+    religious_background JSON NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

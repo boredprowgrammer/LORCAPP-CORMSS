@@ -1,0 +1,316 @@
+/* iOS/Safari Optimizations */
+
+/* iOS Safe Area Support */
+body {
+    /* Support for iPhone X notch and home indicator */
+    padding-top: env(safe-area-inset-top);
+    padding-right: env(safe-area-inset-right);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+}
+
+/* Smooth scrolling for iOS */
+html {
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Fix iOS input zoom issue */
+input[type="text"],
+input[type="email"],
+input[type="tel"],
+input[type="number"],
+input[type="date"],
+textarea,
+select {
+    font-size: 16px !important; /* Prevents iOS zoom on focus */
+}
+
+/* iOS tap highlight */
+* {
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+}
+
+/* Remove iOS input shadows */
+input,
+textarea,
+select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}
+
+/* Exception: Preserve ALTCHA checkbox appearance */
+altcha-widget *,
+altcha-widget::part(checkbox),
+altcha-widget input[type="checkbox"] {
+    -webkit-appearance: auto !important;
+    -moz-appearance: auto !important;
+    appearance: auto !important;
+}
+
+/* Fix iOS button styling */
+button,
+input[type="submit"],
+input[type="button"] {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    cursor: pointer;
+}
+
+/* Prevent iOS text size adjustment */
+html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+}
+
+/* iOS momentum scrolling */
+.scrollable-content,
+.modal-content,
+.form-container {
+    -webkit-overflow-scrolling: touch;
+    overflow-y: auto;
+}
+
+/* Fix iOS viewport height (accounts for Safari toolbar) */
+.full-height {
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+}
+
+html {
+    height: -webkit-fill-available;
+}
+
+/* iOS date/time input styling */
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"] {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    display: block;
+    width: 100%;
+}
+
+/* Fix iOS select dropdown arrow */
+select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 12px;
+    padding-right: 36px;
+}
+
+/* iOS active state fix */
+button:active,
+a:active,
+.btn:active {
+    opacity: 0.8;
+}
+
+/* Prevent iOS callout (long-press menu) on images and links */
+img,
+a {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+/* Allow text selection in input fields */
+input,
+textarea {
+    -webkit-user-select: text;
+    user-select: text;
+    -webkit-touch-callout: default;
+}
+
+/* iOS keyboard appearance */
+input,
+textarea {
+    -webkit-user-select: text;
+    user-select: text;
+}
+
+/* Fix iOS position fixed issues */
+.fixed-header,
+.fixed-footer {
+    position: -webkit-sticky;
+    position: sticky;
+}
+
+/* iOS file input styling */
+input[type="file"] {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}
+
+/* iOS photo capture button */
+input[type="file"]::-webkit-file-upload-button {
+    -webkit-appearance: button;
+    font-size: 16px;
+    padding: 8px 16px;
+    cursor: pointer;
+}
+
+/* Fix iOS modal backdrop blur */
+.modal-backdrop {
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+}
+
+/* iOS status bar spacing (when in standalone mode) */
+@supports (-webkit-touch-callout: none) {
+    .status-bar-spacer {
+        padding-top: 20px; /* Standard status bar height */
+    }
+}
+
+/* iPhone X and newer notch support */
+@supports (padding: max(0px)) {
+    .container,
+    .form-wrapper {
+        padding-left: max(16px, env(safe-area-inset-left));
+        padding-right: max(16px, env(safe-area-inset-right));
+    }
+    
+    .fixed-header {
+        padding-top: max(8px, env(safe-area-inset-top));
+    }
+    
+    .fixed-footer {
+        padding-bottom: max(8px, env(safe-area-inset-bottom));
+    }
+}
+
+/* iOS-specific media queries */
+
+/* iPhone SE, iPhone 6/7/8 */
+@media only screen 
+  and (device-width: 375px) 
+  and (device-height: 667px) 
+  and (-webkit-device-pixel-ratio: 2) {
+    body {
+        font-size: 14px;
+    }
+}
+
+/* iPhone X/XS/11 Pro */
+@media only screen 
+  and (device-width: 375px) 
+  and (device-height: 812px) 
+  and (-webkit-device-pixel-ratio: 3) {
+    .container {
+        padding-bottom: 34px; /* Account for home indicator */
+    }
+}
+
+/* iPhone XR/11 */
+@media only screen 
+  and (device-width: 414px) 
+  and (device-height: 896px) 
+  and (-webkit-device-pixel-ratio: 2) {
+    .container {
+        padding-bottom: 34px;
+    }
+}
+
+/* iPhone 12/13/14 Pro Max */
+@media only screen 
+  and (device-width: 428px) 
+  and (device-height: 926px) 
+  and (-webkit-device-pixel-ratio: 3) {
+    .container {
+        padding-bottom: 34px;
+    }
+}
+
+/* iPad */
+@media only screen 
+  and (min-device-width: 768px) 
+  and (max-device-width: 1024px) 
+  and (-webkit-min-device-pixel-ratio: 2) {
+    /* Larger touch targets for iPad */
+    button,
+    a,
+    input[type="submit"] {
+        min-height: 44px;
+        min-width: 44px;
+    }
+}
+
+/* iPad Pro 12.9" */
+@media only screen 
+  and (device-width: 1024px) 
+  and (device-height: 1366px) 
+  and (-webkit-device-pixel-ratio: 2) {
+    .container {
+        max-width: 960px;
+        margin: 0 auto;
+    }
+}
+
+/* Dark mode support for iOS */
+@media (prefers-color-scheme: dark) {
+    /* Add dark mode styles if needed */
+    :root {
+        color-scheme: light; /* Force light mode if dark mode not supported */
+    }
+}
+
+/* iOS landscape orientation fix */
+@media screen and (orientation: landscape) and (max-device-width: 896px) {
+    body {
+        font-size: 14px;
+    }
+    
+    .modal-content {
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+}
+
+/* Accessibility - reduce motion for users with vestibular disorders */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* Touch-friendly spacing */
+.touch-target {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 12px;
+}
+
+/* iOS focus states */
+input:focus,
+textarea:focus,
+select:focus {
+    outline: none;
+    border-color: #007AFF; /* iOS blue */
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+}
+
+/* Prevent iOS from styling phone numbers */
+a[href^="tel"] {
+    color: inherit;
+    text-decoration: none;
+}
+
+/* Fix iOS Safari bottom bar issue */
+@supports (-webkit-appearance: none) {
+    .ios-bottom-padding {
+        padding-bottom: 20px;
+    }
+}

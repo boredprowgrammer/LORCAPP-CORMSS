@@ -1,0 +1,164 @@
+# ==========================================
+# LORCAPP - HARD-ROCK SECURITY .HTACCESS
+# ==========================================
+
+# Enable Rewrite Engine
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+</IfModule>
+
+# Set index.php as default directory index
+DirectoryIndex dashboard.php index.html
+
+# ==========================================
+# 1. HTTPS ENFORCEMENT (CRITICAL)
+# ==========================================
+# Note: HTTPS enforcement disabled for Render (SSL is handled at platform level)
+# Uncomment below for traditional Apache hosting only
+# <IfModule mod_rewrite.c>
+#     # Force HTTPS
+#     RewriteCond %{HTTPS} off
+#     RewriteCond %{HTTP:X-Forwarded-Proto} !https
+#     RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+# </IfModule>
+
+# ==========================================
+# 2. HIDE PHP EXTENSIONS
+# ==========================================
+# Note: PHP extension hiding disabled to prevent issues with POST requests
+# Uncomment below if needed for traditional hosting
+# <IfModule mod_rewrite.c>
+#     # Only redirect .php URLs to extensionless versions (not for POST requests)
+#     RewriteCond %{REQUEST_METHOD} !=POST
+#     RewriteCond %{THE_REQUEST} ^[A-Z]+\ /([^.\ ]+)\.php [NC]
+#     RewriteRule ^(.+)\.php$ /$1 [R=301,L,QSA]
+#     
+#     # Internally rewrite extensionless URLs to .php files
+#     RewriteCond %{REQUEST_FILENAME} !-d
+#     RewriteCond %{REQUEST_FILENAME} !-f
+#     RewriteCond %{REQUEST_FILENAME}\.php -f
+#     RewriteRule ^(.+?)/?$ $1.php [L,QSA]
+# </IfModule>
+
+# ==========================================
+# 3. ADMIN PANEL ULTRA-PROTECTION
+# ==========================================
+# Note: Admin security is now handled by PHP access control (access_control.php)
+# No server-side file blocking needed
+
+# ==========================================
+# 4. PROTECT SENSITIVE FILES & FOLDERS
+# ==========================================
+# Note: File protection is now handled by PHP access control (access_control.php)
+# All sensitive files use: if (count(get_included_files()) == 1) exit("Direct access forbidden");
+
+# ==========================================
+# 5. FILE UPLOAD SECURITY (ULTRA-CRITICAL)
+# ==========================================
+# Note: Upload security is handled in uploads/.htaccess file
+
+# ==========================================
+# 6. SQL INJECTION PREVENTION
+# ==========================================
+
+
+# ==========================================
+# 7. XSS ATTACK PREVENTION
+# ==========================================
+
+
+# ==========================================
+# 8. FILE INJECTION & TRAVERSAL PREVENTION
+# ==========================================
+
+
+
+# ==========================================
+# 9. SECURITY HEADERS
+# ==========================================
+# NOTE: Security headers are now configured in includes/config.php
+#       This ensures they are set for all PHP requests regardless of server configuration.
+
+# ==========================================
+# 10. BLOCK MALICIOUS BOTS & SCRAPERS
+# ==========================================
+# Note: Bot blocking is disabled for compatibility with various platforms
+# Rate limiting is handled by PHP application layer (rate_limiter.php)
+
+# ==========================================
+# 11. PREVENT HOTLINKING
+# ==========================================
+# Note: Hotlinking protection disabled for compatibility
+
+# ==========================================
+# 12. RATE LIMITING & DDOS PROTECTION
+# ==========================================
+# Note: LimitRequest* directives not allowed in .htaccess
+# Rate limiting is handled by PHP application layer (rate_limiter.php)
+
+# ==========================================
+# 13. PHP SECURITY SETTINGS
+# ==========================================
+# Note: php_admin_value directives not allowed in .htaccess
+# PHP security is configured via php.ini or application level
+
+# ==========================================
+# 14. GZIP COMPRESSION (PERFORMANCE)
+# ==========================================
+# Note: mod_deflate may not be available on all platforms
+# Disabled for Render compatibility
+
+# <IfModule mod_deflate.c>
+#     AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json application/xml
+# </IfModule>
+
+# ==========================================
+# 15. BROWSER CACHING (PERFORMANCE)
+# ==========================================
+# Note: mod_expires may not be available on all platforms
+# Disabled for Render compatibility
+
+# <IfModule mod_expires.c>
+#     ExpiresActive On
+#     ExpiresByType image/jpg "access plus 1 year"
+#     ExpiresByType image/jpeg "access plus 1 year"
+#     ExpiresByType image/gif "access plus 1 year"
+#     ExpiresByType image/png "access plus 1 year"
+#     ExpiresByType image/webp "access plus 1 year"
+#     ExpiresByType text/css "access plus 1 month"
+#     ExpiresByType application/javascript "access plus 1 month"
+#     ExpiresByType application/pdf "access plus 1 month"
+#     ExpiresByType image/x-icon "access plus 1 year"
+# </IfModule>
+
+# ==========================================
+# 16. CUSTOM ERROR PAGES
+# ==========================================
+# Note: Custom error pages may not work on all platforms
+# Disabled for Render compatibility
+
+# ErrorDocument 400 /error.php?code=400
+# ErrorDocument 401 /error.php?code=401
+# ErrorDocument 403 /error.php?code=403
+# ErrorDocument 404 /error.php?code=404
+# ErrorDocument 500 /error.php?code=500
+# ErrorDocument 503 /error.php?code=503
+
+# ==========================================
+# 17. PREVENT DIRECTORY LISTING
+# ==========================================
+# Note: Options directive may not be allowed in .htaccess on some platforms
+# Disabled for Render compatibility
+
+# Options -Indexes
+
+# ==========================================
+# 18. DEFAULT CHARSET
+# ==========================================
+
+AddDefaultCharset UTF-8
+
+# ==========================================
+# END OF HARD-ROCK SECURITY CONFIGURATION
+# ==========================================

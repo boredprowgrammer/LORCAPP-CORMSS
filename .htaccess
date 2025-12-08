@@ -1,0 +1,23 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Force HTTPS (uncomment for production)
+    # RewriteCond %{HTTPS} !=on
+    # RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1 [R=301,L]
+    
+    # Prevent directory browsing
+    Options -Indexes
+    
+    # Protect sensitive files
+    <FilesMatch "\.(env|log|sql|md|git|gitignore|sh)$">
+        Order Allow,Deny
+        Deny from all
+    </FilesMatch>
+    
+    # Protect config and includes directories
+    RedirectMatch 403 ^/config/.*$
+    RedirectMatch 403 ^/includes/.*$
+    RedirectMatch 403 ^/database/.*$
+    RedirectMatch 403 ^/logs/.*$
+    RedirectMatch 403 ^/\.git.*$
+</IfModule>

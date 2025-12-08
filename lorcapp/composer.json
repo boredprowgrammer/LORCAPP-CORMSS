@@ -1,0 +1,8 @@
+{
+    "require": {
+        "spomky-labs/otphp": "*",
+        "web-auth/webauthn-lib": "*",
+        "web-auth/cose-lib": "*",
+        "web-auth/metadata-service": "*"
+    }
+}

@@ -1,0 +1,45 @@
+# Environment files with sensitive data
+.env
+config/config.php
+lorcapp/.env
+
+# Logs
+*.log
+logs/
+lorcapp/logs/*.log
+
+# Test files
+test-*.php
+
+# Migration backups
+migration_backup_*/
+
+# Vendor dependencies
+vendor/
+node_modules/
+
+# IDE specific files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Database local config
+config/database.local.php
+
+# Upload directories
+uploads/
+temp/
+cache/
+
+# Temporary and backup files
+*.tmp
+*.temp
+*.bak
+*.backup
+*.old

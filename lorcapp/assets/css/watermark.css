@@ -1,0 +1,161 @@
+/**
+ * LORCAPP - Confidential Watermark
+ * Canvas-based repeating watermark pattern
+ */
+
+#watermark-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    pointer-events: none !important;
+    z-index: 99999 !important;
+    opacity: 0.2 !important;
+}
+
+.blur-protection {
+    filter: blur(10px);
+    transition: filter 0.3s ease;
+}
+
+/* Print styles */
+@media print {
+    #watermark-overlay {
+        opacity: 0.2 !important;
+    }
+}
+
+.watermark-text:nth-child(2) { top: 0pt; left: 90pt; transform: rotate(45deg); }
+.watermark-text:nth-child(3) { top: 0pt; left: 180pt; transform: rotate(45deg); }
+.watermark-text:nth-child(4) { top: 0pt; left: 270pt; transform: rotate(45deg); }
+.watermark-text:nth-child(5) { top: 0pt; left: 360pt; transform: rotate(45deg); }
+.watermark-text:nth-child(6) { top: 0pt; left: 450pt; transform: rotate(45deg); }
+.watermark-text:nth-child(7) { top: 0pt; left: 540pt; transform: rotate(45deg); }
+.watermark-text:nth-child(8) { top: 0pt; left: 630pt; transform: rotate(45deg); }
+.watermark-text:nth-child(9) { top: 0pt; left: 720pt; transform: rotate(45deg); }
+.watermark-text:nth-child(10) { top: 0pt; left: 810pt; transform: rotate(45deg); }
+
+.watermark-text:nth-child(11) { top: 90pt; left: 0pt; transform: rotate(45deg); }
+.watermark-text:nth-child(12) { top: 90pt; left: 90pt; transform: rotate(45deg); }
+.watermark-text:nth-child(13) { top: 90pt; left: 180pt; transform: rotate(45deg); }
+.watermark-text:nth-child(14) { top: 90pt; left: 270pt; transform: rotate(45deg); }
+.watermark-text:nth-child(15) { top: 90pt; left: 360pt; transform: rotate(45deg); }
+.watermark-text:nth-child(16) { top: 90pt; left: 450pt; transform: rotate(45deg); }
+.watermark-text:nth-child(17) { top: 90pt; left: 540pt; transform: rotate(45deg); }
+.watermark-text:nth-child(18) { top: 90pt; left: 630pt; transform: rotate(45deg); }
+.watermark-text:nth-child(19) { top: 90pt; left: 720pt; transform: rotate(45deg); }
+.watermark-text:nth-child(20) { top: 90pt; left: 810pt; transform: rotate(45deg); }
+
+.watermark-text:nth-child(21) { top: 180pt; left: 0pt; transform: rotate(45deg); }
+.watermark-text:nth-child(22) { top: 180pt; left: 90pt; transform: rotate(45deg); }
+.watermark-text:nth-child(23) { top: 180pt; left: 180pt; transform: rotate(45deg); }
+.watermark-text:nth-child(24) { top: 180pt; left: 270pt; transform: rotate(45deg); }
+.watermark-text:nth-child(25) { top: 180pt; left: 360pt; transform: rotate(45deg); }
+.watermark-text:nth-child(26) { top: 180pt; left: 450pt; transform: rotate(45deg); }
+.watermark-text:nth-child(27) { top: 180pt; left: 540pt; transform: rotate(45deg); }
+.watermark-text:nth-child(28) { top: 180pt; left: 630pt; transform: rotate(45deg); }
+.watermark-text:nth-child(29) { top: 180pt; left: 720pt; transform: rotate(45deg); }
+.watermark-text:nth-child(30) { top: 180pt; left: 810pt; transform: rotate(45deg); }
+
+.watermark-text:nth-child(31) { top: 270pt; left: 0pt; transform: rotate(45deg); }
+.watermark-text:nth-child(32) { top: 270pt; left: 90pt; transform: rotate(45deg); }
+.watermark-text:nth-child(33) { top: 270pt; left: 180pt; transform: rotate(45deg); }
+.watermark-text:nth-child(34) { top: 270pt; left: 270pt; transform: rotate(45deg); }
+.watermark-text:nth-child(35) { top: 270pt; left: 360pt; transform: rotate(45deg); }
+.watermark-text:nth-child(36) { top: 270pt; left: 450pt; transform: rotate(45deg); }
+.watermark-text:nth-child(37) { top: 270pt; left: 540pt; transform: rotate(45deg); }
+.watermark-text:nth-child(38) { top: 270pt; left: 630pt; transform: rotate(45deg); }
+.watermark-text:nth-child(39) { top: 270pt; left: 720pt; transform: rotate(45deg); }
+.watermark-text:nth-child(40) { top: 270pt; left: 810pt; transform: rotate(45deg); }
+
+.watermark-text:nth-child(41) { top: 360pt; left: 0pt; transform: rotate(45deg); }
+.watermark-text:nth-child(42) { top: 360pt; left: 90pt; transform: rotate(45deg); }
+.watermark-text:nth-child(43) { top: 360pt; left: 180pt; transform: rotate(45deg); }
+.watermark-text:nth-child(44) { top: 360pt; left: 270pt; transform: rotate(45deg); }
+.watermark-text:nth-child(45) { top: 360pt; left: 360pt; transform: rotate(45deg); }
+.watermark-text:nth-child(46) { top: 360pt; left: 450pt; transform: rotate(45deg); }
+.watermark-text:nth-child(47) { top: 360pt; left: 540pt; transform: rotate(45deg); }
+.watermark-text:nth-child(48) { top: 360pt; left: 630pt; transform: rotate(45deg); }
+.watermark-text:nth-child(49) { top: 360pt; left: 720pt; transform: rotate(45deg); }
+.watermark-text:nth-child(50) { top: 360pt; left: 810pt; transform: rotate(45deg); }
+
+.watermark-text:nth-child(51) { top: 450pt; left: 0pt; transform: rotate(45deg); }
+.watermark-text:nth-child(52) { top: 450pt; left: 90pt; transform: rotate(45deg); }
+.watermark-text:nth-child(53) { top: 450pt; left: 180pt; transform: rotate(45deg); }
+.watermark-text:nth-child(54) { top: 450pt; left: 270pt; transform: rotate(45deg); }
+.watermark-text:nth-child(55) { top: 450pt; left: 360pt; transform: rotate(45deg); }
+.watermark-text:nth-child(56) { top: 450pt; left: 450pt; transform: rotate(45deg); }
+.watermark-text:nth-child(57) { top: 450pt; left: 540pt; transform: rotate(45deg); }
+.watermark-text:nth-child(58) { top: 450pt; left: 630pt; transform: rotate(45deg); }
+.watermark-text:nth-child(59) { top: 450pt; left: 720pt; transform: rotate(45deg); }
+.watermark-text:nth-child(60) { top: 450pt; left: 810pt; transform: rotate(45deg); }
+
+.watermark-text:nth-child(61) { top: 540pt; left: 0pt; transform: rotate(45deg); }
+.watermark-text:nth-child(62) { top: 540pt; left: 90pt; transform: rotate(45deg); }
+.watermark-text:nth-child(63) { top: 540pt; left: 180pt; transform: rotate(45deg); }
+.watermark-text:nth-child(64) { top: 540pt; left: 270pt; transform: rotate(45deg); }
+.watermark-text:nth-child(65) { top: 540pt; left: 360pt; transform: rotate(45deg); }
+.watermark-text:nth-child(66) { top: 540pt; left: 450pt; transform: rotate(45deg); }
+.watermark-text:nth-child(67) { top: 540pt; left: 540pt; transform: rotate(45deg); }
+.watermark-text:nth-child(68) { top: 540pt; left: 630pt; transform: rotate(45deg); }
+.watermark-text:nth-child(69) { top: 540pt; left: 720pt; transform: rotate(45deg); }
+.watermark-text:nth-child(70) { top: 540pt; left: 810pt; transform: rotate(45deg); }
+
+.watermark-text:nth-child(71) { top: 630pt; left: 0pt; transform: rotate(45deg); }
+.watermark-text:nth-child(72) { top: 630pt; left: 90pt; transform: rotate(45deg); }
+.watermark-text:nth-child(73) { top: 630pt; left: 180pt; transform: rotate(45deg); }
+.watermark-text:nth-child(74) { top: 630pt; left: 270pt; transform: rotate(45deg); }
+.watermark-text:nth-child(75) { top: 630pt; left: 360pt; transform: rotate(45deg); }
+.watermark-text:nth-child(76) { top: 630pt; left: 450pt; transform: rotate(45deg); }
+.watermark-text:nth-child(77) { top: 630pt; left: 540pt; transform: rotate(45deg); }
+.watermark-text:nth-child(78) { top: 630pt; left: 630pt; transform: rotate(45deg); }
+.watermark-text:nth-child(79) { top: 630pt; left: 720pt; transform: rotate(45deg); }
+.watermark-text:nth-child(80) { top: 630pt; left: 810pt; transform: rotate(45deg); }
+
+.watermark-text:nth-child(81) { top: 720pt; left: 0pt; transform: rotate(45deg); }
+.watermark-text:nth-child(82) { top: 720pt; left: 90pt; transform: rotate(45deg); }
+.watermark-text:nth-child(83) { top: 720pt; left: 180pt; transform: rotate(45deg); }
+.watermark-text:nth-child(84) { top: 720pt; left: 270pt; transform: rotate(45deg); }
+.watermark-text:nth-child(85) { top: 720pt; left: 360pt; transform: rotate(45deg); }
+.watermark-text:nth-child(86) { top: 720pt; left: 450pt; transform: rotate(45deg); }
+.watermark-text:nth-child(87) { top: 720pt; left: 540pt; transform: rotate(45deg); }
+.watermark-text:nth-child(88) { top: 720pt; left: 630pt; transform: rotate(45deg); }
+.watermark-text:nth-child(89) { top: 720pt; left: 720pt; transform: rotate(45deg); }
+.watermark-text:nth-child(90) { top: 720pt; left: 810pt; transform: rotate(45deg); }
+
+.watermark-text:nth-child(91) { top: 810pt; left: 0pt; transform: rotate(45deg); }
+.watermark-text:nth-child(92) { top: 810pt; left: 90pt; transform: rotate(45deg); }
+.watermark-text:nth-child(93) { top: 810pt; left: 180pt; transform: rotate(45deg); }
+.watermark-text:nth-child(94) { top: 810pt; left: 270pt; transform: rotate(45deg); }
+.watermark-text:nth-child(95) { top: 810pt; left: 360pt; transform: rotate(45deg); }
+.watermark-text:nth-child(96) { top: 810pt; left: 450pt; transform: rotate(45deg); }
+.watermark-text:nth-child(97) { top: 810pt; left: 540pt; transform: rotate(45deg); }
+.watermark-text:nth-child(98) { top: 810pt; left: 630pt; transform: rotate(45deg); }
+.watermark-text:nth-child(99) { top: 810pt; left: 720pt; transform: rotate(45deg); }
+.watermark-text:nth-child(100) { top: 810pt; left: 810pt; transform: rotate(45deg); }
+
+/* Print styles - show watermark on printed pages */
+@media print {
+    .watermark-container {
+        opacity: 1 !important;
+    }
+    
+    .watermark-text {
+        color: rgb(211, 211, 211) !important;
+    }
+}
+
+/* Smaller screens */
+@media (max-width: 768px) {
+    .watermark-text {
+        font-size: 10pt;
+    }
+}
+
+/* Very small screens */
+@media (max-width: 480px) {
+    .watermark-text {
+        font-size: 8pt;
+    }
+}
