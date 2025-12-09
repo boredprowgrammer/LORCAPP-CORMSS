@@ -177,15 +177,26 @@ class Security {
             $_SESSION['user_agent'] = $currentUA;
         }
         
-        // Check session timeout
-        if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity'] > SESSION_TIMEOUT)) {
-            error_log("Session timeout for user: {$_SESSION['user_id']}");
-            session_unset();
-            session_destroy();
-            return false;
+        // Check session timeout - with auto-extension
+        if (isset($_SESSION['last_activity'])) {
+            $inactiveTime = time() - $_SESSION['last_activity'];
+            
+            // If session has been inactive for more than timeout, destroy it
+            if ($inactiveTime > SESSION_TIMEOUT) {
+                error_log("Session timeout for user: {$_SESSION['user_id']}");
+                session_unset();
+                session_destroy();
+                return false;
+            }
+            
+            // Auto-extend session every 5 minutes of activity
+            if ($inactiveTime > 300) { // 5 minutes
+                $_SESSION['last_activity'] = time();
+            }
+        } else {
+            $_SESSION['last_activity'] = time();
         }
         
-        $_SESSION['last_activity'] = time();
         return true;
     }
     
@@ -446,5 +457,198 @@ class Security {
             return '';
         }
         return htmlspecialchars($data, ENT_QUOTES, 'UTF-8');
+    }
+    
+    /**
+     * Generate Remember Me Token
+     * Creates a secure token stored in database and sets a cookie
+     * Returns false on failure
+     */
+    public static function generateRememberMeToken($userId) {
+        try {
+            $db = Database::getInstance()->getConnection();
+            
+            // Generate random selector and validator
+            $selector = bin2hex(random_bytes(16)); // Public identifier
+            $validator = bin2hex(random_bytes(32)); // Secret
+            
+            // Hash the validator for storage
+            $hashedValidator = password_hash($validator, PASSWORD_ARGON2ID);
+            
+            // Get user agent hash for additional security
+            $userAgentHash = hash('sha256', $_SERVER['HTTP_USER_AGENT'] ?? '');
+            $ipAddress = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+            
+            // Token expires in 90 days
+            $expiresAt = date('Y-m-d H:i:s', time() + (90 * 24 * 60 * 60));
+            
+            // Clean up old tokens for this user (keep max 5 devices)
+            $stmt = $db->prepare("
+                DELETE FROM remember_me_tokens 
+                WHERE user_id = ? 
+                AND token_id NOT IN (
+                    SELECT token_id FROM (
+                        SELECT token_id FROM remember_me_tokens 
+                        WHERE user_id = ?
+                        ORDER BY created_at DESC 
+                        LIMIT 5
+                    ) AS recent
+                )
+            ");
+            $stmt->execute([$userId, $userId]);
+            
+            // Insert new token
+            $stmt = $db->prepare("
+                INSERT INTO remember_me_tokens 
+                (user_id, selector, hashed_validator, user_agent_hash, ip_address, expires_at)
+                VALUES (?, ?, ?, ?, ?, ?)
+            ");
+            $stmt->execute([$userId, $selector, $hashedValidator, $userAgentHash, $ipAddress, $expiresAt]);
+            
+            // Set cookie with selector:validator
+            $cookieValue = $selector . ':' . $validator;
+            $cookieExpires = time() + (90 * 24 * 60 * 60); // 90 days
+            
+            // Secure cookie settings
+            setcookie(
+                'remember_me',
+                $cookieValue,
+                [
+                    'expires' => $cookieExpires,
+                    'path' => '/',
+                    'domain' => '',
+                    'secure' => isset($_SERVER['HTTPS']),
+                    'httponly' => true,
+                    'samesite' => 'Strict'
+                ]
+            );
+            
+            secureLog("Remember me token created", ['user_id' => $userId], 'INFO');
+            return true;
+            
+        } catch (Exception $e) {
+            error_log("Failed to generate remember me token: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Validate Remember Me Token
+     * Checks cookie and database, returns user_id on success, false on failure
+     */
+    public static function validateRememberMeToken() {
+        if (!isset($_COOKIE['remember_me'])) {
+            return false;
+        }
+        
+        try {
+            $db = Database::getInstance()->getConnection();
+            
+            // Parse cookie value
+            $cookieParts = explode(':', $_COOKIE['remember_me'], 2);
+            if (count($cookieParts) !== 2) {
+                self::clearRememberMeToken();
+                return false;
+            }
+            
+            list($selector, $validator) = $cookieParts;
+            
+            // Find token in database
+            $stmt = $db->prepare("
+                SELECT token_id, user_id, hashed_validator, user_agent_hash, expires_at
+                FROM remember_me_tokens
+                WHERE selector = ? AND expires_at > NOW()
+            ");
+            $stmt->execute([$selector]);
+            $token = $stmt->fetch();
+            
+            if (!$token) {
+                self::clearRememberMeToken();
+                return false;
+            }
+            
+            // Verify validator
+            if (!password_verify($validator, $token['hashed_validator'])) {
+                // Token theft detected - delete all tokens for this user
+                $stmt = $db->prepare("DELETE FROM remember_me_tokens WHERE user_id = ?");
+                $stmt->execute([$token['user_id']]);
+                
+                secureLog("Remember me token theft detected", ['user_id' => $token['user_id']], 'CRITICAL');
+                self::clearRememberMeToken();
+                return false;
+            }
+            
+            // Verify user agent hasn't changed significantly
+            $currentUserAgentHash = hash('sha256', $_SERVER['HTTP_USER_AGENT'] ?? '');
+            if ($currentUserAgentHash !== $token['user_agent_hash']) {
+                secureLog("Remember me user agent mismatch", ['user_id' => $token['user_id']], 'WARNING');
+                // Don't fail completely, just log - browsers can update
+                // Could add more strict checking here if needed
+            }
+            
+            // Update last used timestamp
+            $stmt = $db->prepare("UPDATE remember_me_tokens SET last_used_at = NOW() WHERE token_id = ?");
+            $stmt->execute([$token['token_id']]);
+            
+            secureLog("Remember me token validated", ['user_id' => $token['user_id']], 'INFO');
+            return $token['user_id'];
+            
+        } catch (Exception $e) {
+            error_log("Failed to validate remember me token: " . $e->getMessage());
+            self::clearRememberMeToken();
+            return false;
+        }
+    }
+    
+    /**
+     * Clear Remember Me Token
+     * Removes cookie and database entry
+     */
+    public static function clearRememberMeToken() {
+        if (isset($_COOKIE['remember_me'])) {
+            // Parse selector from cookie
+            $cookieParts = explode(':', $_COOKIE['remember_me'], 2);
+            if (count($cookieParts) === 2) {
+                try {
+                    $db = Database::getInstance()->getConnection();
+                    $stmt = $db->prepare("DELETE FROM remember_me_tokens WHERE selector = ?");
+                    $stmt->execute([$cookieParts[0]]);
+                } catch (Exception $e) {
+                    error_log("Failed to delete remember me token: " . $e->getMessage());
+                }
+            }
+            
+            // Clear cookie
+            setcookie(
+                'remember_me',
+                '',
+                [
+                    'expires' => time() - 3600,
+                    'path' => '/',
+                    'domain' => '',
+                    'secure' => isset($_SERVER['HTTPS']),
+                    'httponly' => true,
+                    'samesite' => 'Strict'
+                ]
+            );
+        }
+    }
+    
+    /**
+     * Clear all Remember Me Tokens for a user
+     * Use when password is changed or account security is compromised
+     */
+    public static function clearAllRememberMeTokens($userId) {
+        try {
+            $db = Database::getInstance()->getConnection();
+            $stmt = $db->prepare("DELETE FROM remember_me_tokens WHERE user_id = ?");
+            $stmt->execute([$userId]);
+            
+            secureLog("All remember me tokens cleared", ['user_id' => $userId], 'INFO');
+            return true;
+        } catch (Exception $e) {
+            error_log("Failed to clear all remember me tokens: " . $e->getMessage());
+            return false;
+        }
     }
 }

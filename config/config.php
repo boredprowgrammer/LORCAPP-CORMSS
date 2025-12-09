@@ -62,11 +62,21 @@ if ($appEnv === 'production') {
 // Timezone
 date_default_timezone_set('Asia/Manila');
 
+// Performance Optimizations
+// Enable gzip compression
+if (!ob_start('ob_gzhandler')) {
+    ob_start();
+}
+
 // Session Configuration
 ini_set('session.cookie_httponly', 1);
 ini_set('session.use_only_cookies', 1);
 ini_set('session.cookie_secure', isset($_SERVER['HTTPS']) ? 1 : 0);
 ini_set('session.cookie_samesite', 'Strict');
+ini_set('session.gc_maxlifetime', 28800); // 8 hours
+ini_set('session.cookie_lifetime', 28800); // 8 hours
+ini_set('session.gc_probability', 1);
+ini_set('session.gc_divisor', 100);
 
 // Start session if not already started
 if (session_status() === PHP_SESSION_NONE) {
@@ -115,7 +125,7 @@ define('BASE_URL', getBaseUrl());
 
 // Security Settings
 define('CSRF_TOKEN_NAME', 'csrf_token');
-define('SESSION_TIMEOUT', 3600); // 1 hour in seconds
+define('SESSION_TIMEOUT', 28800); // 8 hours in seconds (increased from 1 hour)
 define('MAX_LOGIN_ATTEMPTS', 5);
 define('LOGIN_LOCKOUT_TIME', 900); // 15 minutes in seconds
 
@@ -125,6 +135,14 @@ header('X-Content-Type-Options: nosniff');
 header('X-XSS-Protection: 1; mode=block');
 header('Referrer-Policy: strict-origin-when-cross-origin');
 header('Permissions-Policy: geolocation=(), microphone=(), camera=(), payment=(), usb=(), magnetometer=(), gyroscope=()');
+
+// Performance Headers - Cache static assets
+$currentFile = basename($_SERVER['PHP_SELF']);
+if (preg_match('/\.(css|js|jpg|jpeg|png|gif|ico|woff|woff2|ttf|svg)$/', $currentFile)) {
+    header('Cache-Control: public, max-age=31536000, immutable'); // 1 year for assets
+} else {
+    header('Cache-Control: no-cache, must-revalidate, max-age=0'); // No cache for PHP pages
+}
 
 // Remove X-Powered-By header to prevent server version disclosure
 header_remove('X-Powered-By');

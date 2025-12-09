@@ -264,12 +264,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                 }
                 
-                // Add department
+                // Add department - check if this department already exists for this officer
                 $stmt = $db->prepare("
-                    INSERT INTO officer_departments (officer_id, department, duty, oath_date, is_active)
-                    VALUES (?, ?, ?, ?, 1)
+                    SELECT id FROM officer_departments 
+                    WHERE officer_id = ? AND department = ? AND is_active = 1
                 ");
-                $stmt->execute([$officerId, $department, $duty, $oathDate]);
+                $stmt->execute([$officerId, $department]);
+                $existingDept = $stmt->fetch();
+                
+                if ($existingDept) {
+                    // Update existing department instead of creating new one
+                    $stmt = $db->prepare("
+                        UPDATE officer_departments 
+                        SET duty = ?, oath_date = ?
+                        WHERE id = ?
+                    ");
+                    $stmt->execute([$duty, $oathDate, $existingDept['id']]);
+                } else {
+                    // Add new department
+                    $stmt = $db->prepare("
+                        INSERT INTO officer_departments (officer_id, department, duty, oath_date, is_active)
+                        VALUES (?, ?, ?, ?, 1)
+                    ");
+                    $stmt->execute([$officerId, $department, $duty, $oathDate]);
+                }
                 
                 // Update headcount only if CODE A (new record)
                 if ($recordCode === 'A') {
@@ -303,13 +321,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $db->commit();
                 
                 // Success message based on whether auto-detection found existing officer
-                if ($autoDetectedExisting) {
-                    setFlashMessage('success', 'Existing officer detected and reactivated with CODE D! Officer already exists in the system.');
+                if ($recordCode === 'D') {
+                    if ($autoDetectedExisting) {
+                        $success = 'Existing officer auto-detected! Officer reactivated with CODE D and assigned to new department.';
+                    } else {
+                        $success = 'Officer merged successfully with CODE D! Existing officer assigned to new department.';
+                    }
                 } else {
-                    setFlashMessage('success', 'Officer added successfully with CODE ' . $recordCode . '!');
+                    $success = 'Officer added successfully with CODE A (New Record)!';
                 }
                 
-                redirect(BASE_URL . '/officers/view.php?id=' . $officerUuid);
+                // Reset form fields after successful submission
+                $_POST = [];
                 
             } catch (Exception $e) {
                 $db->rollBack();

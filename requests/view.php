@@ -855,7 +855,7 @@ ob_start();
                 <div class="mt-4 space-y-2 text-sm">
                     <div>
                         <span class="text-gray-500">Requested:</span>
-                        <span class="text-gray-900"><?php echo date('M j, Y', strtotime($request['requested_at'])); ?></span>
+                        <span class="text-gray-900"><?php echo date('m/d/Y', strtotime($request['requested_at'])); ?></span>
                     </div>
                     <div>
                         <span class="text-gray-500">By:</span>
@@ -995,7 +995,7 @@ ob_start();
                         <div class="flex-shrink-0 w-2 h-2 bg-blue-600 rounded-full mt-1.5 mr-3"></div>
                         <div>
                             <p class="text-sm font-medium text-gray-900">Request Submitted</p>
-                            <p class="text-xs text-gray-500"><?php echo date('M j, Y g:i A', strtotime($request['requested_at'])); ?></p>
+                            <p class="text-xs text-gray-500"><?php echo date('m/d/Y g:i A', strtotime($request['requested_at'])); ?></p>
                         </div>
                     </div>
                     

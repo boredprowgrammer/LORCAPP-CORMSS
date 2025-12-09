@@ -355,12 +355,12 @@ ob_start();
                                 </span>
                             </td>
                             <td class="px-4 py-3">
-                                <div class="text-xs text-gray-900">Requested: <?php echo date('M j, Y', strtotime($request['requested_at'])); ?></div>
+                                <div class="text-xs text-gray-900">Requested: <?php echo date('m/d/Y', strtotime($request['requested_at'])); ?></div>
                                 <?php if ($request['seminar_date']): ?>
-                                <div class="text-xs text-gray-500">Seminar: <?php echo date('M j, Y', strtotime($request['seminar_date'])); ?></div>
+                                <div class="text-xs text-gray-500">Seminar: <?php echo date('m/d/Y', strtotime($request['seminar_date'])); ?></div>
                                 <?php endif; ?>
                                 <?php if ($request['oath_scheduled_date']): ?>
-                                <div class="text-xs text-gray-500">Oath: <?php echo date('M j, Y', strtotime($request['oath_scheduled_date'])); ?></div>
+                                <div class="text-xs text-gray-500">Oath: <?php echo date('m/d/Y', strtotime($request['oath_scheduled_date'])); ?></div>
                                 <?php endif; ?>
                             </td>
                             <td class="px-4 py-3">

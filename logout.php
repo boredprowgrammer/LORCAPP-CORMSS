@@ -19,6 +19,9 @@ if (Security::isLoggedIn()) {
     }
 }
 
+// Clear remember me token
+Security::clearRememberMeToken();
+
 // Clear session
 session_unset();
 session_destroy();

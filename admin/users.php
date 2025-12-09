@@ -10,6 +10,22 @@ $db = Database::getInstance()->getConnection();
 $error = '';
 $success = '';
 
+// Password generator function - creates easy-to-remember passwords
+function generateEasyPassword() {
+    // Adjectives and nouns for memorable combinations
+    $adjectives = ['Happy', 'Lucky', 'Swift', 'Bright', 'Smart', 'Quick', 'Brave', 'Calm', 'Clear', 'Bold'];
+    $nouns = ['Tiger', 'Eagle', 'River', 'Mountain', 'Ocean', 'Star', 'Moon', 'Sun', 'Wind', 'Storm'];
+    $numbers = rand(100, 999);
+    $symbols = ['!', '@', '#', '$'];
+    
+    $password = $adjectives[array_rand($adjectives)] . 
+                $nouns[array_rand($nouns)] . 
+                $numbers . 
+                $symbols[array_rand($symbols)];
+    
+    return $password;
+}
+
 // Handle user creation
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'create') {
     $csrfToken = $_POST['csrf_token'] ?? '';
@@ -76,16 +92,126 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
 // Handle user toggle status
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'toggle') {
-    $userId = intval($_POST['user_id'] ?? 0);
-    $isActive = intval($_POST['is_active'] ?? 0);
+    $csrfToken = $_POST['csrf_token'] ?? '';
     
-    try {
-        $stmt = $db->prepare("UPDATE users SET is_active = ? WHERE user_id = ?");
-        $stmt->execute([!$isActive, $userId]);
-        $success = 'User status updated successfully!';
-    } catch (Exception $e) {
-        error_log("Toggle user error: " . $e->getMessage());
-        $error = 'An error occurred while updating user status.';
+    if (!Security::validateCSRFToken($csrfToken)) {
+        $error = 'Invalid security token.';
+    } else {
+        $userId = intval($_POST['user_id'] ?? 0);
+        $isActive = intval($_POST['is_active'] ?? 0);
+        
+        if ($userId <= 0) {
+            $error = 'Invalid user ID.';
+        } else {
+            try {
+                // Toggle: if currently active (1), set to inactive (0), and vice versa
+                $newStatus = $isActive ? 0 : 1;
+                
+                $stmt = $db->prepare("UPDATE users SET is_active = ? WHERE user_id = ?");
+                $stmt->execute([$newStatus, $userId]);
+                $success = 'User status updated successfully!';
+            } catch (Exception $e) {
+                error_log("Toggle user error: " . $e->getMessage());
+                $error = 'An error occurred while updating user status.';
+            }
+        }
+    }
+}
+
+// Handle user edit
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'edit') {
+    $csrfToken = $_POST['csrf_token'] ?? '';
+    
+    if (!Security::validateCSRFToken($csrfToken)) {
+        $error = 'Invalid security token.';
+    } else {
+        $userId = intval($_POST['user_id'] ?? 0);
+        $username = Security::sanitizeInput($_POST['username'] ?? '');
+        $email = Security::sanitizeInput($_POST['email'] ?? '');
+        $fullName = Security::sanitizeInput($_POST['full_name'] ?? '');
+        $role = Security::sanitizeInput($_POST['role'] ?? '');
+        $districtCode = Security::sanitizeInput($_POST['district_code'] ?? '');
+        $localCode = Security::sanitizeInput($_POST['local_code'] ?? '');
+        $seniorApproverId = !empty($_POST['senior_approver_id']) ? (int)$_POST['senior_approver_id'] : null;
+        
+        if ($userId <= 0) {
+            $error = 'Invalid user ID.';
+        } elseif (empty($username) || empty($email) || empty($fullName) || empty($role)) {
+            $error = 'All fields are required.';
+        } elseif (!Security::validateEmail($email)) {
+            $error = 'Invalid email address.';
+        } elseif ($role === 'local_limited' && empty($seniorApproverId)) {
+            $error = 'Senior approver is required for Local (Limited) accounts.';
+        } else {
+            try {
+                $stmt = $db->prepare("
+                    UPDATE users 
+                    SET username = ?, email = ?, full_name = ?, role = ?, 
+                        district_code = ?, local_code = ?, senior_approver_id = ?
+                    WHERE user_id = ?
+                ");
+                
+                $stmt->execute([
+                    $username,
+                    $email,
+                    $fullName,
+                    $role,
+                    $role !== 'admin' ? $districtCode : null,
+                    ($role === 'local' || $role === 'local_limited') ? $localCode : null,
+                    $role === 'local_limited' ? $seniorApproverId : null,
+                    $userId
+                ]);
+                
+                // Update permissions based on role if needed
+                createDefaultPermissions($userId, $role);
+                
+                $success = 'User updated successfully!';
+                
+            } catch (PDOException $e) {
+                if ($e->getCode() == 23000) {
+                    $error = 'Username or email already exists.';
+                } else {
+                    error_log("Edit user error: " . $e->getMessage());
+                    $error = 'An error occurred while updating the user.';
+                }
+            }
+        }
+    }
+}
+
+// Handle password reset
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'reset_password') {
+    $csrfToken = $_POST['csrf_token'] ?? '';
+    
+    if (!Security::validateCSRFToken($csrfToken)) {
+        $error = 'Invalid security token.';
+    } else {
+        $userId = intval($_POST['user_id'] ?? 0);
+        $newPassword = $_POST['new_password'] ?? '';
+        
+        if ($userId <= 0) {
+            $error = 'Invalid user ID.';
+        } elseif (empty($newPassword)) {
+            $error = 'New password is required.';
+        } elseif (strlen($newPassword) < 8) {
+            $error = 'Password must be at least 8 characters long.';
+        } else {
+            try {
+                $passwordHash = Security::hashPassword($newPassword);
+                
+                $stmt = $db->prepare("UPDATE users SET password_hash = ? WHERE user_id = ?");
+                $stmt->execute([$passwordHash, $userId]);
+                
+                // Clear all remember me tokens for this user (force re-login)
+                Security::clearAllRememberMeTokens($userId);
+                
+                $success = 'Password reset successfully! The user must log in with the new password.';
+                
+            } catch (Exception $e) {
+                error_log("Reset password error: " . $e->getMessage());
+                $error = 'An error occurred while resetting the password.';
+            }
+        }
     }
 }
 
@@ -236,6 +362,16 @@ $pageTitle = 'Manage Users';
 ob_start();
 ?>
 
+<style>
+    /* Disable auto-capitalization on all input fields */
+    input {
+        text-transform: none !important;
+        -webkit-text-transform: none !important;
+        -moz-text-transform: none !important;
+        -ms-text-transform: none !important;
+    }
+</style>
+
 <div class="space-y-6">
     <!-- Header -->
     <div class="flex flex-wrap items-center justify-between gap-4">
@@ -342,6 +478,18 @@ ob_start();
                             <td class="px-6 py-4">
                                 <div class="flex items-center gap-2">
                                     <?php if ($user['user_id'] != $currentUser['user_id']): ?>
+                                        <button onclick="openEditUserModal(<?php echo htmlspecialchars(json_encode($user)); ?>)" class="inline-flex items-center p-2 text-green-600 hover:text-green-900 hover:bg-green-50 rounded transition-colors" title="Edit User">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                            </svg>
+                                        </button>
+                                        
+                                        <button onclick="openResetPasswordModal(<?php echo $user['user_id']; ?>, '<?php echo Security::escape($user['full_name']); ?>')" class="inline-flex items-center p-2 text-orange-600 hover:text-orange-900 hover:bg-orange-50 rounded transition-colors" title="Reset Password">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
+                                            </svg>
+                                        </button>
+                                        
                                         <button onclick="openPermissionsModal(<?php echo htmlspecialchars(json_encode($user)); ?>)" class="inline-flex items-center p-2 text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded transition-colors" title="Manage Permissions">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
@@ -413,7 +561,13 @@ ob_start();
                 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Password *</label>
-                    <input type="password" name="password" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" minlength="8" required>
+                    <div class="relative">
+                        <input type="password" id="create-password" name="password" class="w-full px-4 py-2 pr-24 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" minlength="8" autocomplete="off" autocapitalize="off" required>
+                        <button type="button" onclick="generatePassword('create-password')" class="absolute right-2 top-1/2 transform -translate-y-1/2 px-3 py-1 text-xs bg-blue-100 text-blue-700 hover:bg-blue-200 rounded transition-colors">
+                            Generate
+                        </button>
+                    </div>
+                    <p class="mt-1 text-xs text-gray-500">Min 8 characters or click Generate for easy-to-remember password</p>
                 </div>
                 
                 <div>
@@ -491,6 +645,40 @@ ob_start();
 <script>
 // Modal functions
 let currentLocals = [];
+let editCurrentLocals = [];
+
+// Password generator function
+function generatePassword(fieldId) {
+    const adjectives = ['Happy', 'Lucky', 'Swift', 'Bright', 'Smart', 'Quick', 'Brave', 'Calm', 'Clear', 'Bold'];
+    const nouns = ['Tiger', 'Eagle', 'River', 'Mountain', 'Ocean', 'Star', 'Moon', 'Sun', 'Wind', 'Storm'];
+    const numbers = Math.floor(Math.random() * 900) + 100;
+    const symbols = ['!', '@', '#', '$'];
+    
+    const password = adjectives[Math.floor(Math.random() * adjectives.length)] + 
+                    nouns[Math.floor(Math.random() * nouns.length)] + 
+                    numbers + 
+                    symbols[Math.floor(Math.random() * symbols.length)];
+    
+    const field = document.getElementById(fieldId);
+    field.type = 'text'; // Show generated password
+    field.value = password;
+    
+    // Copy to clipboard
+    navigator.clipboard.writeText(password).then(() => {
+        // Show temporary success message
+        const btn = field.nextElementSibling;
+        const originalText = btn.textContent;
+        btn.textContent = 'Copied!';
+        btn.classList.add('bg-green-100', 'text-green-700');
+        btn.classList.remove('bg-blue-100', 'text-blue-700');
+        
+        setTimeout(() => {
+            btn.textContent = originalText;
+            btn.classList.remove('bg-green-100', 'text-green-700');
+            btn.classList.add('bg-blue-100', 'text-blue-700');
+        }, 2000);
+    });
+}
 
 // Current user data for auto-selection
 const currentUserDistrict = '<?php echo $currentUser['district_code'] ?? ''; ?>';
@@ -786,8 +974,199 @@ document.addEventListener('keydown', function(e) {
         if (permissionsModal && !permissionsModal.classList.contains('hidden')) {
             closePermissionsModal();
         }
+        const editModal = document.getElementById('editUserModal');
+        if (editModal && !editModal.classList.contains('hidden')) {
+            closeEditUserModal();
+        }
+        const resetModal = document.getElementById('resetPasswordModal');
+        if (resetModal && !resetModal.classList.contains('hidden')) {
+            closeResetPasswordModal();
+        }
     }
 });
+
+// Edit User Modal Functions
+function openEditUserModal(user) {
+    const modal = document.getElementById('editUserModal');
+    
+    // Populate form fields
+    document.getElementById('edit-user-id').value = user.user_id;
+    document.getElementById('edit-username').value = user.username;
+    document.getElementById('edit-email').value = user.email;
+    document.getElementById('edit-full-name').value = user.full_name;
+    document.getElementById('edit-userRole').value = user.role;
+    
+    // Set district and local if available
+    if (user.district_code) {
+        document.getElementById('edit-district-value').value = user.district_code;
+        document.getElementById('edit-district-display').value = user.district_name || '';
+        loadLocalsForEditModal(user.district_code);
+    }
+    
+    if (user.local_code) {
+        document.getElementById('edit-local-value').value = user.local_code;
+        document.getElementById('edit-local-display').value = user.local_name || '';
+    }
+    
+    // Toggle fields based on role
+    toggleEditUserFields();
+    
+    // Show modal
+    modal.classList.remove('hidden');
+    modal.style.display = 'block';
+}
+
+function closeEditUserModal() {
+    const modal = document.getElementById('editUserModal');
+    modal.classList.add('hidden');
+    modal.style.display = 'none';
+}
+
+function toggleEditUserFields() {
+    const role = document.getElementById('edit-userRole').value;
+    const districtField = document.getElementById('edit-districtSelectField');
+    const localField = document.getElementById('edit-localSelectField');
+    const seniorApproverField = document.getElementById('edit-seniorApproverField');
+    const seniorApproverSelect = document.getElementById('edit-seniorApproverSelect');
+    
+    const districtDisplay = document.getElementById('edit-district-display');
+    const localDisplay = document.getElementById('edit-local-display');
+    
+    if (role === 'admin') {
+        districtField.style.display = 'none';
+        localField.style.display = 'none';
+        seniorApproverField.style.display = 'none';
+        seniorApproverSelect.removeAttribute('required');
+    } else if (role === 'district') {
+        districtField.style.display = 'block';
+        localField.style.display = 'none';
+        seniorApproverField.style.display = 'none';
+        seniorApproverSelect.removeAttribute('required');
+    } else if (role === 'local_limited') {
+        districtField.style.display = 'block';
+        localField.style.display = 'block';
+        seniorApproverField.style.display = 'block';
+        seniorApproverSelect.setAttribute('required', 'required');
+        
+        const localValue = document.getElementById('edit-local-value').value;
+        if (localValue) {
+            loadSeniorApproversForEdit(localValue);
+        }
+    } else { // local
+        districtField.style.display = 'block';
+        localField.style.display = 'block';
+        seniorApproverField.style.display = 'none';
+        seniorApproverSelect.removeAttribute('required');
+    }
+}
+
+function openEditDistrictModal() {
+    const modal = document.getElementById('district-modal');
+    modal.classList.remove('hidden');
+    modal.style.display = 'block';
+    
+    // Override selectDistrict to update edit fields
+    window.tempSelectDistrict = window.selectDistrict;
+    window.selectDistrict = (code, name) => {
+        document.getElementById('edit-district-value').value = code;
+        document.getElementById('edit-district-display').value = name;
+        document.getElementById('edit-local-value').value = '';
+        document.getElementById('edit-local-display').value = '';
+        loadLocalsForEditModal(code);
+        closeDistrictModal();
+        window.selectDistrict = window.tempSelectDistrict;
+    };
+    
+    document.getElementById('district-search').focus();
+}
+
+function openEditLocalModal() {
+    const districtCode = document.getElementById('edit-district-value').value;
+    if (!districtCode) {
+        alert('Please select a district first');
+        return;
+    }
+    
+    const modal = document.getElementById('local-modal');
+    const listContainer = document.getElementById('local-list');
+    
+    // Populate list
+    listContainer.innerHTML = '';
+    editCurrentLocals.forEach(local => {
+        const div = document.createElement('div');
+        div.className = 'local-item px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100';
+        div.textContent = local.local_name;
+        div.onclick = () => selectEditLocal(local.local_code, local.local_name);
+        listContainer.appendChild(div);
+    });
+    
+    modal.classList.remove('hidden');
+    modal.style.display = 'block';
+    document.getElementById('local-search').focus();
+}
+
+function selectEditLocal(code, name) {
+    document.getElementById('edit-local-value').value = code;
+    document.getElementById('edit-local-display').value = name;
+    
+    const role = document.getElementById('edit-userRole').value;
+    if (role === 'local_limited') {
+        loadSeniorApproversForEdit(code);
+    }
+    
+    closeLocalModal();
+}
+
+function loadLocalsForEditModal(districtCode) {
+    fetch('<?php echo BASE_URL; ?>/api/get-locals.php?district=' + districtCode)
+        .then(response => response.json())
+        .then(data => {
+            editCurrentLocals = data;
+        })
+        .catch(error => console.error('Error loading locals:', error));
+}
+
+function loadSeniorApproversForEdit(localCode) {
+    fetch('<?php echo BASE_URL; ?>/api/get-senior-approvers.php?local=' + localCode)
+        .then(response => response.json())
+        .then(data => {
+            const select = document.getElementById('edit-seniorApproverSelect');
+            select.innerHTML = '<option value="">Select Senior Approver</option>';
+            
+            data.forEach(user => {
+                const option = document.createElement('option');
+                option.value = user.user_id;
+                option.textContent = user.full_name + ' (' + user.username + ')';
+                select.appendChild(option);
+            });
+            
+            if (data.length === 0) {
+                select.innerHTML = '<option value="">No local users available</option>';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading senior approvers:', error);
+        });
+}
+
+// Reset Password Modal Functions
+function openResetPasswordModal(userId, userName) {
+    const modal = document.getElementById('resetPasswordModal');
+    document.getElementById('reset-user-id').value = userId;
+    document.getElementById('reset-user-name').textContent = userName;
+    document.getElementById('reset-password').value = '';
+    
+    modal.classList.remove('hidden');
+    modal.style.display = 'block';
+}
+
+function closeResetPasswordModal() {
+    const modal = document.getElementById('resetPasswordModal');
+    modal.classList.add('hidden');
+    modal.style.display = 'none';
+}
+
+// Close modal with Escape key
 </script>
 
 <!-- District Modal -->
@@ -836,6 +1215,165 @@ document.addEventListener('keydown', function(e) {
             <div id="local-list" class="overflow-y-auto flex-1">
                 <!-- Will be populated dynamically -->
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit User Modal -->
+<div id="editUserModal" class="hidden fixed inset-0 z-50 overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen px-4 py-6">
+        <div onclick="closeEditUserModal()" class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity"></div>
+        <div onclick="event.stopPropagation()" class="relative bg-white rounded-lg shadow-xl w-full max-w-2xl p-6 transform transition-all">
+            
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-gray-900">Edit User</h3>
+                <button onclick="closeEditUserModal()" class="text-gray-400 hover:text-gray-500">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+        
+        <form method="POST" action="" class="space-y-4">
+            <input type="hidden" name="csrf_token" value="<?php echo Security::generateCSRFToken(); ?>">
+            <input type="hidden" name="action" value="edit">
+            <input type="hidden" name="user_id" id="edit-user-id">
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Username *</label>
+                    <input type="text" name="username" id="edit-username" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" required>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Email *</label>
+                    <input type="email" name="email" id="edit-email" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" required>
+                </div>
+                
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
+                    <input type="text" name="full_name" id="edit-full-name" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" required>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Role *</label>
+                    <select name="role" id="edit-userRole" onchange="toggleEditUserFields()" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" required>
+                        <option value="local">Local User</option>
+                        <option value="local_limited">Local (Limited) - Requires Approval</option>
+                        <option value="district">District User</option>
+                        <option value="admin">Administrator</option>
+                    </select>
+                </div>
+                
+                <div id="edit-districtSelectField">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">District *</label>
+                    <div class="relative">
+                        <input 
+                            type="text" 
+                            id="edit-district-display"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer bg-white"
+                            placeholder="Select District"
+                            readonly
+                            onclick="openEditDistrictModal()"
+                            value=""
+                        >
+                        <input type="hidden" name="district_code" id="edit-district-value">
+                        <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none">
+                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="edit-localSelectField">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Local Congregation *</label>
+                    <div class="relative">
+                        <input 
+                            type="text" 
+                            id="edit-local-display"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer bg-white"
+                            placeholder="Select Local Congregation"
+                            readonly
+                            onclick="openEditLocalModal()"
+                            value=""
+                        >
+                        <input type="hidden" name="local_code" id="edit-local-value">
+                        <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none">
+                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="edit-seniorApproverField" style="display: none;" class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Senior Approver (Local Account) *
+                        <span class="text-xs text-gray-500">- This senior account will approve all actions</span>
+                    </label>
+                    <select name="senior_approver_id" id="edit-seniorApproverSelect" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                        <option value="">Select Senior Approver</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="flex items-center justify-end space-x-3 pt-4">
+                <button type="button" onclick="closeEditUserModal()" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors">Cancel</button>
+                <button type="submit" class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors">Update User</button>
+            </div>
+        </form>
+        </div>
+    </div>
+</div>
+
+<!-- Reset Password Modal -->
+<div id="resetPasswordModal" class="hidden fixed inset-0 z-50 overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen px-4 py-6">
+        <div onclick="closeResetPasswordModal()" class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity"></div>
+        <div onclick="event.stopPropagation()" class="relative bg-white rounded-lg shadow-xl w-full max-w-md p-6 transform transition-all">
+            
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-gray-900">Reset Password</h3>
+                <button onclick="closeResetPasswordModal()" class="text-gray-400 hover:text-gray-500">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <p class="text-sm text-gray-600 mb-4">Reset password for: <span id="reset-user-name" class="font-semibold"></span></p>
+        
+        <form method="POST" action="" class="space-y-4">
+            <input type="hidden" name="csrf_token" value="<?php echo Security::generateCSRFToken(); ?>">
+            <input type="hidden" name="action" value="reset_password">
+            <input type="hidden" name="user_id" id="reset-user-id">
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">New Password *</label>
+                <div class="relative">
+                    <input type="text" id="reset-password" name="new_password" class="w-full px-4 py-2 pr-24 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" minlength="8" autocomplete="off" autocapitalize="off" required>
+                    <button type="button" onclick="generatePassword('reset-password')" class="absolute right-2 top-1/2 transform -translate-y-1/2 px-3 py-1 text-xs bg-blue-100 text-blue-700 hover:bg-blue-200 rounded transition-colors">
+                        Generate
+                    </button>
+                </div>
+                <p class="mt-1 text-xs text-gray-500">Min 8 characters or click Generate for easy-to-remember password</p>
+            </div>
+            
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                <div class="flex items-start">
+                    <svg class="w-5 h-5 text-yellow-600 mr-2 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                    </svg>
+                    <p class="text-xs text-yellow-800">The user will be forced to log out from all devices and must use this new password to log in.</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center justify-end space-x-3 pt-4">
+                <button type="button" onclick="closeResetPasswordModal()" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors">Cancel</button>
+                <button type="submit" class="inline-flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 transition-colors">Reset Password</button>
+            </div>
+        </form>
         </div>
     </div>
 </div>

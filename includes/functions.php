@@ -77,7 +77,7 @@ function getWeekDateRange($weekNumber = null, $year = null) {
 /**
  * Format date for display
  */
-function formatDate($date, $format = 'F d, Y') {
+function formatDate($date, $format = 'm/d/Y') {
     if (empty($date)) return '';
     return date($format, strtotime($date));
 }
@@ -85,7 +85,7 @@ function formatDate($date, $format = 'F d, Y') {
 /**
  * Format datetime for display
  */
-function formatDateTime($datetime, $format = 'F d, Y h:i A') {
+function formatDateTime($datetime, $format = 'm/d/Y h:i A') {
     if (empty($datetime)) return '';
     return date($format, strtotime($datetime));
 }
