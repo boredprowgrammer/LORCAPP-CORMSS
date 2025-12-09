@@ -427,12 +427,18 @@ function disableMFA($userId) {
     
     $stmt = $conn->prepare("UPDATE admin_users SET mfa_enabled = 0, mfa_type = 'none', totp_enabled = 0, totp_secret = NULL WHERE id = ?");
     $stmt->bind_param("i", $userId);
+    $result = $stmt->execute();
     
-    // Also delete passkeys and backup codes
-    $conn->query("DELETE FROM admin_passkeys WHERE user_id = $userId");
-    $conn->query("DELETE FROM admin_backup_codes WHERE user_id = $userId");
+    // Also delete passkeys and backup codes - using prepared statements
+    $stmt2 = $conn->prepare("DELETE FROM admin_passkeys WHERE user_id = ?");
+    $stmt2->bind_param("i", $userId);
+    $stmt2->execute();
     
-    return $stmt->execute();
+    $stmt3 = $conn->prepare("DELETE FROM admin_backup_codes WHERE user_id = ?");
+    $stmt3->bind_param("i", $userId);
+    $stmt3->execute();
+    
+    return $result;
 }
 
 /**

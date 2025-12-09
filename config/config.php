@@ -40,6 +40,9 @@ function loadEnv($filePath) {
 $envFile = __DIR__ . '/../.env';
 loadEnv($envFile);
 
+// Load Infisical integration for secure key management
+require_once __DIR__ . '/../includes/infisical.php';
+
 // Error Reporting - Environment-based configuration
 $appEnv = getenv('APP_ENV') ?: 'development';
 
@@ -131,12 +134,19 @@ if ($appEnv === 'production' && !empty($_SERVER['HTTPS'])) {
     header('Strict-Transport-Security: max-age=31536000; includeSubDomains; preload');
 }
 
-// Encryption Settings - REQUIRE environment variables, no fallbacks
+// Encryption Settings - Load from Infisical or environment variables
 define('ENCRYPTION_METHOD', 'AES-256-CBC');
 
-$masterKey = getenv('MASTER_KEY');
+// Try to get MASTER_KEY from Infisical first, then fall back to environment
+try {
+    $masterKey = InfisicalKeyManager::getSecret('MASTER_KEY');
+} catch (Exception $e) {
+    $masterKey = getenv('MASTER_KEY');
+}
+
 if (empty($masterKey)) {
     if ($appEnv === 'production') {
+        error_log('MASTER_KEY not found in Infisical or environment');
         die('Configuration error. Please contact the system administrator.');
     } else {
         // Development fallback only
@@ -145,10 +155,16 @@ if (empty($masterKey)) {
 }
 define('MASTER_KEY', $masterKey);
 
-// Chat encryption key (derived from master key)
-$chatKey = getenv('CHAT_MASTER_KEY');
+// Chat encryption key - Load from Infisical first
+try {
+    $chatKey = InfisicalKeyManager::getSecret('CHAT_MASTER_KEY');
+} catch (Exception $e) {
+    $chatKey = getenv('CHAT_MASTER_KEY');
+}
+
 if (empty($chatKey)) {
     if ($appEnv === 'production') {
+        error_log('CHAT_MASTER_KEY not found in Infisical or environment');
         die('Configuration error. Please contact the system administrator.');
     } else {
         // Development fallback - derive from MASTER_KEY
@@ -166,6 +182,7 @@ define('ALLOWED_FILE_TYPES', ['jpg', 'jpeg', 'png', 'pdf']);
 
 // Load required files
 require_once __DIR__ . '/database.php';
+require_once __DIR__ . '/../includes/infisical.php';
 require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/security.php';
 require_once __DIR__ . '/../includes/encryption.php';

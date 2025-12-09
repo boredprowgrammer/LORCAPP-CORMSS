@@ -7,8 +7,15 @@ class Encryption {
     
     /**
      * Get encryption key for district
+     * Uses Infisical for secure key management, falls back to database
      */
     private static function getDistrictKey($districtCode) {
+        // Check if Infisical integration is available
+        if (class_exists('InfisicalKeyManager')) {
+            return InfisicalKeyManager::getDistrictKey($districtCode);
+        }
+        
+        // Fallback to database
         $db = Database::getInstance()->getConnection();
         
         $stmt = $db->prepare("SELECT encryption_key FROM districts WHERE district_code = ?");
@@ -44,7 +51,7 @@ class Encryption {
     }
     
     /**
-     * Encrypt data
+     * Encrypt data using AES-256-GCM (authenticated encryption)
      */
     public static function encrypt($data, $districtCode) {
         if (empty($data)) {
@@ -52,22 +59,31 @@ class Encryption {
         }
         
         $key = self::getDistrictKey($districtCode);
-        $iv = random_bytes(openssl_cipher_iv_length(ENCRYPTION_METHOD));
+        $nonce = random_bytes(12); // 12 bytes for GCM
+        $tag = '';
         
         $encrypted = openssl_encrypt(
             $data,
-            ENCRYPTION_METHOD,
+            'aes-256-gcm', // Use GCM instead of CBC
             base64_decode($key),
             OPENSSL_RAW_DATA,
-            $iv
+            $nonce,
+            $tag,
+            '',
+            16 // 16-byte authentication tag
         );
         
-        // Combine IV and encrypted data
-        return base64_encode($iv . $encrypted);
+        if ($encrypted === false) {
+            throw new Exception('Encryption failed');
+        }
+        
+        // Combine nonce + tag + encrypted data
+        // Format: nonce(12) + tag(16) + ciphertext
+        return base64_encode($nonce . $tag . $encrypted);
     }
     
     /**
-     * Decrypt data
+     * Decrypt data (supports both GCM and legacy CBC, with automatic archived key fallback)
      */
     public static function decrypt($encryptedData, $districtCode) {
         if (empty($encryptedData)) {
@@ -77,19 +93,93 @@ class Encryption {
         $key = self::getDistrictKey($districtCode);
         $data = base64_decode($encryptedData);
         
-        $ivLength = openssl_cipher_iv_length(ENCRYPTION_METHOD);
-        $iv = substr($data, 0, $ivLength);
-        $encrypted = substr($data, $ivLength);
+        if ($data === false) {
+            return '';
+        }
         
-        $decrypted = openssl_decrypt(
-            $encrypted,
-            ENCRYPTION_METHOD,
-            base64_decode($key),
-            OPENSSL_RAW_DATA,
-            $iv
-        );
+        // Try decryption with current key
+        $decrypted = self::tryDecryptWithKey($data, $key);
         
-        return $decrypted;
+        if ($decrypted !== '') {
+            return $decrypted;
+        }
+        
+        // If current key fails, try archived keys (for backward compatibility after rotation)
+        if (class_exists('InfisicalKeyManager')) {
+            try {
+                $secrets = InfisicalKeyManager::listSecrets('/encryption-keys/archive');
+                
+                foreach ($secrets as $secret) {
+                    // Look for archived keys matching this district
+                    if (strpos($secret['secretKey'], "DISTRICT_KEY_{$districtCode}_") === 0) {
+                        try {
+                            $archivedKey = InfisicalKeyManager::getSecret($secret['secretKey'], '/encryption-keys/archive');
+                            $decrypted = self::tryDecryptWithKey($data, $archivedKey);
+                            
+                            if ($decrypted !== '') {
+                                // Successfully decrypted with archived key
+                                return $decrypted;
+                            }
+                        } catch (Exception $e) {
+                            // Continue to next archived key
+                            continue;
+                        }
+                    }
+                }
+            } catch (Exception $e) {
+                // No archived keys or error accessing them
+            }
+        }
+        
+        return '';
+    }
+    
+    /**
+     * Try to decrypt data with a specific key (supports both GCM and CBC)
+     */
+    private static function tryDecryptWithKey($data, $key) {
+        $dataLength = strlen($data);
+        
+        // Try GCM decryption first (new format: nonce(12) + tag(16) + ciphertext)
+        if ($dataLength >= 28) {
+            $nonce = substr($data, 0, 12);
+            $tag = substr($data, 12, 16);
+            $ciphertext = substr($data, 28);
+            
+            $decrypted = openssl_decrypt(
+                $ciphertext,
+                'aes-256-gcm',
+                base64_decode($key),
+                OPENSSL_RAW_DATA,
+                $nonce,
+                $tag
+            );
+            
+            if ($decrypted !== false) {
+                return $decrypted;
+            }
+        }
+        
+        // Fallback to CBC decryption for legacy data
+        if ($dataLength > 16) {
+            $ivLength = 16;
+            $iv = substr($data, 0, $ivLength);
+            $encrypted = substr($data, $ivLength);
+            
+            $decrypted = openssl_decrypt(
+                $encrypted,
+                'aes-256-cbc',
+                base64_decode($key),
+                OPENSSL_RAW_DATA,
+                $iv
+            );
+            
+            if ($decrypted !== false) {
+                return $decrypted;
+            }
+        }
+        
+        return '';
     }
     
     /**

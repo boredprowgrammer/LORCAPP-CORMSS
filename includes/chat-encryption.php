@@ -105,8 +105,21 @@ class ChatEncryption {
      * @return string Binary key (32 bytes)
      */
     private static function deriveKey($conversationId) {
-        // Get system master key from environment or config
-        $masterKey = getenv('CHAT_MASTER_KEY') ?: CHAT_MASTER_KEY;
+        // Get system master key - try Infisical first, then environment/config
+        try {
+            require_once __DIR__ . '/infisical.php';
+            $masterKey = InfisicalKeyManager::getSecret('CHAT_MASTER_KEY');
+        } catch (Exception $e) {
+            // Fallback to environment or constant
+            $masterKey = getenv('CHAT_MASTER_KEY');
+            if (empty($masterKey) && defined('CHAT_MASTER_KEY')) {
+                $masterKey = CHAT_MASTER_KEY;
+            }
+        }
+        
+        if (empty($masterKey)) {
+            throw new Exception('CHAT_MASTER_KEY not available');
+        }
         
         // Use HKDF to derive conversation-specific key
         $info = 'chat_conversation_' . $conversationId;

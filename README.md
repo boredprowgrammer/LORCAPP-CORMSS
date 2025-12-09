@@ -252,6 +252,18 @@ The system supports the following departments:
   - Status tracking
   - Integration with main registry
 
+## 📚 Documentation
+
+Complete documentation is available in the [`/documentation`](documentation/) folder:
+
+- **[Installation Guide](documentation/INSTALL.md)** - Setup and installation instructions
+- **[Security Documentation](documentation/)** - Security audit, encryption, and best practices
+- **[Deployment Guides](documentation/)** - Docker, Render, and Aiven deployment
+- **[Feature Documentation](documentation/)** - Detailed feature implementations
+- **[API Documentation](documentation/)** - API endpoints and usage
+
+For a complete index, see [documentation/README.md](documentation/README.md)
+
 ## Support
 
 For issues, questions, or contributions, please contact your system administrator.

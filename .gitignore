@@ -7,8 +7,22 @@ lorcapp/.env
 logs/
 lorcapp/logs/*.log
 
-# Test files
+# Test and debug files
 test-*.php
+*-test.php
+debug-*.php
+check-*.php
+verify-*.php
+audit-*.php
+
+# Migration and setup scripts (one-time use)
+migrate-*.php
+migrate-*.sh
+setup-*.sh
+remove-*.php
+
+# Key backups
+backup_keys_*.txt
 
 # Migration backups
 migration_backup_*/
