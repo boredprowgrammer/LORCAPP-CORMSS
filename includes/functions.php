@@ -321,11 +321,10 @@ function obfuscateWord($word) {
     // Split by spaces to handle multi-word names
     $words = explode(' ', $word);
     $obfuscatedWords = [];
-    
     foreach ($words as $w) {
+        if ($w === '' || $w === null) continue;
         $obfuscatedWords[] = obfuscateSingleWord($w);
     }
-    
     return implode(' ', $obfuscatedWords);
 }
 

@@ -17,8 +17,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!Security::validateCSRFToken($csrfToken)) {
         $error = 'Invalid security token.';
     } else {
-        $hasExistingRecord = isset($_POST['has_existing_record']) && $_POST['has_existing_record'] === '1';
-        $existingOfficerUuid = Security::sanitizeInput($_POST['existing_officer_id'] ?? '');
+    $hasExistingRecord = isset($_POST['has_existing_record']) && $_POST['has_existing_record'] === '1';
+    $existingOfficerIdInput = Security::sanitizeInput($_POST['existing_officer_id'] ?? '');
         $lastName = Security::sanitizeInput($_POST['last_name'] ?? '');
         $firstName = Security::sanitizeInput($_POST['first_name'] ?? '');
         $middleInitial = Security::sanitizeInput($_POST['middle_initial'] ?? '');
@@ -50,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         
         // Validation
-        if ($hasExistingRecord && empty($existingOfficerUuid)) {
+        if ($hasExistingRecord && empty($existingOfficerIdInput)) {
             $error = 'Please select an existing officer for CODE D.';
         } elseif (!$hasExistingRecord && (empty($lastName) || empty($firstName))) {
             $error = 'First name and last name are required.';
@@ -111,16 +111,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $existingOfficerUuid = null;
                 $autoDetectedExisting = false;
                 
-                if ($hasExistingRecord && !empty($existingOfficerUuid)) {
-                    // User explicitly selected existing officer
-                    $stmt = $db->prepare("SELECT officer_id, officer_uuid FROM officers WHERE officer_uuid = ?");
-                    $stmt->execute([$existingOfficerUuid]);
+                if ($hasExistingRecord && !empty($existingOfficerIdInput)) {
+                    // User explicitly selected existing officer (by ID)
+                    $stmt = $db->prepare("SELECT officer_id, officer_uuid FROM officers WHERE officer_id = ?");
+                    $stmt->execute([$existingOfficerIdInput]);
                     $officer = $stmt->fetch();
-                    
                     if (!$officer) {
                         throw new Exception('Selected officer not found.');
                     }
-                    
                     $existingOfficerId = $officer['officer_id'];
                     $existingOfficerUuid = $officer['officer_uuid'];
                     
@@ -388,6 +386,18 @@ ob_start();
             <h2 class="text-2xl font-semibold text-gray-900">Add New Officer</h2>
         </div>
         
+
+        <?php if (!empty($success)): ?>
+            <div class="mb-6 bg-green-50 border border-green-200 rounded-lg p-4">
+                <div class="flex items-center">
+                    <svg class="w-5 h-5 text-green-600 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                    </svg>
+                    <span class="text-sm font-medium text-green-800"><?php echo Security::escape($success); ?></span>
+                </div>
+            </div>
+        <?php endif; ?>
+
         <?php if (!empty($error)): ?>
             <div class="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
                 <div class="flex items-center">
