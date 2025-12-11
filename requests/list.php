@@ -121,6 +121,28 @@ ob_start();
 ?>
 
 <div class="p-6 space-y-6">
+    <?php if (!empty($_SESSION['success'])): ?>
+        <div class="mb-6 bg-green-50 border border-green-200 rounded-lg p-4">
+            <div class="flex items-center">
+                <svg class="w-5 h-5 text-green-600 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                </svg>
+                <span class="text-sm font-medium text-green-800"><?php echo Security::escape($_SESSION['success']); ?></span>
+            </div>
+        </div>
+        <?php unset($_SESSION['success']); ?>
+    <?php endif; ?>
+    <?php if (!empty($_SESSION['error'])): ?>
+        <div class="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+            <div class="flex items-center">
+                <svg class="w-5 h-5 text-red-600 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+                </svg>
+                <span class="text-sm font-medium text-red-800"><?php echo Security::escape($_SESSION['error']); ?></span>
+            </div>
+        </div>
+        <?php unset($_SESSION['error']); ?>
+    <?php endif; ?>
     <!-- Header -->
     <div class="flex items-center justify-between">
         <div>
@@ -371,7 +393,63 @@ ob_start();
                                     <a href="view.php?id=<?php echo $request['request_id']; ?>" class="inline-flex items-center px-3 py-1 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors text-sm font-medium">
                                         View Details
                                     </a>
-                                    
+                                    <?php if ($canManage): ?>
+                                    <form method="POST" action="delete-request.php" class="delete-request-form" style="display:inline;">
+                                        <input type="hidden" name="request_id" value="<?php echo $request['request_id']; ?>">
+                                        <input type="hidden" name="csrf_token" value="<?php echo Security::generateCSRFToken(); ?>">
+                                        <button type="button" class="inline-flex items-center px-3 py-1 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors text-sm font-medium" onclick="openDeleteModal(this)">
+                                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                            </svg>
+                                            Delete
+                                        </button>
+                                    </form>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="delete-modal" class="hidden fixed inset-0 z-50 overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" onclick="closeDeleteModal()"></div>
+        <div class="relative bg-white rounded-lg shadow-xl max-w-md w-full flex flex-col">
+            <div class="flex items-center justify-between p-4 border-b">
+                <h3 class="text-lg font-semibold text-gray-900">Delete Request</h3>
+                <button type="button" onclick="closeDeleteModal()" class="text-gray-400 hover:text-gray-500">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="p-6">
+                <p class="text-gray-700 mb-4">Are you sure you want to delete this request? This action cannot be undone.</p>
+                <div class="flex justify-end gap-3">
+                    <button type="button" onclick="closeDeleteModal()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">Cancel</button>
+                    <button type="button" onclick="confirmDeleteRequest()" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let pendingDeleteForm = null;
+function openDeleteModal(button) {
+    pendingDeleteForm = button.closest('form');
+    document.getElementById('delete-modal').classList.remove('hidden');
+    document.getElementById('delete-modal').style.display = 'block';
+}
+function closeDeleteModal() {
+    document.getElementById('delete-modal').classList.add('hidden');
+    document.getElementById('delete-modal').style.display = 'none';
+    pendingDeleteForm = null;
+}
+function confirmDeleteRequest() {
+    if (pendingDeleteForm) {
+        pendingDeleteForm.submit();
+        closeDeleteModal();
+    }
+}
+</script>
+                                    <?php endif; ?>
                                     <?php if ($canManage && $request['status'] !== 'oath_taken'): ?>
                                     <!-- Quick Status Update Dropdown -->
                                     <div class="relative inline-block text-left" x-data="{ open: false }">

@@ -7,10 +7,10 @@ $csp_nonce = base64_encode(random_bytes(16));
 // Nonce is not used in script-src to allow 'unsafe-inline' to work
 // All CDN sources are explicitly whitelisted for maximum security
 $cspPolicy = "default-src 'self'; " .
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " .
-    "script-src-elem 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " .
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.tailwindcss.com; " .
-    "font-src 'self' https://fonts.gstatic.com; " .
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.cdnfonts.com; " .
+    "script-src-elem 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.cdnfonts.com; " .
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.tailwindcss.com https://fonts.cdnfonts.com; " .
+    "font-src 'self' https://fonts.gstatic.com https://fonts.cdnfonts.com; " .
     "img-src 'self' data:; " .
     "connect-src 'self' https://cdnjs.cloudflare.com; " .
     "frame-ancestors 'none'; " .
