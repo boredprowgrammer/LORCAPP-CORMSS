@@ -192,26 +192,29 @@ ob_start();
                 <?php foreach ($requests as $request): ?>
                 <?php
                     // Decrypt names
-                    if ($request['record_code'] === 'CODE D' && !empty($request['existing_officer_uuid'])) {
-                        $decrypted = Encryption::decryptOfficerName(
-                            $request['existing_last_name'],
-                            $request['existing_first_name'],
-                            $request['existing_middle_initial'],
-                            $request['district_code']
-                        );
-                    } else {
-                        $decrypted = Encryption::decryptOfficerName(
-                            $request['last_name_encrypted'],
-                            $request['first_name_encrypted'],
-                            $request['middle_initial_encrypted'],
-                            $request['district_code']
-                        );
+                    try {
+                        if ($request['record_code'] === 'D' && !empty($request['existing_officer_uuid'])) {
+                            $decrypted = Encryption::decryptOfficerName(
+                                $request['existing_last_name'],
+                                $request['existing_first_name'],
+                                $request['existing_middle_initial'],
+                                $request['district_code']
+                            );
+                        } else {
+                            $decrypted = Encryption::decryptOfficerName(
+                                $request['last_name_encrypted'],
+                                $request['first_name_encrypted'],
+                                $request['middle_initial_encrypted'],
+                                $request['district_code']
+                            );
+                        }
+                        $lastName = $decrypted['last_name'];
+                        $firstName = $decrypted['first_name'];
+                        $middleInitial = $decrypted['middle_initial'];
+                        $fullName = trim("$firstName " . ($middleInitial ? $middleInitial . '. ' : '') . "$lastName");
+                    } catch (Exception $e) {
+                        $fullName = '[Name unavailable]';
                     }
-                    
-                    $lastName = $decrypted['last_name'];
-                    $firstName = $decrypted['first_name'];
-                    $middleInitial = $decrypted['middle_initial'];
-                    $fullName = trim("$firstName " . ($middleInitial ? $middleInitial . '. ' : '') . "$lastName");
                     $isLinked = !empty($request['lorcapp_id']);
                 ?>
                 <div class="p-4 hover:bg-gray-50 <?= $isLinked ? 'bg-green-50' : '' ?>">

@@ -67,13 +67,28 @@ if ($statusFilter !== 'all') {
     $params[] = $statusFilter;
 }
 
-// Search filter
+
+// Search filter (include decrypted applicant names)
 if (!empty($searchQuery)) {
-    $query .= " AND (r.requested_department LIKE ? OR d.district_name LIKE ? OR l.local_name LIKE ?)";
+    $query .= " AND (r.requested_department LIKE ? OR d.district_name LIKE ? OR l.local_name LIKE ?";
     $searchParam = "%$searchQuery%";
     $params[] = $searchParam;
     $params[] = $searchParam;
     $params[] = $searchParam;
+
+    // Add applicant name search (decrypted)
+    $query .= " OR LOWER(AES_DECRYPT(r.last_name_encrypted, UNHEX(SHA2(r.district_code, 256)))) LIKE ?";
+    $query .= " OR LOWER(AES_DECRYPT(r.first_name_encrypted, UNHEX(SHA2(r.district_code, 256)))) LIKE ?";
+    $params[] = '%' . strtolower($searchQuery) . '%';
+    $params[] = '%' . strtolower($searchQuery) . '%';
+
+    // For CODE D, also search existing officer names
+    $query .= " OR LOWER(AES_DECRYPT(o.last_name_encrypted, UNHEX(SHA2(r.district_code, 256)))) LIKE ?";
+    $query .= " OR LOWER(AES_DECRYPT(o.first_name_encrypted, UNHEX(SHA2(r.district_code, 256)))) LIKE ?";
+    $params[] = '%' . strtolower($searchQuery) . '%';
+    $params[] = '%' . strtolower($searchQuery) . '%';
+
+    $query .= ")";
 }
 
 $query .= " ORDER BY r.requested_at DESC";
