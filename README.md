@@ -1,7 +1,7 @@
 # Church Officers Registry System (CORS)
 
 A comprehensive Church Officers Registry and Request Management system built with PHP, MySQL, and modern UI components.
-
+[![Better Stack Badge](https://uptime.betterstack.com/status-badges/v1/monitor/2b49u.svg)](https://uptime.betterstack.com/?utm_source=status_badge)
 ## Features
 
 ### Core Functionality
