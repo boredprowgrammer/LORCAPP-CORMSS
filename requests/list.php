@@ -62,13 +62,16 @@ if ($user['role'] === 'district') {
 }
 
 // Status filter
-if ($statusFilter !== 'all') {
+if ($statusFilter === 'all') {
+    // Auto-hide oath_taken by default when showing all
+    $query .= " AND r.status != 'oath_taken'";
+} elseif ($statusFilter !== 'all') {
     $query .= " AND r.status = ?";
     $params[] = $statusFilter;
 }
 
 
-// Search filter (include decrypted applicant names)
+// Powerful search filter (multi-word, partial, fuzzy)
 if (!empty($searchQuery)) {
     $query .= " AND (r.requested_department LIKE ? OR d.district_name LIKE ? OR l.local_name LIKE ?";
     $searchParam = "%$searchQuery%";
@@ -76,18 +79,21 @@ if (!empty($searchQuery)) {
     $params[] = $searchParam;
     $params[] = $searchParam;
 
-    // Add applicant name search (decrypted)
-    $query .= " OR LOWER(AES_DECRYPT(r.last_name_encrypted, UNHEX(SHA2(r.district_code, 256)))) LIKE ?";
-    $query .= " OR LOWER(AES_DECRYPT(r.first_name_encrypted, UNHEX(SHA2(r.district_code, 256)))) LIKE ?";
-    $params[] = '%' . strtolower($searchQuery) . '%';
-    $params[] = '%' . strtolower($searchQuery) . '%';
-
-    // For CODE D, also search existing officer names
-    $query .= " OR LOWER(AES_DECRYPT(o.last_name_encrypted, UNHEX(SHA2(r.district_code, 256)))) LIKE ?";
-    $query .= " OR LOWER(AES_DECRYPT(o.first_name_encrypted, UNHEX(SHA2(r.district_code, 256)))) LIKE ?";
-    $params[] = '%' . strtolower($searchQuery) . '%';
-    $params[] = '%' . strtolower($searchQuery) . '%';
-
+    // Split search query into words for multi-word matching
+    $words = preg_split('/\s+/', strtolower($searchQuery));
+    foreach ($words as $word) {
+        if (strlen($word) < 2) continue;
+        // Applicant names
+        $query .= " OR LOWER(AES_DECRYPT(r.last_name_encrypted, UNHEX(SHA2(r.district_code, 256)))) LIKE ?";
+        $query .= " OR LOWER(AES_DECRYPT(r.first_name_encrypted, UNHEX(SHA2(r.district_code, 256)))) LIKE ?";
+        $params[] = "%$word%";
+        $params[] = "%$word%";
+        // Existing officer names (CODE D)
+        $query .= " OR LOWER(AES_DECRYPT(o.last_name_encrypted, UNHEX(SHA2(r.district_code, 256)))) LIKE ?";
+        $query .= " OR LOWER(AES_DECRYPT(o.first_name_encrypted, UNHEX(SHA2(r.district_code, 256)))) LIKE ?";
+        $params[] = "%$word%";
+        $params[] = "%$word%";
+    }
     $query .= ")";
 }
 
@@ -304,251 +310,199 @@ ob_start();
     </div>
     <?php endif; ?>
 
-    <!-- Requests Table -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <?php if ($canManage): ?>
-                        <th class="px-4 py-3 text-left">
-                            <input type="checkbox" id="selectAll" onchange="toggleSelectAll(this)" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500">
-                        </th>
-                        <?php endif; ?>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Applicant</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dates</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Requested By</th>
-                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    <?php if (empty($requests)): ?>
-                    <tr>
-                        <td colspan="<?php echo $canManage ? '8' : '7'; ?>" class="px-4 py-8 text-center text-gray-500">
-                            <svg class="w-12 h-12 mx-auto text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
-                            </svg>
-                            <p class="font-medium">No requests found</p>
-                            <p class="text-sm">Try adjusting your filters or create a new request</p>
-                        </td>
-                    </tr>
-                    <?php else: ?>
-                        <?php foreach ($requests as $request): 
-                            // For CODE D, use the existing officer's name; for CODE A, use the request's name
-                            if ($request['record_code'] === 'D' && $request['existing_officer_uuid']) {
-                                $lastName = Encryption::decrypt($request['existing_last_name'], $request['district_code']);
-                                $firstName = Encryption::decrypt($request['existing_first_name'], $request['district_code']);
-                                $middleInitial = $request['existing_middle_initial'] ? Encryption::decrypt($request['existing_middle_initial'], $request['district_code']) : '';
-                            } else {
-                                $lastName = Encryption::decrypt($request['last_name_encrypted'], $request['district_code']);
-                                $firstName = Encryption::decrypt($request['first_name_encrypted'], $request['district_code']);
-                                $middleInitial = $request['middle_initial_encrypted'] ? Encryption::decrypt($request['middle_initial_encrypted'], $request['district_code']) : '';
-                            }
-                            $fullName = "$lastName, $firstName" . ($middleInitial ? " $middleInitial." : "");
-                            $statusInfo = $statusConfig[$request['status']];
-                        ?>
-                        <tr class="hover:bg-gray-50 transition-colors">
-                            <?php if ($canManage): ?>
-                            <td class="px-4 py-3">
-                                <input type="checkbox" class="request-checkbox w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500" 
-                                       value="<?php echo $request['request_id']; ?>" 
-                                       data-status="<?php echo $request['status']; ?>"
-                                       onchange="updateBulkActionBar()">
-                            </td>
-                            <?php endif; ?>
-                            <td class="px-4 py-3">
-                                <div class="font-mono font-semibold text-gray-900 uppercase"><?php echo Security::escape($fullName); ?></div>
-                            </td>
-                            <td class="px-4 py-3">
-                                <div class="text-sm text-gray-900"><?php echo Security::escape($request['local_name']); ?></div>
-                                <div class="text-xs text-gray-500"><?php echo Security::escape($request['district_name']); ?></div>
-                            </td>
-                            <td class="px-4 py-3">
-                                <div class="flex items-center gap-2">
-                                    <div>
-                                        <div class="text-sm font-medium text-gray-900"><?php echo Security::escape($request['requested_department']); ?></div>
-                                        <?php if ($request['requested_duty']): ?>
-                                        <div class="text-xs text-gray-500"><?php echo Security::escape($request['requested_duty']); ?></div>
-                                        <?php endif; ?>
-                                    </div>
-                                    <?php if ($request['is_imported']): ?>
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800" title="Imported from LORCAPP R-201 Database">
-                                            <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                                <path d="M3 12v3c0 1.657 3.134 3 7 3s7-1.343 7-3v-3c0 1.657-3.134 3-7 3s-7-1.343-7-3z"/>
-                                                <path d="M3 7v3c0 1.657 3.134 3 7 3s7-1.343 7-3V7c0 1.657-3.134 3-7 3S3 8.657 3 7z"/>
-                                                <path d="M17 5c0 1.657-3.134 3-7 3S3 6.657 3 5s3.134-3 7-3 7 1.343 7 3z"/>
-                                            </svg>
-                                            LORCAPP
-                                        </span>
-                                    <?php endif; ?>
-                                </div>
-                            </td>
-                            <td class="px-4 py-3">
-                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-<?php echo $statusInfo['color']; ?>-100 text-<?php echo $statusInfo['color']; ?>-800">
-                                    <?php echo $statusInfo['label']; ?>
-                                </span>
-                            </td>
-                            <td class="px-4 py-3">
-                                <div class="text-xs text-gray-900">Requested: <?php echo date('m/d/Y', strtotime($request['requested_at'])); ?></div>
-                                <?php if ($request['seminar_date']): ?>
-                                <div class="text-xs text-gray-500">Seminar: <?php echo date('m/d/Y', strtotime($request['seminar_date'])); ?></div>
-                                <?php endif; ?>
-                                <?php if ($request['oath_scheduled_date']): ?>
-                                <div class="text-xs text-gray-500">Oath: <?php echo date('m/d/Y', strtotime($request['oath_scheduled_date'])); ?></div>
-                                <?php endif; ?>
-                            </td>
-                            <td class="px-4 py-3">
-                                <div class="text-sm text-gray-900"><?php echo Security::escape($request['requested_by_name']); ?></div>
-                            </td>
-                            <td class="px-4 py-3 text-right">
-                                <div class="flex items-center justify-end gap-2">
-                                    <a href="view.php?id=<?php echo $request['request_id']; ?>" class="inline-flex items-center px-3 py-1 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors text-sm font-medium">
-                                        View Details
-                                    </a>
-                                    <?php if ($canManage): ?>
-                                    <form method="POST" action="delete-request.php" class="delete-request-form" style="display:inline;">
-                                        <input type="hidden" name="request_id" value="<?php echo $request['request_id']; ?>">
-                                        <input type="hidden" name="csrf_token" value="<?php echo Security::generateCSRFToken(); ?>">
-                                        <button type="button" class="inline-flex items-center px-3 py-1 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors text-sm font-medium" onclick="openDeleteModal(this)">
-                                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                                            </svg>
-                                            Delete
-                                        </button>
-                                    </form>
-</div>
-
-<!-- Delete Confirmation Modal -->
-<div id="delete-modal" class="hidden fixed inset-0 z-50 overflow-y-auto">
-    <div class="flex items-center justify-center min-h-screen p-4">
-        <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" onclick="closeDeleteModal()"></div>
-        <div class="relative bg-white rounded-lg shadow-xl max-w-md w-full flex flex-col">
-            <div class="flex items-center justify-between p-4 border-b">
-                <h3 class="text-lg font-semibold text-gray-900">Delete Request</h3>
-                <button type="button" onclick="closeDeleteModal()" class="text-gray-400 hover:text-gray-500">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                </button>
+    <!-- Requests Cards -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+        <?php if (empty($requests)): ?>
+            <div class="p-8 text-center text-gray-500">
+                <p class="font-medium">No requests found</p>
+                <p class="text-sm">Try adjusting your filters or create a new request</p>
             </div>
-            <div class="p-6">
-                <p class="text-gray-700 mb-4">Are you sure you want to delete this request? This action cannot be undone.</p>
-                <div class="flex justify-end gap-3">
-                    <button type="button" onclick="closeDeleteModal()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">Cancel</button>
-                    <button type="button" onclick="confirmDeleteRequest()" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">Delete</button>
+        <?php else: ?>
+            <!-- Hidden selectAll to keep JS compatibility -->
+            <input type="checkbox" id="selectAll" style="display:none;" onchange="toggleSelectAll(this)">
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <?php foreach ($requests as $request):
+                    // Decrypt name
+                    if ($request['record_code'] === 'D' && $request['existing_officer_uuid']) {
+                        $lastName = Encryption::decrypt($request['existing_last_name'], $request['district_code']);
+                        $firstName = Encryption::decrypt($request['existing_first_name'], $request['district_code']);
+                        $middleInitial = $request['existing_middle_initial'] ? Encryption::decrypt($request['existing_middle_initial'], $request['district_code']) : '';
+                    } else {
+                        $lastName = Encryption::decrypt($request['last_name_encrypted'], $request['district_code']);
+                        $firstName = Encryption::decrypt($request['first_name_encrypted'], $request['district_code']);
+                        $middleInitial = $request['middle_initial_encrypted'] ? Encryption::decrypt($request['middle_initial_encrypted'], $request['district_code']) : '';
+                    }
+                    if ($lastName === '' && $firstName === '') {
+                        $fullName = '[DECRYPT ERROR]';
+                    } else {
+                        $fullName = "$lastName, $firstName" . ($middleInitial ? " $middleInitial." : "");
+                    }
+                    $statusInfo = $statusConfig[$request['status']];
+                ?>
+                <div class="bg-white border border-gray-100 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
+                    <div class="flex items-start justify-between">
+                        <div class="flex items-start gap-3">
+                            <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-medium">
+                                <?php echo strtoupper(substr($fullName, 0, 1)); ?>
+                            </div>
+                            <div>
+                                <div class="text-sm font-semibold text-gray-900"><?php echo Security::escape($fullName); ?></div>
+                                <div class="text-xs text-gray-500"><?php echo Security::escape($request['local_name']); ?> • <?php echo Security::escape($request['district_name']); ?></div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-<?php echo $statusInfo['color']; ?>-100 text-<?php echo $statusInfo['color']; ?>-800">
+                                <?php echo $statusInfo['label']; ?>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-3 text-sm text-gray-700">
+                        <div><?php echo Security::escape($request['requested_department']); ?> <?php if ($request['requested_duty']): ?><span class="text-xs text-gray-500">• <?php echo Security::escape($request['requested_duty']); ?></span><?php endif; ?></div>
+                        <div class="text-xs text-gray-500 mt-2">Requested: <?php echo date('m/d/Y', strtotime($request['requested_at'])); ?></div>
+                        <?php if ($request['seminar_date']): ?><div class="text-xs text-gray-500">Seminar: <?php echo date('m/d/Y', strtotime($request['seminar_date'])); ?></div><?php endif; ?>
+                        <?php if ($request['oath_scheduled_date']): ?><div class="text-xs text-gray-500">Oath: <?php echo date('m/d/Y', strtotime($request['oath_scheduled_date'])); ?></div><?php endif; ?>
+                    </div>
+
+                    <div class="mt-4 flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <?php if ($canManage): ?>
+                                <input type="checkbox" class="request-checkbox" value="<?php echo $request['request_id']; ?>" data-status="<?php echo $request['status']; ?>" onchange="updateBulkActionBar()">
+                            <?php endif; ?>
+                            <div class="text-xs text-gray-500">Requested by <?php echo Security::escape($request['requested_by_name']); ?></div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <a href="view.php?id=<?php echo $request['request_id']; ?>" class="px-3 py-1 bg-blue-50 text-blue-700 rounded-lg text-sm">View</a>
+                            <?php if ($canManage): ?>
+                                <form method="POST" action="delete-request.php" class="delete-request-form inline">
+                                    <input type="hidden" name="request_id" value="<?php echo $request['request_id']; ?>">
+                                    <input type="hidden" name="csrf_token" value="<?php echo Security::generateCSRFToken(); ?>">
+                                    <button type="button" class="px-3 py-1 bg-red-50 text-red-700 rounded-lg text-sm" onclick="openDeleteModal(this)">Delete</button>
+                                </form>
+                            <?php endif; ?>
+                            <?php if ($canManage && $request['status'] !== 'oath_taken'): ?>
+                                <!-- Quick Status Update Dropdown -->
+                                <div class="relative inline-block text-left" x-data="{ open: false }">
+                                    <button @click="open = !open" @click.away="open = false" type="button" class="px-3 py-1 bg-green-50 text-green-700 rounded-lg text-sm">
+                                        Update
+                                    </button>
+                                    <div x-show="open" x-transition class="absolute right-0 mt-2 w-56 rounded-lg shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10" style="display: none;">
+                                        <div class="py-1">
+                                            <?php
+                                            // Define next possible statuses based on current status
+                                            $nextStatuses = [];
+                                            switch ($request['status']) {
+                                                case 'pending':
+                                                    $nextStatuses = [
+                                                        'requested_to_seminar' => 'Approve for Seminar',
+                                                        'rejected' => 'Reject Request'
+                                                    ];
+                                                    break;
+                                                case 'requested_to_seminar':
+                                                    $nextStatuses = [
+                                                        'in_seminar' => 'Mark In Seminar',
+                                                        'cancelled' => 'Cancel'
+                                                    ];
+                                                    break;
+                                                case 'in_seminar':
+                                                    $nextStatuses = [
+                                                        'seminar_completed' => 'Complete Seminar'
+                                                    ];
+                                                    break;
+                                                case 'seminar_completed':
+                                                    $nextStatuses = [
+                                                        'requested_to_oath' => 'Approve for Oath'
+                                                    ];
+                                                    break;
+                                                case 'requested_to_oath':
+                                                    $nextStatuses = [
+                                                        'ready_to_oath' => 'Mark Ready for Oath'
+                                                    ];
+                                                    break;
+                                                case 'ready_to_oath':
+                                                    $nextStatuses = [
+                                                        'oath_taken' => 'Complete Oath'
+                                                    ];
+                                                    break;
+                                            }
+                                            
+                                            if (!empty($nextStatuses)):
+                                                foreach ($nextStatuses as $status => $label):
+                                            ?>
+                                            <a href="view.php?id=<?php echo $request['request_id']; ?>#workflow" 
+                                               class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                                <?php echo Security::escape($label); ?>
+                                            </a>
+                                            <?php 
+                                                endforeach;
+                                            else:
+                                            ?>
+                                            <div class="px-4 py-2 text-sm text-gray-500">
+                                                No quick actions available
+                                            </div>
+                                            <?php endif; ?>
+                                            
+                                            <div class="border-t border-gray-100"></div>
+                                            <a href="view.php?id=<?php echo $request['request_id']; ?>" 
+                                               class="block px-4 py-2 text-sm text-blue-700 hover:bg-blue-50">
+                                                View Full Details →
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="delete-modal" class="hidden fixed inset-0 z-50 overflow-y-auto">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" onclick="closeDeleteModal()"></div>
+            <div class="relative bg-white rounded-lg shadow-xl max-w-md w-full flex flex-col">
+                <div class="flex items-center justify-between p-4 border-b">
+                    <h3 class="text-lg font-semibold text-gray-900">Delete Request</h3>
+                    <button type="button" onclick="closeDeleteModal()" class="text-gray-400 hover:text-gray-500">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div class="p-6">
+                    <p class="text-gray-700 mb-4">Are you sure you want to delete this request? This action cannot be undone.</p>
+                    <div class="flex justify-end gap-3">
+                        <button type="button" onclick="closeDeleteModal()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">Cancel</button>
+                        <button type="button" onclick="confirmDeleteRequest()" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">Delete</button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
-<script>
-let pendingDeleteForm = null;
-function openDeleteModal(button) {
-    pendingDeleteForm = button.closest('form');
-    document.getElementById('delete-modal').classList.remove('hidden');
-    document.getElementById('delete-modal').style.display = 'block';
-}
-function closeDeleteModal() {
-    document.getElementById('delete-modal').classList.add('hidden');
-    document.getElementById('delete-modal').style.display = 'none';
-    pendingDeleteForm = null;
-}
-function confirmDeleteRequest() {
-    if (pendingDeleteForm) {
-        pendingDeleteForm.submit();
-        closeDeleteModal();
+    <script>
+    let pendingDeleteForm = null;
+    function openDeleteModal(button) {
+        pendingDeleteForm = button.closest('form');
+        document.getElementById('delete-modal').classList.remove('hidden');
+        document.getElementById('delete-modal').style.display = 'block';
     }
-}
-</script>
-                                    <?php endif; ?>
-                                    <?php if ($canManage && $request['status'] !== 'oath_taken'): ?>
-                                    <!-- Quick Status Update Dropdown -->
-                                    <div class="relative inline-block text-left" x-data="{ open: false }">
-                                        <button @click="open = !open" @click.away="open = false" type="button" class="inline-flex items-center px-3 py-1 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors text-sm font-medium">
-                                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                                            </svg>
-                                            Update Status
-                                        </button>
-                                        
-                                        <div x-show="open" x-transition class="absolute right-0 mt-2 w-56 rounded-lg shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10" style="display: none;">
-                                            <div class="py-1">
-                                                <?php
-                                                // Define next possible statuses based on current status
-                                                $nextStatuses = [];
-                                                switch ($request['status']) {
-                                                    case 'pending':
-                                                        $nextStatuses = [
-                                                            'requested_to_seminar' => 'Approve for Seminar',
-                                                            'rejected' => 'Reject Request'
-                                                        ];
-                                                        break;
-                                                    case 'requested_to_seminar':
-                                                        $nextStatuses = [
-                                                            'in_seminar' => 'Mark In Seminar',
-                                                            'cancelled' => 'Cancel'
-                                                        ];
-                                                        break;
-                                                    case 'in_seminar':
-                                                        $nextStatuses = [
-                                                            'seminar_completed' => 'Complete Seminar'
-                                                        ];
-                                                        break;
-                                                    case 'seminar_completed':
-                                                        $nextStatuses = [
-                                                            'requested_to_oath' => 'Approve for Oath'
-                                                        ];
-                                                        break;
-                                                    case 'requested_to_oath':
-                                                        $nextStatuses = [
-                                                            'ready_to_oath' => 'Mark Ready for Oath'
-                                                        ];
-                                                        break;
-                                                    case 'ready_to_oath':
-                                                        $nextStatuses = [
-                                                            'oath_taken' => 'Complete Oath'
-                                                        ];
-                                                        break;
-                                                }
-                                                
-                                                if (!empty($nextStatuses)):
-                                                    foreach ($nextStatuses as $status => $label):
-                                                ?>
-                                                <a href="view.php?id=<?php echo $request['request_id']; ?>#workflow" 
-                                                   class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                                    <?php echo Security::escape($label); ?>
-                                                </a>
-                                                <?php 
-                                                    endforeach;
-                                                else:
-                                                ?>
-                                                <div class="px-4 py-2 text-sm text-gray-500">
-                                                    No quick actions available
-                                                </div>
-                                                <?php endif; ?>
-                                                
-                                                <div class="border-t border-gray-100"></div>
-                                                <a href="view.php?id=<?php echo $request['request_id']; ?>" 
-                                                   class="block px-4 py-2 text-sm text-blue-700 hover:bg-blue-50">
-                                                    View Full Details →
-                                                </a>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <?php endif; ?>
-                                </div>
-                            </td>
-                        </tr>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
-                </tbody>
-            </table>
-        </div>
-    </div>
+    function closeDeleteModal() {
+        document.getElementById('delete-modal').classList.add('hidden');
+        document.getElementById('delete-modal').style.display = 'none';
+        pendingDeleteForm = null;
+    }
+    function confirmDeleteRequest() {
+        if (pendingDeleteForm) {
+            pendingDeleteForm.submit();
+            closeDeleteModal();
+        }
+    }
+    </script>
 </div>
 
 <script>

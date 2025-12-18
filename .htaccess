@@ -8,6 +8,12 @@
     # Prevent directory browsing
     Options -Indexes
     
+    # Serve canonical favicon: internally rewrite /favicon.ico to the asset path.
+    # Update the target path below if your favicon is located elsewhere.
+    # This keeps the browser URL as /favicon.ico while serving the chosen file.
+    # Redirect to an existing project image (logo) as a temporary favicon. Replace with your real favicon file if available.
+    
+    
     # Protect sensitive files
     <FilesMatch "\.(env|log|sql|md|git|gitignore|sh)$">
         Order Allow,Deny
