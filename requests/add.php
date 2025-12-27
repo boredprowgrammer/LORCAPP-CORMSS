@@ -56,6 +56,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $department = $_POST['department'] ?? '';
     $duty = trim($_POST['duty'] ?? '');
     $existingOfficerId = $_POST['existing_officer_id'] ?? null;
+    $requestClass = $_POST['request_class'] ?? '8_lessons'; // Default to 8 lessons
+    
+    // Set seminar days based on request class
+    $seminarDaysRequired = ($requestClass === '33_lessons') ? 30 : 8;
     
     // Validation
     if (empty($recordCode)) {
@@ -87,15 +91,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     email, phone, district_code, local_code,
                     requested_department, requested_duty, record_code,
                     existing_officer_uuid,
+                    request_class, seminar_days_required, seminar_days_completed,
                     status, requested_by
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 'pending', ?)
             ");
             
             $stmt->execute([
                 $lastNameEnc, $firstNameEnc, $middleInitialEnc,
                 $email, $phone, $districtCode, $localCode,
                 $department, $duty, $recordCode,
-                $existingOfficerId, $user['user_id']
+                $existingOfficerId,
+                $requestClass, $seminarDaysRequired,
+                $user['user_id']
             ]);
             
             $requestId = $db->lastInsertId();
@@ -231,7 +238,9 @@ ob_start();
                     <input type="text" name="last_name" x-model="lastName" required 
                            :readonly="code === 'D' && selectedOfficer"
                            :class="code === 'D' && selectedOfficer ? 'bg-gray-100' : ''"
-                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                           oninput="this.value = this.value.toUpperCase()"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 uppercase"
+                           style="text-transform: uppercase;">
                 </div>
                 
                 <div>
@@ -239,7 +248,9 @@ ob_start();
                     <input type="text" name="first_name" x-model="firstName" required 
                            :readonly="code === 'D' && selectedOfficer"
                            :class="code === 'D' && selectedOfficer ? 'bg-gray-100' : ''"
-                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                           oninput="this.value = this.value.toUpperCase()"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 uppercase"
+                           style="text-transform: uppercase;">
                 </div>
                 
                 <div>
@@ -247,7 +258,9 @@ ob_start();
                     <input type="text" name="middle_initial" x-model="middleInitial" maxlength="1" 
                            :readonly="code === 'D' && selectedOfficer"
                            :class="code === 'D' && selectedOfficer ? 'bg-gray-100' : ''"
-                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                           oninput="this.value = this.value.toUpperCase()"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 uppercase"
+                           style="text-transform: uppercase;">
                 </div>
             </div>
         </div>
@@ -357,9 +370,50 @@ ob_start();
                         name="duty" 
                         rows="3" 
                         placeholder="e.g., Choir Member, Usher, Teacher, etc."
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                        oninput="this.value = this.value.toUpperCase()"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none uppercase"
+                        style="text-transform: uppercase;"
                     ></textarea>
                     <p class="text-xs text-gray-500 mt-1">Specify the role or position you're applying for</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Seminar Class (8 Lessons or 33 Lessons) -->
+        <div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <svg class="w-5 h-5 text-purple-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z"/>
+                </svg>
+                Seminar Class
+            </h3>
+            
+            <div class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <label class="flex items-start p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-purple-500 hover:bg-purple-50 transition-colors">
+                        <input type="radio" name="request_class" value="8_lessons" class="mt-1 h-4 w-4 text-purple-600 border-gray-300" checked>
+                        <div class="ml-3">
+                            <div class="text-sm font-semibold text-gray-900">8 Lessons — Standard Class</div>
+                            <div class="text-xs text-gray-600 mt-1">Requires 8 days of seminar attendance</div>
+                            <div class="text-xs text-purple-600 mt-1 font-medium">✓ Most common for regular officers</div>
+                        </div>
+                    </label>
+                    
+                    <label class="flex items-start p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-purple-500 hover:bg-purple-50 transition-colors">
+                        <input type="radio" name="request_class" value="33_lessons" class="mt-1 h-4 w-4 text-purple-600 border-gray-300">
+                        <div class="ml-3">
+                            <div class="text-sm font-semibold text-gray-900">33 Lessons — Extended Class</div>
+                            <div class="text-xs text-gray-600 mt-1">Requires 30 days of seminar attendance</div>
+                            <div class="text-xs text-orange-600 mt-1 font-medium">⚠ For special assignments</div>
+                        </div>
+                    </label>
+                </div>
+                
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <p class="text-xs text-blue-800">
+                        <strong>Note:</strong> The seminar class determines how many days of training are required before the officer can take their oath. 
+                        R5-13 certificate will be generated after completing all required seminar days.
+                    </p>
                 </div>
             </div>
         </div>

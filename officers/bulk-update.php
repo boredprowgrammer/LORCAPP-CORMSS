@@ -25,14 +25,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $officerIds = $_POST['officer_ids'] ?? [];
         $purok = Security::sanitizeInput($_POST['purok'] ?? '');
         $grupo = Security::sanitizeInput($_POST['grupo'] ?? '');
+        $kapisanan = Security::sanitizeInput($_POST['kapisanan'] ?? '');
         $controlNumber = Security::sanitizeInput($_POST['control_number'] ?? '');
         $updatePurok = isset($_POST['update_purok']);
         $updateGrupo = isset($_POST['update_grupo']);
+        $updateKapisanan = isset($_POST['update_kapisanan']);
         $updateControlNumber = isset($_POST['update_control_number']);
         
         if (empty($officerIds)) {
             $error = 'No officers selected.';
-        } elseif (!$updatePurok && !$updateGrupo && !$updateControlNumber) {
+        } elseif (!$updatePurok && !$updateGrupo && !$updateKapisanan && !$updateControlNumber) {
             $error = 'Please select at least one field to update.';
         } else {
             try {
@@ -74,6 +76,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     if ($updateGrupo) {
                         $updateFields[] = "grupo = ?";
                         $params[] = !empty($grupo) ? $grupo : null;
+                    }
+                    
+                    if ($updateKapisanan) {
+                        $updateFields[] = "kapisanan = ?";
+                        $params[] = !empty($kapisanan) ? $kapisanan : null;
                     }
                     
                     if ($updateControlNumber) {
@@ -221,6 +228,11 @@ ob_start();
                     </label>
                     
                     <label class="flex items-center space-x-2 cursor-pointer">
+                        <input type="checkbox" name="update_kapisanan" id="update_kapisanan" class="w-4 h-4 text-blue-600 rounded">
+                        <span class="text-sm font-medium text-gray-700">Update Kapisanan</span>
+                    </label>
+                    
+                    <label class="flex items-center space-x-2 cursor-pointer">
                         <input type="checkbox" name="update_control_number" id="update_control_number" class="w-4 h-4 text-blue-600 rounded">
                         <span class="text-sm font-medium text-gray-700">Update Control Number</span>
                     </label>
@@ -255,6 +267,23 @@ ob_start();
                     <p class="text-xs text-gray-500 mt-1">Leave empty to clear existing value</p>
                 </div>
                 
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Kapisanan Value</label>
+                    <select 
+                        name="kapisanan" 
+                        id="kapisanan_value"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                        disabled>
+                        <option value="">Select Kapisanan</option>
+                        <option value="Buklod">Buklod</option>
+                        <option value="Kadiwa">Kadiwa</option>
+                        <option value="Binhi">Binhi</option>
+                    </select>
+                    <p class="text-xs text-gray-500 mt-1">Leave empty to clear existing value</p>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-1 gap-4 mb-6">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Control Number Value</label>
                     <input 
@@ -348,6 +377,10 @@ document.getElementById('update_purok').addEventListener('change', function() {
 
 document.getElementById('update_grupo').addEventListener('change', function() {
     document.getElementById('grupo_value').disabled = !this.checked;
+});
+
+document.getElementById('update_kapisanan').addEventListener('change', function() {
+    document.getElementById('kapisanan_value').disabled = !this.checked;
 });
 
 document.getElementById('update_control_number').addEventListener('change', function() {

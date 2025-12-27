@@ -228,17 +228,17 @@ class PDFStorage {
     }
     
     /**
-     * Get encryption key from environment
+     * Get encryption key from application configuration
      * 
      * @return string Encryption key
      */
     private function getEncryptionKey() {
-        $key = getenv('PDF_ENCRYPTION_KEY');
-        
-        if (empty($key)) {
-            // Fallback to application encryption key
-            $key = getenv('ENCRYPTION_KEY');
+        // Use the application's MASTER_KEY constant (loaded from Infisical or .env)
+        if (!defined('MASTER_KEY')) {
+            throw new Exception('Encryption key not configured');
         }
+        
+        $key = MASTER_KEY;
         
         if (empty($key)) {
             throw new Exception('Encryption key not configured');

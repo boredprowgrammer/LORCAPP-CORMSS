@@ -252,7 +252,7 @@ ob_start();
 
 <!-- Create District Modal -->
 <div x-data="{ show: false }" 
-     @open-modal.window="show = ($event.detail === 'createDistrictModal')"
+     @open-modal.document="show = ($event.detail === 'createDistrictModal')"
      @keydown.escape.window="show = false"
      x-show="show"
      class="fixed inset-0 z-50 overflow-y-auto"
@@ -316,7 +316,7 @@ ob_start();
 
 <!-- Create Local Modal -->
 <div x-data="{ show: false }" 
-     @open-modal.window="show = ($event.detail === 'createLocalModal')"
+     @open-modal.document="show = ($event.detail === 'createLocalModal')"
      @keydown.escape.window="show = false"
      x-show="show"
      class="fixed inset-0 z-50 overflow-y-auto"

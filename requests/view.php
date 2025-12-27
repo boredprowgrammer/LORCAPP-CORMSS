@@ -75,6 +75,104 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $canManage) {
     $action = $_POST['action'] ?? '';
     
     try {
+        // Handle seminar progress update
+        if ($action === 'update_seminar_progress') {
+            // Recalculate seminar days completed from seminar_dates JSON
+            $seminarDates = !empty($request['seminar_dates']) ? json_decode($request['seminar_dates'], true) : [];
+            $attendedCount = 0;
+            
+            if (is_array($seminarDates)) {
+                foreach ($seminarDates as $seminar) {
+                    if (!empty($seminar['attended'])) {
+                        $attendedCount++;
+                    }
+                }
+            }
+            
+            // Update the count in database
+            $stmt = $db->prepare("
+                UPDATE officer_requests 
+                SET seminar_days_completed = ?
+                WHERE request_id = ?
+            ");
+            $stmt->execute([$attendedCount, $requestId]);
+            
+            $success = "Seminar progress updated: $attendedCount days completed.";
+            
+            // Refresh request data
+            $stmt = $db->prepare("SELECT * FROM officer_requests WHERE request_id = ?");
+            $stmt->execute([$requestId]);
+            $request = array_merge($request, $stmt->fetch(PDO::FETCH_ASSOC));
+        }
+        
+        // Handle mark attendance
+        if ($action === 'mark_attendance') {
+            $seminarIndex = intval($_POST['seminar_index'] ?? -1);
+            $attended = ($_POST['attended'] ?? '0') === '1';
+            
+            // Get current seminar dates
+            $seminarDates = !empty($request['seminar_dates']) ? json_decode($request['seminar_dates'], true) : [];
+            
+            if (is_array($seminarDates) && isset($seminarDates[$seminarIndex])) {
+                // Update attendance status
+                $seminarDates[$seminarIndex]['attended'] = $attended;
+                $seminarDates[$seminarIndex]['attendance_marked_at'] = date('Y-m-d H:i:s');
+                
+                // Count attended dates
+                $attendedCount = 0;
+                foreach ($seminarDates as $seminar) {
+                    if (!empty($seminar['attended'])) {
+                        $attendedCount++;
+                    }
+                }
+                
+                // Update database
+                $stmt = $db->prepare("
+                    UPDATE officer_requests 
+                    SET seminar_dates = ?,
+                        seminar_days_completed = ?
+                    WHERE request_id = ?
+                ");
+                $stmt->execute([
+                    json_encode($seminarDates),
+                    $attendedCount,
+                    $requestId
+                ]);
+                
+                $daysRequired = $request['seminar_days_required'] ?? 0;
+                
+                // Return JSON for AJAX requests
+                if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+                    header('Content-Type: application/json');
+                    echo json_encode([
+                        'success' => true,
+                        'message' => $attended ? "Attendance marked" : "Attendance unmarked",
+                        'days_completed' => $attendedCount,
+                        'days_required' => $daysRequired
+                    ]);
+                    exit;
+                }
+                
+                $success = $attended ? "Attendance marked for day " . ($seminarIndex + 1) : "Attendance unmarked for day " . ($seminarIndex + 1);
+                
+                // Refresh request data
+                $stmt = $db->prepare("SELECT * FROM officer_requests WHERE request_id = ?");
+                $stmt->execute([$requestId]);
+                $request = array_merge($request, $stmt->fetch(PDO::FETCH_ASSOC));
+            } else {
+                // Return JSON error for AJAX requests
+                if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+                    header('Content-Type: application/json');
+                    echo json_encode([
+                        'success' => false,
+                        'error' => 'Invalid seminar date index'
+                    ]);
+                    exit;
+                }
+                $error = "Invalid seminar date index.";
+            }
+        }
+        
         switch ($action) {
             case 'set_code':
                 $recordCode = $_POST['record_code'] ?? '';
@@ -748,6 +846,184 @@ ob_start();
             </div>
             <?php endif; ?>
 
+            <?php 
+            // Initialize seminar tracking variables globally
+            $seminarDates = !empty($request['seminar_dates']) ? json_decode($request['seminar_dates'], true) : [];
+            $daysRequired = $request['seminar_days_required'] ?? 0;
+            
+            // Calculate days completed based on attended status
+            $daysCompleted = 0;
+            if (!empty($seminarDates)) {
+                foreach ($seminarDates as $seminar) {
+                    if (!empty($seminar['attended'])) {
+                        $daysCompleted++;
+                    }
+                }
+            }
+            ?>
+
+            <!-- Seminar Progress Tracker (8 Lessons or 33 Lessons) -->
+            <?php if (!empty($request['request_class']) && in_array($request['status'], ['requested_to_seminar', 'in_seminar', 'seminar_completed', 'requested_to_oath', 'ready_to_oath', 'oath_taken'])): ?>
+            <?php 
+            // Auto-initialize if empty
+            $needsInit = empty($seminarDates) && $daysRequired > 0;
+            
+            $progressPercent = $daysRequired > 0 ? ($daysCompleted / $daysRequired) * 100 : 0;
+            $isComplete = $daysCompleted >= $daysRequired && $daysRequired > 0;
+            ?>
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6" x-data="{ needsInit: <?= $needsInit ? 'true' : 'false' ?> }">
+                <?php if ($needsInit): ?>
+                <!-- Auto-initialization prompt -->
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+                    <div class="flex items-start">
+                        <svg class="w-5 h-5 text-yellow-600 mr-2 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+                        </svg>
+                        <div class="flex-1">
+                            <p class="text-sm font-semibold text-yellow-900">Seminar dates not initialized</p>
+                            <p class="text-xs text-yellow-800 mt-1">
+                                Click below to auto-generate <?= $daysRequired ?> seminar dates (daily consecutive schedule)
+                            </p>
+                            <button @click="initializeSeminar()" :disabled="!needsInit"
+                                class="mt-2 px-3 py-1.5 bg-yellow-600 text-white text-xs rounded-lg hover:bg-yellow-700 transition-colors disabled:opacity-50">
+                                Initialize Daily Seminar Schedule
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <?php endif; ?>
+                
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                        <svg class="w-5 h-5 text-purple-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"></path>
+                            <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"></path>
+                        </svg>
+                        Seminar Progress — <?= Security::escape($request['request_class']) ?>
+                    </h3>
+                    <?php if ($canManage && !$isComplete && !$needsInit): ?>
+                    <button onclick="document.dispatchEvent(new CustomEvent('open-modal', { detail: 'addSeminarDateModal' }))"
+                        class="inline-flex items-center px-3 py-1.5 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700 transition-colors">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        Add Extra Date
+                    </button>
+                    <?php endif; ?>
+                </div>
+                
+                <!-- Progress Bar -->
+                <div class="mb-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-medium text-gray-700">
+                            <?= $daysCompleted ?> of <?= $daysRequired ?> days completed
+                        </span>
+                        <span class="text-sm font-bold <?= $isComplete ? 'text-green-600' : 'text-purple-600' ?>">
+                            <?= number_format($progressPercent, 0) ?>%
+                        </span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                        <div class="<?= $isComplete ? 'bg-green-600' : 'bg-purple-600' ?> h-3 rounded-full transition-all duration-500" 
+                             style="width: <?= min($progressPercent, 100) ?>%"></div>
+                    </div>
+                    <?php if ($isComplete): ?>
+                    <div class="mt-2 flex items-center text-sm text-green-700 font-medium">
+                        <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                        </svg>
+                        All required seminar days completed!
+                    </div>
+                    <?php endif; ?>
+                </div>
+                
+                <!-- Seminar Dates List -->
+                <?php if (!empty($seminarDates)): ?>
+                <div class="space-y-2">
+                    <h4 class="text-sm font-semibold text-gray-700 mb-2">Seminar Schedule:</h4>
+                    <?php foreach ($seminarDates as $index => $seminar): ?>
+                    <?php 
+                    $isAttended = !empty($seminar['attended']);
+                    $isPast = strtotime($seminar['date']) < strtotime('today');
+                    $isToday = date('Y-m-d', strtotime($seminar['date'])) === date('Y-m-d');
+                    ?>
+                    <div data-seminar-index="<?= $index ?>" class="flex items-start p-3 <?= $isAttended ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200' ?> rounded-lg border">
+                        <div class="flex-shrink-0 w-8 h-8 <?= $isAttended ? 'bg-green-600' : 'bg-purple-600' ?> text-white rounded-full flex items-center justify-center text-sm font-bold mr-3 badge-container">
+                            <?php if ($isAttended): ?>
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                            </svg>
+                            <?php else: ?>
+                            <?= $index + 1 ?>
+                            <?php endif; ?>
+                        </div>
+                        <div class="flex-grow">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <span class="font-medium <?= $isAttended ? 'text-green-900' : 'text-gray-900' ?>">
+                                        <?= date('F j, Y', strtotime($seminar['date'])) ?>
+                                    </span>
+                                    <?php if ($isToday): ?>
+                                    <span class="ml-2 px-2 py-0.5 bg-blue-100 text-blue-800 text-xs font-semibold rounded">TODAY</span>
+                                    <?php endif; ?>
+                                    <?php if ($isAttended): ?>
+                                    <span class="ml-2 px-2 py-0.5 bg-green-100 text-green-800 text-xs font-semibold rounded">ATTENDED</span>
+                                    <?php elseif ($isPast): ?>
+                                    <span class="ml-2 px-2 py-0.5 bg-red-100 text-red-800 text-xs font-semibold rounded">MISSED</span>
+                                    <?php endif; ?>
+                                </div>
+                                <?php if ($canManage): ?>
+                                <div class="flex items-center space-x-2">
+                                    <?php if (!$isAttended): ?>
+                                    <button onclick="markAttendance(<?= $index ?>, true)" 
+                                        class="text-green-600 hover:text-green-800 text-sm px-2 py-1 rounded hover:bg-green-100">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                        </svg>
+                                    </button>
+                                    <?php else: ?>
+                                    <button onclick="markAttendance(<?= $index ?>, false)" 
+                                        class="text-yellow-600 hover:text-yellow-800 text-sm px-2 py-1 rounded hover:bg-yellow-100">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                        </svg>
+                                    </button>
+                                    <?php endif; ?>
+                                    <button onclick="editSeminarDate(<?= $index ?>, '<?= htmlspecialchars($seminar['date']) ?>', '<?= htmlspecialchars($seminar['topic'] ?? '') ?>', '<?= htmlspecialchars($seminar['notes'] ?? '') ?>')" 
+                                        class="text-blue-600 hover:text-blue-800 text-sm">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                        </svg>
+                                    </button>
+                                    <button onclick="deleteSeminarDate(<?= $index ?>)" 
+                                        class="text-red-600 hover:text-red-800 text-sm">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                                <?php endif; ?>
+                            </div>
+                            <?php if (!empty($seminar['topic'])): ?>
+                            <p class="text-sm text-gray-600 mt-1">Topic: <?= Security::escape($seminar['topic']) ?></p>
+                            <?php endif; ?>
+                            <?php if (!empty($seminar['notes'])): ?>
+                            <p class="text-xs text-gray-500 mt-1"><?= Security::escape($seminar['notes']) ?></p>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+                <?php elseif (!$needsInit): ?>
+                <div class="text-center py-6 text-gray-500">
+                    <svg class="w-12 h-12 mx-auto text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    <p class="text-sm">No seminar dates recorded yet</p>
+                </div>
+                <?php endif; ?>
+            </div>
+            <?php endif; ?>
+
             <!-- Oath Details -->
             <?php if (in_array($request['status'], ['requested_to_oath', 'ready_to_oath', 'oath_taken'])): ?>
             <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
@@ -863,6 +1139,73 @@ ob_start();
                     </div>
                 </div>
             </div>
+
+            <!-- R5-13 Certificate Generator (When seminar is completed) -->
+            <?php if (!empty($request['request_class']) && $daysCompleted >= $daysRequired && $daysRequired > 0): ?>
+            <div class="bg-purple-50 border border-purple-200 rounded-lg p-6">
+                <h3 class="text-sm font-semibold text-purple-900 mb-4">
+                    R5-13 Certificate (Form 513)
+                </h3>
+                
+                <?php if (!empty($request['r513_generated_at'])): ?>
+                <!-- Certificate already generated - show preview -->
+                <div class="mb-3 p-3 bg-white rounded-lg border border-purple-100">
+                    <div class="flex items-center text-sm text-green-700 mb-2">
+                        <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                        </svg>
+                        Certificate Generated
+                    </div>
+                    <p class="text-xs text-gray-600">
+                        Generated: <?= date('F j, Y g:i A', strtotime($request['r513_generated_at'])) ?>
+                    </p>
+                </div>
+                
+                <a href="../generate-r513-html.php?request_id=<?= $requestId ?>&preview=1"
+                   target="_blank"
+                   class="w-full inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium mb-2">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                    </svg>
+                    Preview R5-13 Certificate
+                </a>
+                
+                <button onclick="document.dispatchEvent(new CustomEvent('open-modal', { detail: 'r513Modal' }))"
+                   class="w-full inline-flex items-center justify-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                    </svg>
+                    Regenerate Certificate
+                </button>
+                <?php else: ?>
+                <!-- Generate new certificate -->
+                <div class="mb-3 p-3 bg-white rounded-lg border border-purple-100">
+                    <div class="flex items-center text-sm text-purple-700 mb-2">
+                        <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                        </svg>
+                        Ready to Generate
+                    </div>
+                    <p class="text-xs text-gray-600">
+                        All <?= $daysRequired ?> seminar days completed
+                    </p>
+                </div>
+                
+                <button onclick="document.dispatchEvent(new CustomEvent('open-modal', { detail: 'r513Modal' }))"
+                   class="w-full inline-flex items-center justify-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    Generate R5-13 Certificate
+                </button>
+                <?php endif; ?>
+                
+                <p class="text-xs text-purple-700 mt-3">
+                    <?= $request['request_class'] === '33_lessons' ? '33 lessons (30-day extended)' : '8 lessons (standard)' ?> seminar certificate
+                </p>
+            </div>
+            <?php endif; ?>
 
             <!-- Palasumpaan Generator (Ready to Oath and Completed Oaths) -->
             <?php if (in_array($request['status'], ['ready_to_oath', 'oath_taken'])): ?>
@@ -1091,7 +1434,32 @@ ob_start();
 
 <!-- Palasumpaan Generator Modal -->
 <?php if (in_array($request['status'], ['ready_to_oath', 'oath_taken'])): ?>
-<div x-data="{ show: false, oathDate: '<?= $request['oath_actual_date'] ?>', oathLokal: '', oathDistrito: '' }" 
+<div x-data="{ 
+        show: false, 
+        oathDate: '<?= $request['oath_actual_date'] ?>', 
+        oathLokal: '', 
+        oathDistrito: '',
+        generating: false,
+        generatePalasumpaan(event) {
+            this.generating = true;
+            const form = event.target;
+            const formData = new FormData(form);
+            const queryString = new URLSearchParams(formData).toString();
+            const url = form.action + '?' + queryString;
+            
+            // Prevent global loading overlay
+            event.stopPropagation();
+            
+            // Open in new tab
+            window.open(url, '_blank');
+            
+            // Close modal after a short delay
+            setTimeout(() => {
+                this.generating = false;
+                this.show = false;
+            }, 1000);
+        }
+    }" 
      @open-modal.document="if ($event.detail === 'palasumpaanModal') show = true"
      x-show="show"
      x-cloak
@@ -1126,7 +1494,9 @@ ob_start();
                 </button>
             </div>
             
-            <form method="GET" action="../generate-palasumpaan.php" target="_blank" @submit="setTimeout(() => show = false, 100)">
+            <form method="GET" action="../generate-palasumpaan.php" target="_blank" 
+                  data-no-loader
+                  @submit.prevent="generatePalasumpaan($event)">
                 <input type="hidden" name="request_id" value="<?= $requestId ?>">
                 
                 <div class="space-y-4 mb-6">
@@ -1187,11 +1557,206 @@ ob_start();
                 </div>
                 
                 <div class="flex items-center justify-end space-x-3 pt-4">
-                    <button type="button" @click="show = false" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                    <button type="button" 
+                            @click="show = false" 
+                            :disabled="generating"
+                            class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                         Cancel
                     </button>
-                    <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
-                        Generate Certificate
+                    <button type="submit" 
+                            :disabled="generating"
+                            class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center">
+                        <svg x-show="generating" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span x-text="generating ? 'Generating...' : 'Generate Certificate'"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
+
+<!-- R5-13 Certificate Generator Modal -->
+<?php if (!empty($request['request_class']) && $daysCompleted >= $daysRequired && $daysRequired > 0): ?>
+<div x-data="{ show: false, generating: false, message: '', error: '' }"
+     @open-modal.document="if ($event.detail === 'r513Modal') { show = true; message = ''; error = ''; }"
+     x-show="show"
+     x-cloak
+     class="fixed inset-0 z-50 overflow-y-auto"
+     style="display: none;">
+    <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+        <div x-show="show" 
+             x-transition:enter="ease-out duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="ease-in duration-200"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75"
+             @click="show = false"></div>
+
+        <div x-show="show"
+             x-transition:enter="ease-out duration-300"
+             x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+             x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+             x-transition:leave="ease-in duration-200"
+             x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+             x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+             class="inline-block w-full max-w-lg p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl">
+            
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-gray-900">Generate R5-13 Certificate</h3>
+                <button @click="show = false" :disabled="generating" class="text-gray-400 hover:text-gray-600 disabled:opacity-50">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="mb-4">
+                <div class="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-4">
+                    <div class="flex items-start">
+                        <svg class="w-5 h-5 text-purple-600 mr-2 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+                        </svg>
+                        <div class="flex-1">
+                            <p class="text-sm font-semibold text-purple-900">About R5-13 Certificate</p>
+                            <p class="text-xs text-purple-800 mt-1">
+                                This generates Form 513 (Seminar Certificate) with all <?= $daysCompleted ?> completed seminar dates.
+                                The certificate will be saved as an encrypted PDF.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="space-y-2 text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Officer:</span>
+                        <span class="font-medium text-gray-900"><?= Security::escape($fullName) ?></span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Class:</span>
+                        <span class="font-medium text-gray-900"><?= Security::escape($request['request_class']) ?></span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Seminar Days:</span>
+                        <span class="font-medium text-green-700"><?= $daysCompleted ?> / <?= $daysRequired ?> completed</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Success/Error Messages -->
+            <div x-show="message" class="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                <p class="text-sm text-green-800" x-text="message"></p>
+            </div>
+            <div x-show="error" class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p class="text-sm text-red-800" x-text="error"></p>
+            </div>
+            
+            <div class="flex items-center justify-end space-x-3 pt-4">
+                <button type="button" @click="show = false" :disabled="generating"
+                        class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors disabled:opacity-50">
+                    Cancel
+                </button>
+                <button type="button" @click="generateR513()" :disabled="generating"
+                        class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 flex items-center">
+                    <span x-show="!generating">Generate Certificate</span>
+                    <span x-show="generating" class="flex items-center">
+                        <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Generating...
+                    </span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
+
+<!-- Add Seminar Date Modal -->
+<?php if ($canManage && !empty($request['request_class'])): ?>
+<div x-data="{ show: false, date: '', topic: '', notes: '', submitting: false, editIndex: null }" 
+     @open-modal.document="if ($event.detail === 'addSeminarDateModal') { show = true; date = ''; topic = ''; notes = ''; editIndex = null; }"
+     x-show="show"
+     x-cloak
+     class="fixed inset-0 z-50 overflow-y-auto"
+     style="display: none;">
+    <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+        <div x-show="show" 
+             x-transition:enter="ease-out duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="ease-in duration-200"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75"
+             @click="show = false"></div>
+
+        <div x-show="show"
+             x-transition:enter="ease-out duration-300"
+             x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+             x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+             x-transition:leave="ease-in duration-200"
+             x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+             x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+             class="inline-block w-full max-w-lg p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl">
+            
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-gray-900" x-text="editIndex !== null ? 'Edit Seminar Date' : 'Add Seminar Date'"></h3>
+                <button @click="show = false" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <form @submit.prevent="addSeminarDate()" method="POST">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Seminar Date <span class="text-red-600">*</span>
+                        </label>
+                        <input type="date" x-model="date" required
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Topic / Lesson
+                        </label>
+                        <input type="text" x-model="topic" placeholder="e.g., Pananampalataya"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Notes (optional)
+                        </label>
+                        <textarea x-model="notes" rows="3" placeholder="Additional notes..."
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"></textarea>
+                    </div>
+                </div>
+                
+                <div class="flex items-center justify-end space-x-3 pt-6">
+                    <button type="button" @click="show = false" :disabled="submitting"
+                            class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors disabled:opacity-50">
+                        Cancel
+                    </button>
+                    <button type="submit" :disabled="submitting || !date"
+                            class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 flex items-center">
+                        <span x-show="!submitting" x-text="editIndex !== null ? 'Update Date' : 'Add Date'"></span>
+                        <span x-show="submitting" class="flex items-center">
+                            <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Saving...
+                        </span>
                     </button>
                 </div>
             </form>
@@ -1271,7 +1836,325 @@ ob_start();
 </div>
 <?php endif; ?>
 
+<script>
+// Seminar Auto-Initialization
+async function initializeSeminar() {
+    if (!confirm('This will auto-generate all seminar dates with daily consecutive intervals. Continue?')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch('auto-init-seminar.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                request_id: <?= $requestId ?>
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alert('Daily seminar schedule initialized successfully!');
+            window.location.reload();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to initialize seminar'));
+        }
+    } catch (error) {
+        console.error('Error initializing seminar:', error);
+        alert('An error occurred while initializing the seminar schedule');
+    }
+}
+
+// Mark Attendance - AJAX without page refresh
+async function markAttendance(index, attended) {
+    try {
+        const formData = new FormData();
+        formData.append('csrf_token', '<?= Security::generateCSRFToken() ?>');
+        formData.append('action', 'mark_attendance');
+        formData.append('seminar_index', index);
+        formData.append('attended', attended ? '1' : '0');
+        
+        const response = await fetch('', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const text = await response.text();
+        
+        // Check if response is JSON (AJAX response) or HTML (full page)
+        try {
+            const result = JSON.parse(text);
+            if (result.success) {
+                // Update UI without refresh
+                updateSeminarUI(index, attended, result.days_completed, result.days_required);
+            } else {
+                alert('Error: ' + (result.error || 'Failed to mark attendance'));
+            }
+        } catch (e) {
+            // Response is HTML, reload to see changes
+            window.location.reload();
+        }
+    } catch (error) {
+        console.error('Error marking attendance:', error);
+        alert('An error occurred while updating attendance');
+    }
+}
+
+// Update seminar UI without page refresh
+function updateSeminarUI(index, attended, daysCompleted, daysRequired) {
+    // Update the specific seminar card
+    const seminarCards = document.querySelectorAll('[data-seminar-index]');
+    if (seminarCards[index]) {
+        const card = seminarCards[index];
+        
+        // Update card styling
+        if (attended) {
+            card.classList.remove('bg-gray-50', 'border-gray-200');
+            card.classList.add('bg-green-50', 'border-green-200');
+        } else {
+            card.classList.remove('bg-green-50', 'border-green-200');
+            card.classList.add('bg-gray-50', 'border-gray-200');
+        }
+        
+        // Update badge
+        const badge = card.querySelector('.badge-container');
+        if (badge) {
+            if (attended) {
+                badge.className = 'flex-shrink-0 w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center text-sm font-bold mr-3 badge-container';
+                badge.innerHTML = '<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>';
+            } else {
+                badge.className = 'flex-shrink-0 w-8 h-8 bg-purple-600 text-white rounded-full flex items-center justify-center text-sm font-bold mr-3 badge-container';
+                badge.textContent = (index + 1);
+            }
+        }
+        
+        // Update status badge
+        const statusBadge = card.querySelector('.status-badge');
+        if (statusBadge) {
+            statusBadge.remove();
+        }
+        
+        const dateSpan = card.querySelector('.font-medium');
+        if (dateSpan && attended) {
+            const newBadge = document.createElement('span');
+            newBadge.className = 'ml-2 px-2 py-0.5 bg-green-100 text-green-800 text-xs font-semibold rounded status-badge';
+            newBadge.textContent = 'ATTENDED';
+            dateSpan.parentNode.appendChild(newBadge);
+        }
+        
+        // Update buttons
+        const buttonContainer = card.querySelector('.flex.items-center.space-x-2');
+        if (buttonContainer) {
+            if (attended) {
+                buttonContainer.innerHTML = `
+                    <button onclick="markAttendance(${index}, false)" 
+                        class="text-yellow-600 hover:text-yellow-800 text-sm px-2 py-1 rounded hover:bg-yellow-100">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                ` + buttonContainer.querySelector('button[onclick^="editSeminarDate"]')?.outerHTML + 
+                    buttonContainer.querySelector('button[onclick^="deleteSeminarDate"]')?.outerHTML;
+            } else {
+                const editBtn = buttonContainer.querySelector('button[onclick^="editSeminarDate"]')?.outerHTML || '';
+                const deleteBtn = buttonContainer.querySelector('button[onclick^="deleteSeminarDate"]')?.outerHTML || '';
+                buttonContainer.innerHTML = `
+                    <button onclick="markAttendance(${index}, true)" 
+                        class="text-green-600 hover:text-green-800 text-sm px-2 py-1 rounded hover:bg-green-100">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                    </button>
+                ` + editBtn + deleteBtn;
+            }
+        }
+    }
+    
+    // Update progress bar
+    const progressText = document.querySelector('.text-sm.font-medium.text-gray-700');
+    if (progressText) {
+        progressText.textContent = `${daysCompleted} of ${daysRequired} days completed`;
+    }
+    
+    const progressPercent = daysRequired > 0 ? (daysCompleted / daysRequired) * 100 : 0;
+    const progressBar = document.querySelector('.bg-purple-600.h-3, .bg-green-600.h-3');
+    if (progressBar) {
+        progressBar.style.width = Math.min(progressPercent, 100) + '%';
+        
+        if (daysCompleted >= daysRequired) {
+            progressBar.classList.remove('bg-purple-600');
+            progressBar.classList.add('bg-green-600');
+        }
+    }
+    
+    const progressPercentText = document.querySelector('.text-sm.font-bold');
+    if (progressPercentText) {
+        progressPercentText.textContent = Math.round(progressPercent) + '%';
+        
+        if (daysCompleted >= daysRequired) {
+            progressPercentText.classList.remove('text-purple-600');
+            progressPercentText.classList.add('text-green-600');
+        }
+    }
+    
+    // Show completion message if all done
+    if (daysCompleted >= daysRequired && daysRequired > 0) {
+        const completionMsg = document.querySelector('.text-green-700.font-medium');
+        if (!completionMsg) {
+            const progressBar = document.querySelector('.w-full.bg-gray-200.rounded-full');
+            if (progressBar) {
+                const msg = document.createElement('div');
+                msg.className = 'mt-2 flex items-center text-sm text-green-700 font-medium';
+                msg.innerHTML = `
+                    <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                    </svg>
+                    All required seminar days completed!
+                `;
+                progressBar.parentNode.appendChild(msg);
+            }
+        }
+        
+        // Reload after a delay to show R5-13 button if it should appear
+        setTimeout(() => {
+            window.location.reload();
+        }, 2000);
+    }
+}
+
+// Edit Seminar Date
+function editSeminarDate(index, date, topic, notes) {
+    const modalElement = document.querySelector('[x-data*="editIndex"]');
+    const alpineData = Alpine.$data(modalElement);
+    
+    alpineData.editIndex = index;
+    alpineData.date = date;
+    alpineData.topic = topic;
+    alpineData.notes = notes;
+    alpineData.show = true;
+}
+
+// Seminar Date Management Functions
+async function addSeminarDate() {
+    const alpineData = Alpine.$data(document.querySelector('[x-data*="date:"]'));
+    
+    if (!alpineData.date) {
+        alert('Please select a seminar date');
+        return;
+    }
+    
+    alpineData.submitting = true;
+    
+    try {
+        const response = await fetch('update-seminar.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                request_id: <?= $requestId ?>,
+                action: alpineData.editIndex !== null ? 'edit' : 'add',
+                index: alpineData.editIndex,
+                date: alpineData.date,
+                topic: alpineData.topic || '',
+                notes: alpineData.notes || ''
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alert(alpineData.editIndex !== null ? 'Seminar date updated successfully!' : 'Seminar date added successfully!');
+            window.location.reload();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to save seminar date'));
+        }
+    } catch (error) {
+        console.error('Error saving seminar date:', error);
+        alert('An error occurred while saving the seminar date');
+    } finally {
+        alpineData.submitting = false;
+    }
+}
+
+async function deleteSeminarDate(index) {
+    if (!confirm('Are you sure you want to remove this seminar date?')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch('update-seminar.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                request_id: <?= $requestId ?>,
+                action: 'delete',
+                index: index
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alert('Seminar date removed successfully!');
+            window.location.reload();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to remove seminar date'));
+        }
+    } catch (error) {
+        console.error('Error removing seminar date:', error);
+        alert('An error occurred while removing the seminar date');
+    }
+}
+
+// R5-13 Certificate Generation
+async function generateR513() {
+    const modalElement = document.querySelector('[x-data*="generating"]');
+    const alpineData = Alpine.$data(modalElement);
+    
+    alpineData.generating = true;
+    alpineData.error = '';
+    alpineData.message = '';
+    
+    try {
+        const response = await fetch('../generate-r513-html.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                request_id: <?= $requestId ?>,
+                csrf_token: '<?= Security::generateCSRFToken() ?>'
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alpineData.message = 'R5-13 Certificate generated successfully!';
+            
+            setTimeout(() => {
+                window.location.reload();
+            }, 2000);
+        } else {
+            alpineData.error = result.error || 'Failed to generate certificate';
+        }
+    } catch (error) {
+        console.error('Error generating R5-13:', error);
+        alpineData.error = 'An error occurred while generating the certificate';
+    } finally {
+        alpineData.generating = false;
+    }
+}
+</script>
+
 <?php
 $content = ob_get_clean();
 include __DIR__ . '/../includes/layout.php';
 ?>
+

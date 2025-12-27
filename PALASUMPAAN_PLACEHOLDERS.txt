@@ -1,0 +1,59 @@
+# Quick Reference: Palasumpaan Template Placeholders
+
+## All Placeholders (Copy-Paste Ready)
+
+```
+${FULLNAME}
+${LOCAL_NAME}
+${DISTRICT_NAME}
+${DUTY}
+${DAY}
+${MONTH}
+${YEAR}
+${OATH_LOKAL}
+${OATH_DISTRITO}
+```
+
+## Sample Template Text
+
+```
+PANUNUMPA SA PAGTANGGAP NG TUNGKULIN
+
+Akong si ${FULLNAME}, kaanib sa Iglesia Ni Cristo sa lokal ng ${LOCAL_NAME}, Distrito ng ${DISTRICT_NAME} ay nagpapahayag na aking tinatanggap ang tungkuling ${DUTY}, udyok ng pananampalataya at malinis na budhi na walang ibang layunin kundi ang pag-ibig sa Diyos, sa Panginoong Jesucristo, at sa Kaniyang banal na Iglesia.
+
+Akin ding ipinahahayag na tutuparin ko nang buong puso at pagmamalasakit ang lahat ng gampaning nasasaklaw ng aking tungkulin, dahil ako ay lubos na sumasampalataya na ang pagpapabaya sa mga ito ay katumbas na rin ng pagtalikod sa tungkulin.
+
+Ipinangangako ko rin na lubos kong susundin at ipatutupad ang mga aral ng Diyos na nakasulat sa Bibilia at ang lahat ng tuntuning pinaiiral sa loob ng Iglesia, sa pamamagitan ng lubos at buong kababaang–loob na nagpapasakop sa Pamamahala ng Iglesia Ni Cristo sa mga huling araw.
+
+Nauunawaan ko na may kaukulang parusa ang alinmang paglabag sa mga aral ng Diyos at mga tuntuning itinuturo at ipinatutupad sa loob ng Iglesia Ni Cristo. Kaya kung ako ay masusumpungan sa paglabag ay buong puso kong tatanggapin ang anumang parusa o pagdidisiplinang ipapataw sa akin ng Pamamahala ng Iglesia Ni Cristo.
+
+Tulungan nawa ako ng Diyos.
+
+
+${FULLNAME}
+Nanumpa
+
+Sinumpaan ngayong ika - ${DAY} ng ${MONTH} taong ${YEAR} sa Lokal ng ${OATH_LOKAL}, Distrito Eklesiastiko ng ${OATH_DISTRITO}
+```
+
+## Testing URLs
+
+### Preview (DOCX output)
+```
+/generate-palasumpaan.php?request_id=XX&preview=1
+```
+
+### Generate (PDF output)
+```
+/generate-palasumpaan.php?request_id=XX&oath_date=2025-12-24&oath_lokal=San%20Fernando&oath_distrito=Pampanga%20East
+```
+
+## Quick Steps to Create Template
+
+1. Open Microsoft Word
+2. Create new document
+3. Copy the sample template text above
+4. Replace specific values with placeholders
+5. Format as desired (bold, underline, fonts, etc.)
+6. Save as `PALASUMPAAN_template.docx` in project root
+7. Test with preview URL

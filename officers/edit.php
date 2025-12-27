@@ -81,6 +81,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $localCode = Security::sanitizeInput($_POST['local_code'] ?? '');
         $purok = Security::sanitizeInput($_POST['purok'] ?? '');
         $grupo = Security::sanitizeInput($_POST['grupo'] ?? '');
+        $kapisanan = Security::sanitizeInput($_POST['kapisanan'] ?? '');
         $controlNumber = Security::sanitizeInput($_POST['control_number'] ?? '');
         $registryNumber = Security::sanitizeInput($_POST['registry_number'] ?? '');
         $tarhetaControlId = !empty($_POST['tarheta_control_id']) ? (int)$_POST['tarheta_control_id'] : null;
@@ -114,6 +115,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'local_code' => $localCode,
                     'purok' => $purok,
                     'grupo' => $grupo,
+                    'kapisanan' => $kapisanan,
                     'control_number' => $controlNumber,
                     'registry_number' => $registryNumber,
                     'tarheta_control_id' => $tarhetaControlId,
@@ -154,6 +156,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         local_code = ?,
                         purok = ?,
                         grupo = ?,
+                        kapisanan = ?,
                         control_number = ?,
                         control_number_encrypted = ?,
                         registry_number_encrypted = ?,
@@ -171,6 +174,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $localCode,
                     !empty($purok) ? $purok : null,
                     !empty($grupo) ? $grupo : null,
+                    !empty($kapisanan) ? $kapisanan : null,
                     !empty($controlNumber) ? $controlNumber : null,
                     $controlNumberEnc,
                     $registryNumberEnc,
@@ -382,7 +386,9 @@ ob_start();
                                 type="text" 
                                 name="last_name" 
                                 placeholder="Last Name" 
-                                class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 uppercase"
+                                style="text-transform: uppercase;"
+                                oninput="this.value = this.value.toUpperCase()"
                                 value="<?php echo Security::escape($decrypted['last_name']); ?>"
                                 required
                             >
@@ -396,7 +402,9 @@ ob_start();
                                 type="text" 
                                 name="first_name" 
                                 placeholder="First Name" 
-                                class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 uppercase"
+                                style="text-transform: uppercase;"
+                                oninput="this.value = this.value.toUpperCase()"
                                 value="<?php echo Security::escape($decrypted['first_name']); ?>"
                                 required
                             >
@@ -408,7 +416,9 @@ ob_start();
                                 type="text" 
                                 name="middle_initial" 
                                 placeholder="M.I." 
-                                class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 uppercase"
+                                style="text-transform: uppercase;"
+                                oninput="this.value = this.value.toUpperCase()"
                                 maxlength="2"
                                 value="<?php echo Security::escape($decrypted['middle_initial']); ?>"
                             >
@@ -492,7 +502,7 @@ ob_start();
                         </div>
                     </div>
 
-                    <!-- Purok, Grupo, Control Number (Optional Fields) -->
+                    <!-- Purok, Grupo, Kapisanan (Optional Fields) -->
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -520,6 +530,23 @@ ob_start();
                             >
                         </div>
                         
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Kapisanan <span class="text-gray-400 text-xs">(Optional)</span>
+                            </label>
+                            <select 
+                                name="kapisanan" 
+                                class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <option value="">Select Kapisanan</option>
+                                <option value="Buklod" <?php echo (($officer['kapisanan'] ?? '') === 'Buklod') ? 'selected' : ''; ?>>Buklod</option>
+                                <option value="Kadiwa" <?php echo (($officer['kapisanan'] ?? '') === 'Kadiwa') ? 'selected' : ''; ?>>Kadiwa</option>
+                                <option value="Binhi" <?php echo (($officer['kapisanan'] ?? '') === 'Binhi') ? 'selected' : ''; ?>>Binhi</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Control Number (Optional Field) -->
+                    <div class="mt-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">
                                 Control Number <span class="text-gray-400 text-xs">(Optional - Search Legacy)</span>

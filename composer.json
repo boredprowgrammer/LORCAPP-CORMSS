@@ -1,0 +1,16 @@
+{
+    "name": "coregistry/cortracker",
+    "description": "Church Officers Registry and Tracker",
+    "type": "project",
+    "require": {
+        "php": ">=7.4",
+        "phpoffice/phpword": "^1.4",
+        "dompdf/dompdf": "^2.0",
+        "tecnickcom/tcpdf": "^6.10"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "includes/"
+        }
+    }
+}

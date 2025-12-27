@@ -35,6 +35,69 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     }
 }
 
+// Handle direct duty deletion
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'delete_duty') {
+    $csrfToken = $_POST['csrf_token'] ?? '';
+    
+    if (!Security::validateCSRFToken($csrfToken)) {
+        setFlashMessage('error', 'Invalid security token.');
+    } else {
+        $departmentId = intval($_POST['department_id'] ?? 0);
+        
+        if (empty($departmentId)) {
+            setFlashMessage('error', 'Department ID is required.');
+        } else {
+            try {
+                $db->beginTransaction();
+                
+                // Verify department belongs to this officer
+                $stmt = $db->prepare("
+                    SELECT od.*, o.officer_id 
+                    FROM officer_departments od
+                    JOIN officers o ON od.officer_id = o.officer_id
+                    WHERE od.id = ? AND o.officer_uuid = ?
+                ");
+                $stmt->execute([$departmentId, $officerUuid]);
+                $dept = $stmt->fetch();
+                
+                if (!$dept) {
+                    throw new Exception('Department not found.');
+                }
+                
+                // Actually delete the duty record from database
+                $stmt = $db->prepare("
+                    DELETE FROM officer_departments 
+                    WHERE id = ?
+                ");
+                $stmt->execute([$departmentId]);
+                
+                // Log audit
+                $stmt = $db->prepare("
+                    INSERT INTO audit_log (user_id, action, table_name, record_id, ip_address, user_agent)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                ");
+                $stmt->execute([
+                    $currentUser['user_id'],
+                    'delete_duty',
+                    'officer_departments',
+                    $departmentId,
+                    $_SERVER['REMOTE_ADDR'],
+                    $_SERVER['HTTP_USER_AGENT'] ?? ''
+                ]);
+                
+                $db->commit();
+                setFlashMessage('success', 'Duty deleted successfully!');
+                redirect(BASE_URL . '/officers/view.php?id=' . $officerUuid);
+                
+            } catch (Exception $e) {
+                $db->rollBack();
+                error_log("Delete duty error: " . $e->getMessage());
+                setFlashMessage('error', 'Error deleting duty: ' . $e->getMessage());
+            }
+        }
+    }
+}
+
 // Handle department removal
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'remove_department') {
     $csrfToken = $_POST['csrf_token'] ?? '';
@@ -408,20 +471,37 @@ ob_start();
                                 </td>
                                 <td class="px-4 py-3 text-gray-700"><?php echo formatDateTime($dept['assigned_at']); ?></td>
                                 <td class="px-4 py-3">
-                                    <?php if ($dept['is_active']): ?>
+                                    <div class="flex items-center space-x-2">
+                                        <!-- Direct Delete Button -->
                                         <button 
+                                            type="button"
+                                            data-dept-id="<?php echo $dept['id']; ?>"
+                                            data-dept-name="<?php echo Security::escape($dept['department'] . ' - ' . ($dept['duty'] ?: 'No Duty')); ?>"
+                                            onclick="openDeleteDutyModal(this.dataset.deptId, this.dataset.deptName)"
+                                            class="inline-flex items-center px-2 py-1 text-xs font-medium text-white bg-red-600 rounded hover:bg-red-700 transition-colors"
+                                            title="Delete Duty">
+                                            <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                            </svg>
+                                            Delete
+                                        </button>
+                                        
+                                        <!-- Remove Department Button (with reason) - only for active -->
+                                        <?php if ($dept['is_active']): ?>
+                                        <button 
+                                            type="button"
                                             data-dept-id="<?php echo $dept['id']; ?>"
                                             data-dept-name="<?php echo Security::escape($dept['department']); ?>"
                                             onclick="openRemoveDeptModal(this.dataset.deptId, this.dataset.deptName)"
-                                            class="inline-flex items-center px-2 py-1 text-xs font-medium text-white bg-red-600 rounded hover:bg-red-700 transition-colors"
-                                            title="Remove Department">
-                                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                            class="inline-flex items-center px-2 py-1 text-xs font-medium text-white bg-orange-600 rounded hover:bg-orange-700 transition-colors"
+                                            title="Remove with Reason (CODE C/D)">
+                                            <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
                                                 <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
                                             </svg>
+                                            Remove
                                         </button>
-                                    <?php else: ?>
-                                        <span class="text-xs text-gray-500">Inactive</span>
-                                    <?php endif; ?>
+                                        <?php endif; ?>
+                                    </div>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -666,15 +746,587 @@ ob_start();
                                 </td>
                                 <td class="px-4 py-3 text-sm text-gray-700" x-text="request.requested_at_formatted"></td>
                                 <td class="px-4 py-3">
-                                    <a :href="'<?php echo BASE_URL; ?>/requests/view.php?id=' + request.request_id" 
-                                       class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                                    <button type="button"
+                                        @click="$dispatch('open-request-modal', { requestId: request.request_id })"
+                                        class="text-blue-600 hover:text-blue-800 text-sm font-medium">
                                         View Details
-                                    </a>
+                                    </button>
                                 </td>
                             </tr>
                         </template>
                     </tbody>
                 </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Request Details Modal -->
+    <div x-data="requestModalData()" 
+         @open-request-modal.window="openModal($event.detail.requestId)"
+         @keydown.escape.window="closeModal()"
+         x-show="showModal"
+         class="fixed inset-0 z-50 overflow-y-auto"
+         style="display: none;">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div @click="closeModal()" class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity"></div>
+            <div @click.stop class="relative bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col transform transition-all"
+                 x-show="showModal"
+                 x-transition:enter="ease-out duration-300"
+                 x-transition:enter-start="opacity-0 translate-y-4"
+                 x-transition:enter-end="opacity-100 translate-y-0"
+                 x-transition:leave="ease-in duration-200"
+                 x-transition:leave-start="opacity-100 translate-y-0"
+                 x-transition:leave-end="opacity-0 translate-y-4">
+                
+                <!-- Modal Header -->
+                <div class="flex items-center justify-between p-6 border-b border-gray-200">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-semibold text-gray-900">Request Details</h3>
+                            <p class="text-sm text-gray-500" x-text="requestData ? '#' + requestData.request_id : ''"></p>
+                        </div>
+                    </div>
+                    <button type="button" @click="closeModal()" class="text-gray-400 hover:text-gray-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+                
+                <!-- Loading State -->
+                <div x-show="loading" class="flex items-center justify-center p-12">
+                    <div class="relative w-16 h-16">
+                        <div class="absolute inset-0 border-4 border-blue-200 rounded-full"></div>
+                        <div class="absolute inset-0 border-4 border-blue-600 rounded-full border-t-transparent animate-spin"></div>
+                    </div>
+                </div>
+                
+                <!-- Tabs and Content -->
+                <div x-show="!loading && requestData" class="flex-1 overflow-hidden flex flex-col">
+                    <!-- Tab Navigation -->
+                    <div class="border-b border-gray-200 px-6">
+                        <nav class="-mb-px flex space-x-8">
+                            <button type="button"
+                                @click="activeTab = 'overview'"
+                                :class="activeTab === 'overview' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                                class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                                Overview
+                            </button>
+                            <button type="button"
+                                @click="activeTab = 'requirements'"
+                                :class="activeTab === 'requirements' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                                class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors flex items-center">
+                                <span>Requirements</span>
+                                <span x-show="requestData && getCompletedRequirements() < 7" 
+                                      class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                    <span x-text="getCompletedRequirements()"></span>/<span>7</span>
+                                </span>
+                                <span x-show="requestData && getCompletedRequirements() === 7" 
+                                      class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    Complete
+                                </span>
+                            </button>
+                            <button type="button"
+                                @click="activeTab = 'history'"
+                                :class="activeTab === 'history' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                                class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                                History
+                            </button>
+                        </nav>
+                    </div>
+                    
+                    <!-- Tab Content -->
+                    <div class="flex-1 overflow-y-auto p-6">
+                        <!-- Overview Tab -->
+                        <div x-show="activeTab === 'overview'" class="space-y-6">
+                            <div class="grid grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Department</label>
+                                    <p class="text-base text-gray-900" x-text="requestData?.requested_department"></p>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Duty</label>
+                                    <p class="text-base text-gray-900" x-text="requestData?.requested_duty || 'N/A'"></p>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                                    <span class="inline-flex items-center px-2.5 py-1 rounded text-sm font-medium" 
+                                          :class="{
+                                              'bg-yellow-100 text-yellow-800': requestData?.status === 'pending',
+                                              'bg-blue-100 text-blue-800': requestData?.status === 'requested_to_seminar',
+                                              'bg-indigo-100 text-indigo-800': requestData?.status === 'in_seminar',
+                                              'bg-green-100 text-green-800': requestData?.status === 'seminar_completed' || requestData?.status === 'oath_taken',
+                                              'bg-purple-100 text-purple-800': requestData?.status === 'requested_to_oath',
+                                              'bg-pink-100 text-pink-800': requestData?.status === 'ready_to_oath',
+                                              'bg-red-100 text-red-800': requestData?.status === 'rejected',
+                                              'bg-gray-100 text-gray-800': requestData?.status === 'cancelled'
+                                          }"
+                                          x-text="requestData?.status_label">
+                                    </span>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Requested Date</label>
+                                    <p class="text-base text-gray-900" x-text="requestData?.requested_at_formatted"></p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center justify-between pt-4 border-t">
+                                <a :href="'<?php echo BASE_URL; ?>/requests/view.php?id=' + (requestData?.request_id || '')" 
+                                   target="_blank"
+                                   class="text-sm text-blue-600 hover:text-blue-800 font-medium">
+                                    Open Full Request Page →
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <!-- Requirements Checklist Tab -->
+                        <div x-show="activeTab === 'requirements'" class="space-y-4">
+                            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                                <div class="flex items-center">
+                                    <svg class="w-5 h-5 text-blue-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+                                    </svg>
+                                    <p class="text-sm text-blue-800">Track document submission progress. Check items as they are submitted.</p>
+                                </div>
+                            </div>
+                            
+                            <div class="space-y-3">
+                                <!-- R5-15/04 -->
+                                <div class="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
+                                    <div class="flex items-center space-x-3">
+                                        <input type="checkbox" 
+                                               :checked="requestData?.has_r515" 
+                                               @change="toggleRequirement('has_r515', $event.target.checked)"
+                                               class="w-5 h-5 text-blue-600 rounded">
+                                        <div>
+                                            <p class="font-medium text-gray-900">R5-15/04</p>
+                                            <p class="text-sm text-gray-500">Officer Application Form</p>
+                                        </div>
+                                    </div>
+                                    <span x-show="requestData?.has_r515" class="text-green-600">
+                                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                        </svg>
+                                    </span>
+                                </div>
+                                
+                                <!-- Patotoo ng Katiwala -->
+                                <div class="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
+                                    <div class="flex items-center space-x-3">
+                                        <input type="checkbox" 
+                                               :checked="requestData?.has_patotoo_katiwala" 
+                                               @change="toggleRequirement('has_patotoo_katiwala', $event.target.checked)"
+                                               class="w-5 h-5 text-blue-600 rounded">
+                                        <div>
+                                            <p class="font-medium text-gray-900">Patotoo ng Katiwala</p>
+                                            <p class="text-sm text-gray-500">Recommendation from Katiwala</p>
+                                        </div>
+                                    </div>
+                                    <span x-show="requestData?.has_patotoo_katiwala" class="text-green-600">
+                                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                        </svg>
+                                    </span>
+                                </div>
+                                
+                                <!-- Patotoo ng Kapisanan -->
+                                <div class="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
+                                    <div class="flex items-center space-x-3">
+                                        <input type="checkbox" 
+                                               :checked="requestData?.has_patotoo_kapisanan" 
+                                               @change="toggleRequirement('has_patotoo_kapisanan', $event.target.checked)"
+                                               class="w-5 h-5 text-blue-600 rounded">
+                                        <div>
+                                            <p class="font-medium text-gray-900">Patotoo ng Kapisanan</p>
+                                            <p class="text-sm text-gray-500">Recommendation from Organization</p>
+                                        </div>
+                                    </div>
+                                    <span x-show="requestData?.has_patotoo_kapisanan" class="text-green-600">
+                                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                        </svg>
+                                    </span>
+                                </div>
+                                
+                                <!-- Salaysay ng Magulang -->
+                                <div class="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
+                                    <div class="flex items-center space-x-3">
+                                        <input type="checkbox" 
+                                               :checked="requestData?.has_salaysay_magulang" 
+                                               @change="toggleRequirement('has_salaysay_magulang', $event.target.checked)"
+                                               class="w-5 h-5 text-blue-600 rounded">
+                                        <div>
+                                            <p class="font-medium text-gray-900">Salaysay ng Magulang</p>
+                                            <p class="text-sm text-gray-500">Parent's Statement (if applicable)</p>
+                                        </div>
+                                    </div>
+                                    <span x-show="requestData?.has_salaysay_magulang" class="text-green-600">
+                                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                        </svg>
+                                    </span>
+                                </div>
+                                
+                                <!-- Salaysay ng Pagtanggap -->
+                                <div class="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
+                                    <div class="flex items-center space-x-3">
+                                        <input type="checkbox" 
+                                               :checked="requestData?.has_salaysay_pagtanggap" 
+                                               @change="toggleRequirement('has_salaysay_pagtanggap', $event.target.checked)"
+                                               class="w-5 h-5 text-blue-600 rounded">
+                                        <div>
+                                            <p class="font-medium text-gray-900">Salaysay ng Pagtanggap</p>
+                                            <p class="text-sm text-gray-500">Acceptance Statement</p>
+                                        </div>
+                                    </div>
+                                    <span x-show="requestData?.has_salaysay_pagtanggap" class="text-green-600">
+                                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                        </svg>
+                                    </span>
+                                </div>
+                                
+                                <!-- R5-13 Seminar (Auto-complete) -->
+                                <div class="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg"
+                                     :class="requestData?.status === 'seminar_completed' || requestData?.status === 'requested_to_oath' || requestData?.status === 'ready_to_oath' || requestData?.status === 'oath_taken' ? 'border-green-300 bg-green-50' : 'border-gray-200'">
+                                    <div class="flex items-center space-x-3">
+                                        <input type="checkbox" 
+                                               :checked="requestData?.status === 'seminar_completed' || requestData?.status === 'requested_to_oath' || requestData?.status === 'ready_to_oath' || requestData?.status === 'oath_taken'" 
+                                               disabled
+                                               class="w-5 h-5 text-blue-600 rounded cursor-not-allowed">
+                                        <div>
+                                            <p class="font-medium text-gray-900">R5-13 Seminar Certificate</p>
+                                            <p class="text-sm" 
+                                               :class="requestData?.status === 'seminar_completed' || requestData?.status === 'requested_to_oath' || requestData?.status === 'ready_to_oath' || requestData?.status === 'oath_taken' ? 'text-green-600' : 'text-gray-500'">
+                                                <span x-show="requestData?.status === 'seminar_completed' || requestData?.status === 'requested_to_oath' || requestData?.status === 'ready_to_oath' || requestData?.status === 'oath_taken'">✓ Auto-completed when seminar is finished</span>
+                                                <span x-show="!(requestData?.status === 'seminar_completed' || requestData?.status === 'requested_to_oath' || requestData?.status === 'ready_to_oath' || requestData?.status === 'oath_taken')">Will be auto-checked when seminar is completed</span>
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <span x-show="requestData?.status === 'seminar_completed' || requestData?.status === 'requested_to_oath' || requestData?.status === 'ready_to_oath' || requestData?.status === 'oath_taken'" class="text-green-600">
+                                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                        </svg>
+                                    </span>
+                                </div>
+                                
+                                <!-- 2x2 Picture -->
+                                <div class="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
+                                    <div class="flex items-center space-x-3">
+                                        <input type="checkbox" 
+                                               :checked="requestData?.has_picture" 
+                                               @change="toggleRequirement('has_picture', $event.target.checked)"
+                                               class="w-5 h-5 text-blue-600 rounded">
+                                        <div>
+                                            <p class="font-medium text-gray-900">2x2 Picture</p>
+                                            <p class="text-sm text-gray-500">Recent 2x2 ID photo</p>
+                                        </div>
+                                    </div>
+                                    <span x-show="requestData?.has_picture" class="text-green-600">
+                                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                        </svg>
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 mt-6">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm font-medium text-gray-700">Progress</span>
+                                    <span class="text-sm font-semibold" :class="getCompletedRequirements() === 7 ? 'text-green-600' : 'text-gray-900'" x-text="getCompletedRequirements() + ' / 7 Complete'"></span>
+                                </div>
+                                <div class="mt-2 w-full bg-gray-200 rounded-full h-2">
+                                    <div class="bg-blue-600 h-2 rounded-full transition-all duration-300" 
+                                         :style="`width: ${(getCompletedRequirements() / 7) * 100}%`"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- History Tab -->
+                        <div x-show="activeTab === 'history'" class="space-y-4">
+                            <div class="text-center py-8 text-gray-500">
+                                <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <p class="font-medium">Activity history coming soon</p>
+                                <p class="text-sm mt-1">Track all changes and updates to this request</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    function requestModalData() {
+        return {
+            showModal: false,
+            loading: false,
+            activeTab: 'overview',
+            requestData: null,
+            
+            async openModal(requestId) {
+                this.showModal = true;
+                this.loading = true;
+                this.activeTab = 'overview';
+                
+                try {
+                    const response = await fetch(`<?php echo BASE_URL; ?>/api/get-officer-requests.php?id=${requestId}`);
+                    const data = await response.json();
+                    this.requestData = data;
+                } catch (error) {
+                    console.error('Error loading request:', error);
+                } finally {
+                    this.loading = false;
+                }
+            },
+            
+            closeModal() {
+                this.showModal = false;
+                this.requestData = null;
+            },
+            
+            getCompletedRequirements() {
+                if (!this.requestData) return 0;
+                
+                let count = 0;
+                if (this.requestData.has_r515) count++;
+                if (this.requestData.has_patotoo_katiwala) count++;
+                if (this.requestData.has_patotoo_kapisanan) count++;
+                if (this.requestData.has_salaysay_magulang) count++;
+                if (this.requestData.has_salaysay_pagtanggap) count++;
+                if (this.requestData.has_picture) count++;
+                // R5-13 auto-check
+                if (this.requestData.status === 'seminar_completed' || 
+                    this.requestData.status === 'requested_to_oath' || 
+                    this.requestData.status === 'ready_to_oath' || 
+                    this.requestData.status === 'oath_taken') {
+                    count++;
+                }
+                
+                return count;
+            },
+            
+            async toggleRequirement(field, value) {
+                try {
+                    const response = await fetch(`<?php echo BASE_URL; ?>/api/update-request-requirement.php`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            request_id: this.requestData.request_id,
+                            field: field,
+                            value: value
+                        })
+                    });
+                    
+                    if (response.ok) {
+                        this.requestData[field] = value;
+                    }
+                } catch (error) {
+                    console.error('Error updating requirement:', error);
+                }
+            }
+        }
+    }
+    </script>
+
+    <!-- Call-Up Slips Section -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900">Call-Up Slips (Tawag-Pansin)</h3>
+            </div>
+            <a href="<?php echo BASE_URL; ?>/officers/call-up.php?officer_uuid=<?php echo urlencode($officerUuid); ?>" 
+               class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-yellow-600 rounded-lg hover:bg-yellow-700 transition-colors">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                </svg>
+                Create Call-Up
+            </a>
+        </div>
+        
+        <?php
+        // Fetch call-up slips for this officer
+        $stmt = $db->prepare("
+            SELECT 
+                c.slip_id,
+                c.file_number,
+                c.department,
+                c.reason,
+                c.issue_date,
+                c.deadline_date,
+                c.status,
+                c.response_date,
+                u.full_name as prepared_by_name
+            FROM call_up_slips c
+            LEFT JOIN users u ON c.prepared_by = u.user_id
+            WHERE c.officer_id = ?
+            ORDER BY c.issue_date DESC, c.slip_id DESC
+        ");
+        $stmt->execute([$officer['officer_id']]);
+        $callUpSlips = $stmt->fetchAll();
+        ?>
+        
+        <?php if (empty($callUpSlips)): ?>
+            <div class="text-center py-12">
+                <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                <p class="text-gray-500 font-medium">No call-up slips issued</p>
+                <p class="text-sm text-gray-400 mt-1">This officer has no call-up notices</p>
+            </div>
+        <?php else: ?>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">File Number</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reason</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Issue Date</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deadline</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prepared By</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <?php foreach ($callUpSlips as $slip): 
+                            // Determine status styling
+                            $statusConfig = [
+                                'issued' => ['color' => 'yellow', 'label' => 'Issued', 'icon' => true],
+                                'responded' => ['color' => 'green', 'label' => 'Responded', 'icon' => false],
+                                'expired' => ['color' => 'red', 'label' => 'Expired', 'icon' => false],
+                                'cancelled' => ['color' => 'gray', 'label' => 'Cancelled', 'icon' => false]
+                            ];
+                            $statusInfo = $statusConfig[$slip['status']] ?? ['color' => 'gray', 'label' => ucfirst($slip['status']), 'icon' => false];
+                            
+                            // Check if expired (past deadline and still issued)
+                            $isExpired = ($slip['status'] === 'issued' && strtotime($slip['deadline_date']) < time());
+                            if ($isExpired) {
+                                $statusInfo = ['color' => 'red', 'label' => 'Expired', 'icon' => false];
+                            }
+                        ?>
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-3">
+                                    <span class="text-sm font-medium text-gray-900"><?php echo Security::escape($slip['file_number']); ?></span>
+                                </td>
+                                <td class="px-4 py-3">
+                                    <span class="text-sm text-gray-900"><?php echo Security::escape($slip['department']); ?></span>
+                                </td>
+                                <td class="px-4 py-3">
+                                    <div class="text-sm text-gray-700 max-w-xs truncate" title="<?php echo Security::escape($slip['reason']); ?>">
+                                        <?php echo Security::escape($slip['reason']); ?>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-3 text-sm text-gray-700"><?php echo formatDate($slip['issue_date']); ?></td>
+                                <td class="px-4 py-3">
+                                    <span class="text-sm text-gray-700"><?php echo formatDate($slip['deadline_date']); ?></span>
+                                    <?php if ($isExpired): ?>
+                                        <span class="ml-1 text-xs text-red-600 font-medium">(Overdue)</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td class="px-4 py-3">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-<?php echo $statusInfo['color']; ?>-100 text-<?php echo $statusInfo['color']; ?>-800">
+                                        <?php if ($statusInfo['icon']): ?>
+                                            <svg class="animate-pulse h-3 w-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                                            </svg>
+                                        <?php endif; ?>
+                                        <?php echo $statusInfo['label']; ?>
+                                    </span>
+                                </td>
+                                <td class="px-4 py-3 text-sm text-gray-700"><?php echo Security::escape($slip['prepared_by_name']); ?></td>
+                                <td class="px-4 py-3">
+                                    <a href="<?php echo BASE_URL; ?>/officers/generate-call-up-pdf.php?slip_id=<?php echo $slip['slip_id']; ?>" 
+                                       target="_blank"
+                                       class="inline-flex items-center px-2 py-1 text-xs font-medium text-white bg-blue-600 rounded hover:bg-blue-700 transition-colors"
+                                       title="View PDF">
+                                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                        </svg>
+                                        View
+                                    </a>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        <?php endif; ?>
+    </div>
+</div>
+
+<!-- Delete Duty Confirmation Modal -->
+<div x-data="{ show: false, deptId: '', deptName: '' }" 
+     @open-delete-duty-modal.window="show = true; deptId = $event.detail.deptId; deptName = $event.detail.deptName"
+     @keydown.escape.window="show = false"
+     x-show="show"
+     class="fixed inset-0 z-50 overflow-y-auto"
+     style="display: none;">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div @click="show = false" class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity"></div>
+        <div @click.stop class="relative bg-white rounded-lg shadow-xl max-w-md w-full p-6 transform transition-all"
+             x-show="show"
+             x-transition:enter="ease-out duration-300"
+             x-transition:enter-start="opacity-0 translate-y-4"
+             x-transition:enter-end="opacity-100 translate-y-0"
+             x-transition:leave="ease-in duration-200"
+             x-transition:leave-start="opacity-100 translate-y-0"
+             x-transition:leave-end="opacity-0 translate-y-4">
+            
+            <div class="text-center">
+                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+                    <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                </div>
+                
+                <h3 class="text-lg font-bold text-gray-900 mb-2">Delete Duty</h3>
+                <p class="text-sm text-gray-600 mb-4">Are you sure you want to delete this duty?</p>
+                
+                <div class="bg-red-50 border border-red-200 rounded-lg p-3 mb-6 text-left">
+                    <p class="text-sm font-medium text-red-800" x-text="deptName"></p>
+                </div>
+                
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-6">
+                    <div class="flex items-start text-left">
+                        <svg class="w-5 h-5 text-yellow-600 mr-2 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                        </svg>
+                        <span class="text-sm text-yellow-800">This action cannot be undone. The duty will be permanently removed.</span>
+                    </div>
+                </div>
+                
+                <form method="POST" action="">
+                    <input type="hidden" name="csrf_token" value="<?php echo Security::generateCSRFToken(); ?>">
+                    <input type="hidden" name="action" value="delete_duty">
+                    <input type="hidden" name="department_id" x-model="deptId">
+                    
+                    <div class="flex justify-center space-x-3">
+                        <button type="button" @click="show = false" class="px-4 py-2 border border-gray-300 rounded-lg font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                            Cancel
+                        </button>
+                        <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg font-medium text-white bg-red-600 hover:bg-red-700 transition-colors">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                            Delete Duty
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -787,6 +1439,12 @@ ob_start();
 </div>
 
 <script>
+function openDeleteDutyModal(deptId, deptName) {
+    window.dispatchEvent(new CustomEvent('open-delete-duty-modal', { 
+        detail: { deptId: deptId, deptName: deptName }
+    }));
+}
+
 function openRemoveDeptModal(deptId, deptName) {
     window.dispatchEvent(new CustomEvent('open-remove-dept-modal', { 
         detail: { deptId: deptId, deptName: deptName }

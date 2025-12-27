@@ -26,6 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $localCode = Security::sanitizeInput($_POST['local_code'] ?? '');
         $purok = Security::sanitizeInput($_POST['purok'] ?? '');
         $grupo = Security::sanitizeInput($_POST['grupo'] ?? '');
+        $kapisanan = Security::sanitizeInput($_POST['kapisanan'] ?? '');
         $controlNumber = Security::sanitizeInput($_POST['control_number'] ?? '');
         $registryNumber = Security::sanitizeInput($_POST['registry_number'] ?? '');
         $tarhetaControlId = !empty($_POST['tarheta_control_id']) ? (int)$_POST['tarheta_control_id'] : null;
@@ -67,12 +68,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             require_once __DIR__ . '/../includes/pending-actions.php';
             
             if (shouldPendAction()) {
+                // For CODE D, get the existing officer UUID first
+                $existingOfficerUuid = null;
+                if ($hasExistingRecord && !empty($existingOfficerIdInput)) {
+                    $stmt = $db->prepare("SELECT officer_uuid FROM officers WHERE officer_id = ?");
+                    $stmt->execute([$existingOfficerIdInput]);
+                    $officer = $stmt->fetch();
+                    if ($officer) {
+                        $existingOfficerUuid = $officer['officer_uuid'];
+                    }
+                }
+                
                 // Create pending action instead of executing immediately
                 $officerName = $hasExistingRecord ? 'Existing Officer' : $lastName . ', ' . $firstName;
                 
                 $actionData = [
                     'has_existing_record' => $hasExistingRecord,
                     'existing_officer_uuid' => $existingOfficerUuid,
+                    'existing_officer_id' => $existingOfficerIdInput,
                     'last_name' => $lastName,
                     'first_name' => $firstName,
                     'middle_initial' => $middleInitial,
@@ -80,6 +93,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'local_code' => $localCode,
                     'purok' => $purok,
                     'grupo' => $grupo,
+                    'kapisanan' => $kapisanan,
                     'control_number' => $controlNumber,
                     'registry_number' => $registryNumber,
                     'tarheta_control_id' => $tarhetaControlId,
@@ -113,11 +127,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 if ($hasExistingRecord && !empty($existingOfficerIdInput)) {
                     // User explicitly selected existing officer (by ID)
-                    $stmt = $db->prepare("SELECT officer_id, officer_uuid FROM officers WHERE officer_id = ?");
-                    $stmt->execute([$existingOfficerIdInput]);
+                    $stmt = $db->prepare("SELECT officer_id, officer_uuid, is_active FROM officers WHERE officer_id = ? AND district_code = ?");
+                    $stmt->execute([$existingOfficerIdInput, $districtCode]);
                     $officer = $stmt->fetch();
                     if (!$officer) {
-                        throw new Exception('Selected officer not found.');
+                        error_log("Officer lookup failed - ID: {$existingOfficerIdInput}, District: {$districtCode}");
+                        throw new Exception('Selected officer not found. The officer may have been deleted or moved to a different district.');
                     }
                     $existingOfficerId = $officer['officer_id'];
                     $existingOfficerUuid = $officer['officer_uuid'];
@@ -207,6 +222,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             local_code,
                             purok,
                             grupo,
+                            kapisanan,
                             control_number,
                             control_number_encrypted,
                             registry_number_encrypted,
@@ -215,7 +231,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             record_code,
                             is_active,
                             created_by
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)
                     ");
                     
                     // Encrypt control number if provided
@@ -230,6 +246,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $localCode,
                         !empty($purok) ? $purok : null,
                         !empty($grupo) ? $grupo : null,
+                        !empty($kapisanan) ? $kapisanan : null,
                         !empty($controlNumber) ? $controlNumber : null,
                         $controlNumberEnc,
                         $registryNumberEnc,
@@ -546,7 +563,9 @@ ob_start();
                                     id="last_name"
                                     name="last_name" 
                                     placeholder="Last Name" 
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 uppercase"
+                                    style="text-transform: uppercase;"
+                                    oninput="this.value = this.value.toUpperCase()"
                                     value="<?php echo Security::escape($_POST['last_name'] ?? ''); ?>"
                                     :required="!hasExisting"
                                 >
@@ -569,7 +588,9 @@ ob_start();
                                     id="first_name"
                                     name="first_name" 
                                     placeholder="First Name" 
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 uppercase"
+                                    style="text-transform: uppercase;"
+                                    oninput="this.value = this.value.toUpperCase()"
                                     value="<?php echo Security::escape($_POST['first_name'] ?? ''); ?>"
                                     :required="!hasExisting"
                                 >
@@ -590,7 +611,9 @@ ob_start();
                                 type="text" 
                                 name="middle_initial" 
                                 placeholder="M.I." 
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 uppercase"
+                                style="text-transform: uppercase;"
+                                oninput="this.value = this.value.toUpperCase()"
                                 maxlength="2"
                                 value="<?php echo Security::escape($_POST['middle_initial'] ?? ''); ?>"
                             >
@@ -658,7 +681,7 @@ ob_start();
                     </div>
                 </div>
 
-                <!-- Purok, Grupo, Control Number (Optional Fields) -->
+                <!-- Purok, Grupo, Kapisanan (Optional Fields) -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -686,6 +709,23 @@ ob_start();
                         >
                     </div>
                     
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Kapisanan <span class="text-gray-400 text-xs">(Optional)</span>
+                        </label>
+                        <select 
+                            name="kapisanan" 
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">Select Kapisanan</option>
+                            <option value="Buklod" <?php echo (($_POST['kapisanan'] ?? '') === 'Buklod') ? 'selected' : ''; ?>>Buklod</option>
+                            <option value="Kadiwa" <?php echo (($_POST['kapisanan'] ?? '') === 'Kadiwa') ? 'selected' : ''; ?>>Kadiwa</option>
+                            <option value="Binhi" <?php echo (($_POST['kapisanan'] ?? '') === 'Binhi') ? 'selected' : ''; ?>>Binhi</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Control Number (Optional Field) -->
+                <div class="mt-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">
                             Control Number <span class="text-gray-400 text-xs">(Optional - Search Legacy)</span>
@@ -722,24 +762,24 @@ ob_start();
                     
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">
-                            Registry Number <span class="text-gray-400 text-xs">(Optional - Search Tarheta)</span>
+                            Registry Number <span class="text-gray-400 text-xs">(Optional - Search Tarheta or Enter Manually)</span>
                         </label>
                         <div class="relative">
                             <input 
                                 type="text" 
                                 id="registry_search"
-                                name="registry_number" 
                                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                placeholder="Search by name or number..."
-                                value="<?php echo Security::escape($_POST['registry_number'] ?? ''); ?>"
+                                placeholder="Search by name or number, or type registry number..."
                                 autocomplete="off"
-                                onkeyup="searchTarheta(this.value)"
+                                onkeyup="handleRegistryInput(this.value)"
+                                value="<?php echo Security::escape($_POST['registry_number'] ?? ''); ?>"
                             >
+                            <input type="hidden" name="registry_number" id="registry_number" value="<?php echo Security::escape($_POST['registry_number'] ?? ''); ?>">
                             <input type="hidden" name="tarheta_control_id" id="tarheta_control_id" value="">
                             <!-- Search Results Dropdown -->
                             <div id="tarheta_results" class="hidden absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto"></div>
                         </div>
-                        <p class="text-xs text-gray-500 mt-1">Search for registry numbers or enter manually</p>
+                        <p class="text-xs text-gray-500 mt-1">Search for registry numbers from Tarheta or type manually</p>
                     </div>
                 </div>
                 
@@ -835,7 +875,9 @@ ob_start();
                     <textarea 
                         name="duty" 
                         placeholder="Describe the specific duty or role (optional)" 
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 h-24 resize-none"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 h-24 resize-none uppercase"
+                        style="text-transform: uppercase;"
+                        oninput="this.value = this.value.toUpperCase()"
                     ><?php echo Security::escape($_POST['duty'] ?? ''); ?></textarea>
                 </div>
                 
@@ -1064,6 +1106,22 @@ function insertEnye(fieldId) {
     input.focus();
 }
 
+// Handle registry input - search or manual entry
+function handleRegistryInput(value) {
+    // Update the hidden field with the current value
+    document.getElementById('registry_number').value = value;
+    
+    // If value looks like it might be a search query (has spaces or letters), trigger search
+    // Otherwise, allow manual entry without triggering search
+    if (value.length >= 2 && (value.includes(' ') || /[a-zA-Z]/.test(value))) {
+        searchTarheta(value);
+    } else if (value.length < 1) {
+        // Clear search results if input is empty
+        document.getElementById('tarheta_results').classList.add('hidden');
+        document.getElementById('tarheta_control_id').value = '';
+    }
+}
+
 // Search Tarheta Control records
 let tarhetaSearchTimeout;
 function searchTarheta(search) {
@@ -1071,7 +1129,7 @@ function searchTarheta(search) {
     
     const resultsDiv = document.getElementById('tarheta_results');
     
-    if (search.length < 1) {
+    if (search.length < 2) {
         resultsDiv.classList.add('hidden');
         return;
     }
@@ -1148,7 +1206,7 @@ function searchTarheta(search) {
 function selectTarheta(id, fullName, registryNumber, lastName, firstName, middleName, husbandsSurname) {
     // Set registry number and hidden ID
     document.getElementById('registry_search').value = registryNumber + ' - ' + fullName;
-    document.querySelector('[name="registry_number"]').value = registryNumber;
+    document.getElementById('registry_number').value = registryNumber;
     document.getElementById('tarheta_control_id').value = id;
     
     // Auto-fill name fields if empty
@@ -1156,14 +1214,27 @@ function selectTarheta(id, fullName, registryNumber, lastName, firstName, middle
     const firstNameField = document.getElementById('first_name');
     const middleInitialField = document.querySelector('[name="middle_initial"]');
     
-    if (lastNameField && !lastNameField.value) {
-        lastNameField.value = lastName;
+    // If husband's surname is available, use it as last name and father's surname as middle name
+    if (husbandsSurname && husbandsSurname.trim() !== '') {
+        if (lastNameField && !lastNameField.value) {
+            lastNameField.value = husbandsSurname;
+        }
+        if (middleInitialField && !middleInitialField.value && lastName) {
+            // Use father's surname (original last name) as middle name
+            middleInitialField.value = lastName.substring(0, 1);
+        }
+    } else {
+        // No husband's surname, use original last name
+        if (lastNameField && !lastNameField.value) {
+            lastNameField.value = lastName;
+        }
+        if (middleInitialField && !middleInitialField.value && middleName) {
+            middleInitialField.value = middleName.substring(0, 1);
+        }
     }
+    
     if (firstNameField && !firstNameField.value) {
         firstNameField.value = firstName;
-    }
-    if (middleInitialField && !middleInitialField.value && middleName) {
-        middleInitialField.value = middleName.substring(0, 2);
     }
     
     // Hide results

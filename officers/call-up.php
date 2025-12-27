@@ -309,7 +309,7 @@ document.addEventListener('alpine:init', () => {
     <!-- Form -->
     <form method="POST" class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 space-y-6">
         <input type="hidden" name="csrf_token" value="<?php echo Security::generateCSRFToken(); ?>">
-        <input type="hidden" name="officer_uuid" x-model="selectedOfficer?.id">
+        <input type="hidden" name="officer_uuid" :value="selectedOfficer ? selectedOfficer.uuid : ''">
         
         <!-- Officer Search/Manual Input -->
         <div>
@@ -348,7 +348,7 @@ document.addEventListener('alpine:init', () => {
                         x-model="manualDistrict"
                         @change="filterLocalsByDistrict()"
                         class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white"
-                        required>
+                        :required="useManualInput">
                         <option value="">Select District</option>
                         <?php foreach ($allDistricts as $dist): ?>
                             <option value="<?php echo Security::escape($dist['district_code']); ?>">
@@ -368,7 +368,7 @@ document.addEventListener('alpine:init', () => {
                         x-model="manualLocal"
                         class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white"
                         :disabled="!manualDistrict"
-                        required>
+                        :required="useManualInput">
                         <option value="">Select Local</option>
                         <template x-for="local in filteredLocals" :key="local.code">
                             <option :value="local.code" x-text="local.name"></option>

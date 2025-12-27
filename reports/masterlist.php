@@ -19,6 +19,7 @@ $success = '';
 $filterDistrict = Security::sanitizeInput($_GET['district'] ?? '');
 $filterLocal = Security::sanitizeInput($_GET['local'] ?? '');
 $filterPurok = Security::sanitizeInput($_GET['purok'] ?? '');
+$filterKapisanan = Security::sanitizeInput($_GET['kapisanan'] ?? '');
 $filterExtGws = Security::sanitizeInput($_GET['ext_gws'] ?? '');
 $filterStatus = Security::sanitizeInput($_GET['status'] ?? 'active');
 
@@ -88,6 +89,11 @@ try {
     if (!empty($filterPurok)) {
         $whereConditions[] = 'o.purok = ?';
         $params[] = $filterPurok;
+    }
+    
+    if (!empty($filterKapisanan)) {
+        $whereConditions[] = 'o.kapisanan = ?';
+        $params[] = $filterKapisanan;
     }
     
     $whereClause = !empty($whereConditions) ? 'WHERE ' . implode(' AND ', $whereConditions) : '';
@@ -173,6 +179,7 @@ try {
             'officer_uuid' => $officer['officer_uuid'],
             'purok' => $officer['purok'],
             'grupo' => $officer['grupo'],
+            'kapisanan' => $officer['kapisanan'],
             'departments' => $officer['departments'],
             'is_active' => $officer['is_active'],
             'status' => $status,
@@ -259,6 +266,16 @@ ob_start();
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Purok</label>
                 <input type="text" name="purok" value="<?php echo Security::escape($filterPurok); ?>" placeholder="Filter by Purok" class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Kapisanan</label>
+                <select name="kapisanan" class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                    <option value="">All Kapisanan</option>
+                    <option value="Buklod" <?php echo $filterKapisanan === 'Buklod' ? 'selected' : ''; ?>>Buklod</option>
+                    <option value="Kadiwa" <?php echo $filterKapisanan === 'Kadiwa' ? 'selected' : ''; ?>>Kadiwa</option>
+                    <option value="Binhi" <?php echo $filterKapisanan === 'Binhi' ? 'selected' : ''; ?>>Binhi</option>
+                </select>
             </div>
             
             <div>
@@ -447,7 +464,7 @@ ob_start();
                         <p style="text-align: center; font-family:Verdana, sans-serif; font-size: 7pt; margin:0pt;"><?php echo Security::escape($officer['registry_number'] ?? ''); ?></p>
                     </td>
                     <td style="width:49pt;border:1pt solid black">
-                        <p style="text-align: center; font-family:Verdana, sans-serif; font-size: 8pt; margin:0pt;"></p>
+                        <p style="text-align: center; font-family:Verdana, sans-serif; font-size: 8pt; margin:0pt;"><?php echo Security::escape($officer['kapisanan'] ?? ''); ?></p>
                     </td>
                     <td style="width:45pt;border:1pt solid black">
                         <p style="text-align: center; font-family:Verdana, sans-serif; font-size: 8pt; margin:0pt;">

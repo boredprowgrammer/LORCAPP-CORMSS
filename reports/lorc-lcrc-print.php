@@ -270,9 +270,8 @@ try {
     <title>LORC/LCRC Checker Report - <?php echo Security::escape($reportInfo['district_name']); ?></title>
     <style>
         @page {
-            /* Print in portrait orientation */
             size: auto portrait;
-            margin: 0.5in;
+            margin: 0.75in 0.5in;
         }
         
         * {
@@ -282,106 +281,126 @@ try {
         }
         
         body {
-            font-family: Arial, Helvetica, sans-serif;
-            font-size: 10pt;
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 11pt;
             color: #000;
             background: #fff;
-            padding: 10px;
+            line-height: 1.4;
         }
         
-        /* Hide all decorative elements for plain print */
-        .report-header,
-        .report-info,
-        .statistics-summary,
-        .report-footer {
-            display: none !important;
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .report-info {
+            display: table;
+            width: 100%;
+            margin-bottom: 25px;
+            font-size: 10pt;
+            border: 1px solid #000;
+        }
+        
+        .report-info-row {
+            display: table-row;
+        }
+        
+        .report-info-cell {
+            display: table-cell;
+            padding: 6px 10px;
+            border: 1px solid #000;
+            vertical-align: middle;
+        }
+        
+        .report-info-cell.label {
+            font-weight: bold;
+            width: 25%;
+            background-color: #f0f0f0;
+        }
+        
+        .statistics-summary {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #000;
+            background-color: #fafafa;
+        }
+        
+        .statistics-summary h3 {
+            font-size: 11pt;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #666;
+            padding-bottom: 5px;
+        }
+        
+        .stats-grid {
+            display: table;
+            width: 100%;
+            font-size: 9pt;
+        }
+        
+        .stats-row {
+            display: table-row;
+        }
+        
+        .stats-cell {
+            display: table-cell;
+            padding: 4px 8px;
+            border-right: 1px solid #ccc;
+            text-align: center;
+        }
+        
+        .stats-cell:last-child {
+            border-right: none;
+        }
+        
+        .stats-cell .label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 3px;
+        }
+        
+        .stats-cell .value {
+            font-size: 12pt;
+            font-weight: bold;
         }
         
         table {
             width: 100%;
             border-collapse: collapse;
-            margin: 0;
-        }
-        
-        thead {
-            background-color: #000;
-            color: white;
+            margin-bottom: 20px;
+            font-family: Arial, sans-serif;
+            font-size: 9pt;
         }
         
         thead th {
-            padding: 6px 4px;
+            background-color: #000;
+            color: #fff;
+            padding: 8px 6px;
             text-align: left;
-            font-size: 8pt;
             font-weight: bold;
             border: 1px solid #000;
             text-transform: uppercase;
+            font-size: 8pt;
+        }
+        
+        tbody td {
+            padding: 6px;
+            border: 1px solid #000;
+            vertical-align: top;
         }
         
         tbody tr {
             page-break-inside: avoid;
         }
         
-        tbody td {
-            padding: 4px 3px;
-            border: 1px solid #ccc;
-            font-size: 8pt;
-            vertical-align: top;
-        }
-        
         tbody tr:nth-child(even) {
-            background-color: #f9fafb;
-        }
-        
-        /* Status-based row coloring */
-        tbody tr.complete {
-            background-color: #f0fdf4 !important;
-        }
-        
-        tbody tr.missing-control {
-            background-color: #fefce8 !important;
-        }
-        
-        tbody tr.missing-registry {
-            background-color: #fff7ed !important;
-        }
-        
-        tbody tr.missing-both {
-            background-color: #fef2f2 !important;
-        }
-        
-        .status-badge {
-            display: inline-block;
-            padding: 3px 8px;
-            border-radius: 3px;
-            font-size: 8pt;
-            font-weight: bold;
-            text-align: center;
-            white-space: nowrap;
-        }
-        
-        .status-badge.complete {
-            background-color: #dcfce7;
-            color: #166534;
-        }
-        
-        .status-badge.missing-control {
-            background-color: #fef3c7;
-            color: #854d0e;
-        }
-        
-        .status-badge.missing-registry {
-            background-color: #ffedd5;
-            color: #9a3412;
-        }
-        
-        .status-badge.missing-both {
-            background-color: #fee2e2;
-            color: #991b1b;
+            background-color: #f9f9f9;
         }
         
         .text-missing {
-            color: #dc2626;
-            font-weight: bold;
+            color: #000;
+            font-style: italic;
         }
         
         .no-print {
@@ -413,13 +432,22 @@ try {
         }
         
         @media print {
+            @page {
+                size: auto portrait;
+                margin: 0.75in 0.5in;
+            }
+            
             .no-print {
                 display: none !important;
             }
             
             body {
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
+                background: #fff;
+                color: #000;
+            }
+            
+            .container {
+                padding: 0;
             }
             
             thead {
@@ -429,6 +457,37 @@ try {
             tbody tr {
                 page-break-inside: avoid;
                 page-break-after: auto;
+            }
+            
+            /* Force clean black and white */
+            * {
+                background: #fff !important;
+                color: #000 !important;
+            }
+            
+            thead th {
+                background-color: #000 !important;
+                color: #fff !important;
+            }
+            
+            .report-info-cell.label {
+                background-color: #f0f0f0 !important;
+            }
+            
+            .statistics-summary {
+                background-color: #fafafa !important;
+            }
+            
+            tbody tr:nth-child(even) {
+                background-color: #f9f9f9 !important;
+            }
+            
+            /* Remove status badge colors */
+            .status-badge {
+                background: transparent !important;
+                border: 1px solid #000 !important;
+                padding: 2px 6px;
+                color: #000 !important;
             }
         }
         
@@ -442,16 +501,8 @@ try {
                 max-width: 1200px;
                 margin: 0 auto;
                 background: white;
-                padding: 20px;
+                padding: 40px;
                 box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            }
-            
-            /* Show elements on screen for preview */
-            .report-header,
-            .report-info,
-            .statistics-summary,
-            .report-footer {
-                display: block !important;
             }
         }
     </style>
@@ -463,52 +514,6 @@ try {
     </div>
     
     <div class="container">
-        <!-- Report Header -->
-        <div class="report-header">
-            <h1>LORC/LCRC Checker Report</h1>
-            <h2>Church Officers Registry Verification</h2>
-        </div>
-        
-        <!-- Report Info -->
-        <div class="report-info">
-            <div class="report-info-left">
-                <p><strong>District:</strong> <?php echo Security::escape($reportInfo['district_name']); ?></p>
-                <p><strong>Local Congregation:</strong> <?php echo Security::escape($reportInfo['local_name']); ?></p>
-                <p><strong>Status Filter:</strong> <?php echo Security::escape($reportInfo['filter_status']); ?></p>
-                <p><strong>Issue Filter:</strong> <?php echo Security::escape($reportInfo['filter_issue']); ?></p>
-            </div>
-            <div class="report-info-right">
-                <p><strong>Generated:</strong> <?php echo Security::escape($reportInfo['generated_date']); ?></p>
-                <p><strong>Time:</strong> <?php echo Security::escape($reportInfo['generated_time']); ?></p>
-                <p><strong>Total Records:</strong> <?php echo number_format(count($officers)); ?></p>
-                <p><strong>Generated By:</strong> <?php echo Security::escape($currentUser['username']); ?></p>
-            </div>
-        </div>
-        
-        <!-- Statistics Summary -->
-        <div class="statistics-summary">
-            <div class="stat-item">
-                <div class="stat-label">Total Officers</div>
-                <div class="stat-value"><?php echo number_format($statistics['total']); ?></div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-label">Complete</div>
-                <div class="stat-value complete"><?php echo number_format($statistics['complete']); ?></div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-label">No Control #</div>
-                <div class="stat-value warning"><?php echo number_format($statistics['missing_control']); ?></div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-label">No Registry #</div>
-                <div class="stat-value warning"><?php echo number_format($statistics['missing_registry']); ?></div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-label">Missing Both</div>
-                <div class="stat-value danger"><?php echo number_format($statistics['missing_both']); ?></div>
-            </div>
-        </div>
-        
         <!-- Report Table -->
         <?php if (!empty($officers)): ?>
         <table>
@@ -595,9 +600,31 @@ try {
                     <td><?php echo $officer['departments'] ? Security::escape($officer['departments']) : '—'; ?></td>
                     <?php endif; ?>
                     <td style="text-align: center;">
-                        <span class="status-badge <?php echo $statusBadgeClass; ?>">
-                            <?php echo $statusText; ?>
-                        </span>
+                        <?php 
+                        switch ($officer['issue_type']) {
+                            case 'complete':
+                                echo '✓ Complete';
+                                break;
+                            case 'missing_control':
+                                echo 'No Control #';
+                                break;
+                            case 'missing_registry':
+                                echo 'No Registry #';
+                                break;
+                            case 'missing_both':
+                                echo 'Missing Both';
+                                break;
+                            case 'no_purok':
+                                echo 'No Purok';
+                                break;
+                            case 'no_grupo':
+                                echo 'No Grupo';
+                                break;
+                            case 'no_purok_grupo':
+                                echo 'No Purok & Grupo';
+                                break;
+                        }
+                        ?>
                     </td>
                 </tr>
                 <?php endforeach; ?>
@@ -606,12 +633,6 @@ try {
         <?php else: ?>
         <p style="text-align: center; padding: 40px; color: #666;">No records found matching the selected filters.</p>
         <?php endif; ?>
-        
-        <!-- Report Footer -->
-        <div class="report-footer">
-            <p>This is a computer-generated report from CORegistry and CORTracker System</p>
-            <p>Generated on <?php echo date('F d, Y \a\t h:i A'); ?> by <?php echo Security::escape($currentUser['username']); ?></p>
-        </div>
     </div>
     
     <script>

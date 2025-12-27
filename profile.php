@@ -8,6 +8,7 @@ $db = Database::getInstance()->getConnection();
 
 $error = '';
 $success = '';
+$passwordChanged = false;
 
 // Handle password change
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'change_password') {
@@ -32,6 +33,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             try {
                 $newPasswordHash = Security::hashPassword($newPassword);
                 
+                // Single transaction for both password update and audit log
+                $db->beginTransaction();
+                
                 $stmt = $db->prepare("UPDATE users SET password_hash = ? WHERE user_id = ?");
                 $stmt->execute([$newPasswordHash, $currentUser['user_id']]);
                 
@@ -46,8 +50,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                     $_SERVER['HTTP_USER_AGENT'] ?? ''
                 ]);
                 
+                $db->commit();
                 $success = 'Password changed successfully!';
+                $passwordChanged = true;
             } catch (Exception $e) {
+                $db->rollBack();
                 error_log("Change password error: " . $e->getMessage());
                 $error = 'An error occurred while changing password.';
             }
@@ -71,6 +78,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             $error = 'Invalid email address.';
         } else {
             try {
+                // Single transaction for both profile update and audit log
+                $db->beginTransaction();
+                
                 $stmt = $db->prepare("UPDATE users SET full_name = ?, email = ? WHERE user_id = ?");
                 $stmt->execute([$fullName, $email, $currentUser['user_id']]);
                 
@@ -85,11 +95,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                     $_SERVER['HTTP_USER_AGENT'] ?? ''
                 ]);
                 
+                $db->commit();
                 $success = 'Profile updated successfully!';
                 
-                // Refresh user data
-                $currentUser = getCurrentUser();
+                // Update current user data in session
+                $_SESSION['user']['full_name'] = $fullName;
+                $_SESSION['user']['email'] = $email;
+                $currentUser['full_name'] = $fullName;
+                $currentUser['email'] = $email;
             } catch (PDOException $e) {
+                $db->rollBack();
                 if ($e->getCode() == 23000) {
                     $error = 'Email already exists.';
                 } else {

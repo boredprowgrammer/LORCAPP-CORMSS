@@ -37,7 +37,7 @@ $officerId = filter_var($data['officer_id'] ?? '', FILTER_VALIDATE_INT);
 $field = $data['field'] ?? '';
 $value = Security::sanitizeInput($data['value'] ?? '');
 
-if (!$officerId || !in_array($field, ['purok', 'grupo'])) {
+if (!$officerId || !in_array($field, ['purok', 'grupo', 'control_number', 'registry_number'])) {
     http_response_code(400);
     echo json_encode(['success' => false, 'message' => 'Invalid input']);
     exit;
@@ -72,11 +72,31 @@ try {
     }
     
     // Update the field
-    $stmt = $db->prepare("UPDATE officers SET $field = ?, updated_at = NOW() WHERE officer_id = ?");
-    $stmt->execute([
-        !empty($value) ? $value : null,
-        $officerId
-    ]);
+    if ($field === 'control_number') {
+        // Update both plain and encrypted control number
+        $encryptedValue = !empty($value) ? Encryption::encrypt($value, $officer['district_code']) : null;
+        $stmt = $db->prepare("UPDATE officers SET control_number = ?, control_number_encrypted = ?, updated_at = NOW() WHERE officer_id = ?");
+        $stmt->execute([
+            !empty($value) ? $value : null,
+            $encryptedValue,
+            $officerId
+        ]);
+    } elseif ($field === 'registry_number') {
+        // Update encrypted registry number
+        $encryptedValue = !empty($value) ? Encryption::encrypt($value, $officer['district_code']) : null;
+        $stmt = $db->prepare("UPDATE officers SET registry_number_encrypted = ?, updated_at = NOW() WHERE officer_id = ?");
+        $stmt->execute([
+            $encryptedValue,
+            $officerId
+        ]);
+    } else {
+        // Update purok or grupo (not encrypted)
+        $stmt = $db->prepare("UPDATE officers SET $field = ?, updated_at = NOW() WHERE officer_id = ?");
+        $stmt->execute([
+            !empty($value) ? $value : null,
+            $officerId
+        ]);
+    }
     
     // Log the change in audit trail
     $stmt = $db->prepare("

@@ -41,11 +41,14 @@ try {
             o.middle_initial_encrypted,
             o.district_code,
             lc.local_name,
-            d.district_name
+            d.district_name,
+            GROUP_CONCAT(DISTINCT od.department ORDER BY od.department SEPARATOR ', ') as departments
         FROM officers o
         LEFT JOIN local_congregations lc ON o.local_code = lc.local_code
         LEFT JOIN districts d ON o.district_code = d.district_code
+        LEFT JOIN officer_departments od ON o.officer_id = od.officer_id AND od.is_active = 1
         $whereClause
+        GROUP BY o.officer_id
         LIMIT 500
     ");
     
@@ -85,11 +88,25 @@ try {
                 stripos($lastNameLower, $queryLower) !== false ||
                 stripos($firstNameLower, $queryLower) !== false) {
                 
+                // Build location string safely
+                $location = '';
+                if (!empty($officer['local_name']) && !empty($officer['district_name'])) {
+                    $location = $officer['local_name'] . ', ' . $officer['district_name'];
+                } elseif (!empty($officer['local_name'])) {
+                    $location = $officer['local_name'];
+                } elseif (!empty($officer['district_name'])) {
+                    $location = $officer['district_name'];
+                }
+                
                 $results[] = [
-                    'id' => $officer['officer_uuid'],
+                    'id' => $officer['officer_id'],
+                    'uuid' => $officer['officer_uuid'],
                     'name' => obfuscateName($fullName),
                     'full_name' => $fullName, // Keep full name for tooltip
-                    'location' => $officer['local_name'] . ', ' . $officer['district_name'],
+                    'location' => $location,
+                    'local_name' => $officer['local_name'] ?? '',
+                    'district_name' => $officer['district_name'] ?? '',
+                    'departments' => $officer['departments'] ?: 'No departments',
                     'lastName' => $decrypted['last_name'],
                     'firstName' => $decrypted['first_name'],
                     'middleInitial' => $decrypted['middle_initial']

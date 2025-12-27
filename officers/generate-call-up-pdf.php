@@ -14,15 +14,15 @@ header('Content-Type: application/json');
 $currentUser = getCurrentUser();
 $db = Database::getInstance()->getConnection();
 
-// Get slip ID
-$slipId = intval($_POST['slip_id'] ?? 0);
+// Get slip ID from GET or POST
+$slipId = intval($_GET['slip_id'] ?? $_POST['slip_id'] ?? 0);
 
 if (!$slipId) {
     echo json_encode(['error' => 'Invalid call-up slip ID.']);
     exit;
 }
 
-// Fetch call-up slip details
+// Fetch call-up slip details (LEFT JOIN officers for manual entries)
 $stmt = $db->prepare("
     SELECT 
         c.*,
@@ -35,7 +35,7 @@ $stmt = $db->prepare("
         l.local_name,
         u.full_name as prepared_by_name
     FROM call_up_slips c
-    JOIN officers o ON c.officer_id = o.officer_id
+    LEFT JOIN officers o ON c.officer_id = o.officer_id
     LEFT JOIN districts d ON c.district_code = d.district_code
     LEFT JOIN local_congregations l ON c.local_code = l.local_code
     LEFT JOIN users u ON c.prepared_by = u.user_id
@@ -59,19 +59,24 @@ if ($currentUser['role'] === 'local' && $slip['local_code'] !== $currentUser['lo
     exit;
 }
 
-// Decrypt officer name
-$decrypted = Encryption::decryptOfficerName(
-    $slip['last_name_encrypted'],
-    $slip['first_name_encrypted'],
-    $slip['middle_initial_encrypted'],
-    $slip['officer_district']
-);
+// Get officer name (either from database or manual entry)
+if (!empty($slip['manual_officer_name'])) {
+    $officerFullName = $slip['manual_officer_name'];
+} else {
+    // Decrypt officer name from database
+    $decrypted = Encryption::decryptOfficerName(
+        $slip['last_name_encrypted'],
+        $slip['first_name_encrypted'],
+        $slip['middle_initial_encrypted'],
+        $slip['officer_district']
+    );
 
-$officerFullName = trim(
-    $decrypted['first_name'] . ' ' . 
-    ($decrypted['middle_initial'] ? $decrypted['middle_initial'] . '. ' : '') . 
-    $decrypted['last_name']
-);
+    $officerFullName = trim(
+        $decrypted['first_name'] . ' ' . 
+        ($decrypted['middle_initial'] ? $decrypted['middle_initial'] . '. ' : '') . 
+        $decrypted['last_name']
+    );
+}
 
 // Format dates (Filipino month names)
 $filipinoMonths = [

@@ -36,7 +36,12 @@ class Database {
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                 PDO::ATTR_EMULATE_PREPARES => false,
-                PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci"
+                PDO::ATTR_PERSISTENT => true, // Enable persistent connections for better performance
+                PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci",
+                PDO::MYSQL_ATTR_USE_BUFFERED_QUERY => true, // Buffer queries for faster execution
+                PDO::ATTR_TIMEOUT => 5, // Connection timeout
+                PDO::MYSQL_ATTR_COMPRESS => true, // Enable compression for faster data transfer
+                PDO::MYSQL_ATTR_LOCAL_INFILE => false // Security: disable local file loading
             ];
             
             // Add SSL configuration if required
@@ -47,6 +52,9 @@ class Database {
             }
             
             $this->conn = new PDO($dsn, DB_USER, DB_PASS, $options);
+            
+            // Set additional performance optimizations
+            $this->conn->exec("SET SESSION sql_mode = 'TRADITIONAL'");
         } catch(PDOException $e) {
             error_log("Database Connection Error: " . $e->getMessage());
             die("Database connection failed. Please contact administrator.");

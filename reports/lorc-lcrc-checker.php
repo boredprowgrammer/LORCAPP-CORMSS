@@ -293,7 +293,8 @@ ob_start();
             <div class="flex-1 min-w-0">
                 <h3 class="text-sm font-medium text-blue-900 mb-1">💡 Quick Edit Tip</h3>
                 <p class="text-sm text-blue-800">
-                    <strong>Purok</strong> and <strong>Grupo</strong> fields are editable! Simply <strong>click on any field</strong> in the table below to update it. Changes are saved automatically.
+                    <strong>Control Number</strong>, <strong>Registry Number</strong>, <strong>Purok</strong>, and <strong>Grupo</strong> fields are editable! 
+                    Simply <strong>click on any field</strong> to edit. For Control and Registry numbers, start typing to search existing records. Changes save automatically.
                 </p>
             </div>
         </div>
@@ -538,12 +539,34 @@ ob_start();
                         <td class="px-4 py-3 text-sm text-gray-900 font-medium"><?php echo Security::escape($officer['full_name']); ?></td>
                         <?php if ($showControlNumber): ?>
                         <td class="px-4 py-3 text-sm <?php echo $officer['has_control'] ? 'text-gray-900' : 'text-red-500 font-semibold'; ?>">
-                            <?php echo $officer['control_number'] ? Security::escape($officer['control_number']) : '—'; ?>
+                            <div class="editable-cell-wrapper relative" style="min-width: 120px;">
+                                <span class="editable-cell editable-searchable" 
+                                      contenteditable="true" 
+                                      data-officer-id="<?php echo $officer['officer_id']; ?>" 
+                                      data-field="control_number"
+                                      data-original="<?php echo Security::escape($officer['control_number'] ?? ''); ?>"
+                                      data-search-type="control"
+                                      title="Click to edit or search"
+                                      ><?php echo $officer['control_number'] ? Security::escape($officer['control_number']) : '—'; ?></span>
+                                <div class="search-dropdown hidden absolute z-50 mt-1 w-64 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto"></div>
+                                <span class="save-indicator hidden ml-2 text-xs text-green-600">✓</span>
+                            </div>
                         </td>
                         <?php endif; ?>
                         <?php if ($showRegistryNumber): ?>
                         <td class="px-4 py-3 text-sm <?php echo $officer['has_registry'] ? 'text-gray-900' : 'text-red-500 font-semibold'; ?>">
-                            <?php echo $officer['registry_number'] ? Security::escape($officer['registry_number']) : '—'; ?>
+                            <div class="editable-cell-wrapper relative" style="min-width: 120px;">
+                                <span class="editable-cell editable-searchable" 
+                                      contenteditable="true" 
+                                      data-officer-id="<?php echo $officer['officer_id']; ?>" 
+                                      data-field="registry_number"
+                                      data-original="<?php echo Security::escape($officer['registry_number'] ?? ''); ?>"
+                                      data-search-type="registry"
+                                      title="Click to edit or search"
+                                      ><?php echo $officer['registry_number'] ? Security::escape($officer['registry_number']) : '—'; ?></span>
+                                <div class="search-dropdown hidden absolute z-50 mt-1 w-96 bg-white border border-gray-300 rounded-lg shadow-lg max-h-64 overflow-y-auto"></div>
+                                <span class="save-indicator hidden ml-2 text-xs text-green-600">✓</span>
+                            </div>
                         </td>
                         <?php endif; ?>
                         <?php if ($showOathDate): ?>
@@ -790,6 +813,20 @@ ob_start();
     border-radius: 2px;
 }
 
+/* Search dropdown styling */
+.search-dropdown {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.search-dropdown:not(.hidden) {
+    animation: fadeIn 0.15s ease-in;
+}
+
+.editable-cell-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
 /* Animation for save indicator */
 @keyframes fadeIn {
     from {
@@ -808,14 +845,17 @@ ob_start();
 
 @media print {
     @page {
-        /* Print in portrait orientation */
         size: auto portrait;
-        margin: 0.5in;
+        margin: 0.75in 0.5in;
     }
     
     body {
         margin: 0;
         padding: 0;
+        font-family: 'Times New Roman', Times, serif;
+        font-size: 11pt;
+        color: #000;
+        line-height: 1.4;
     }
     
     * {
@@ -827,100 +867,133 @@ ob_start();
         display: none !important;
     }
     
-    /* Print header */
+    /* Hide all cards and styling for clean print */
+    .space-y-6 {
+        display: block;
+    }
+    
+    .space-y-6 > * {
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        background: white !important;
+    }
+    
+    /* Print Header */
     .space-y-6 > .bg-white:first-child {
-        margin-bottom: 20px;
+        margin-bottom: 20px !important;
+        padding-bottom: 10px !important;
+        border-bottom: 2px solid #000 !important;
         page-break-after: avoid;
+    }
+    
+    .space-y-6 > .bg-white:first-child h1 {
+        font-size: 16pt;
+        font-weight: bold;
+        text-align: center;
+        margin: 0 0 5px 0;
+        text-transform: uppercase;
+        font-family: Arial, sans-serif;
+    }
+    
+    .space-y-6 > .bg-white:first-child p {
+        font-size: 10pt;
+        text-align: center;
+        margin: 0;
+        font-style: italic;
     }
     
     /* Table container */
     .overflow-x-auto {
         overflow: visible !important;
+        margin-top: 15px;
     }
     
-    /* Table styling */
+    /* Clean professional table */
     table {
         width: 100%;
         border-collapse: collapse;
         page-break-inside: auto;
-        font-size: 10pt;
+        font-family: Arial, sans-serif;
+        font-size: 9pt;
+        border: 1px solid #000;
     }
     
     thead {
         display: table-header-group;
-        background-color: #f9fafb !important;
+        background-color: #fff !important;
     }
     
     thead th {
-        background-color: #f9fafb !important;
-        border: 1px solid #e5e7eb !important;
-        padding: 8px 4px !important;
-        font-weight: 600;
+        background-color: #fff !important;
+        border: 1px solid #000 !important;
+        padding: 6px 4px !important;
+        font-weight: bold;
         text-align: left;
-        color: #374151 !important;
+        color: #000 !important;
+        font-size: 9pt;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
     
     tbody tr {
         page-break-inside: avoid;
         page-break-after: auto;
-        border: 1px solid #e5e7eb;
+        background-color: #fff !important;
     }
     
     tbody td {
-        border: 1px solid #e5e7eb !important;
-        padding: 6px 4px !important;
+        border: 1px solid #000 !important;
+        padding: 4px 4px !important;
         font-size: 9pt;
+        color: #000 !important;
+        background-color: #fff !important;
     }
     
-    /* Preserve row colors */
-    .bg-green-50 {
-        background-color: #f0fdf4 !important;
+    /* Remove all background colors for clean print */
+    .bg-green-50,
+    .bg-yellow-50,
+    .bg-orange-50,
+    .bg-red-50,
+    .bg-purple-50,
+    .bg-indigo-50,
+    .bg-pink-50 {
+        background-color: #fff !important;
     }
     
-    .bg-yellow-50 {
-        background-color: #fefce8 !important;
+    /* Status badges - simple text */
+    tbody td span {
+        background: none !important;
+        color: #000 !important;
+        border: none !important;
+        padding: 0 !important;
+        font-weight: normal !important;
+        font-size: 9pt !important;
     }
     
-    .bg-orange-50 {
-        background-color: #fff7ed !important;
+    /* Text colors - all black */
+    .text-red-500,
+    .text-gray-900,
+    .text-gray-700,
+    .text-blue-600 {
+        color: #000 !important;
+        font-weight: normal !important;
     }
     
-    .bg-red-50 {
-        background-color: #fef2f2 !important;
+    /* Missing values emphasis */
+    td:has(.text-red-500) {
+        font-style: italic;
     }
     
-    /* Status badges */
-    .bg-green-100 {
-        background-color: #dcfce7 !important;
-        color: #166534 !important;
-    }
-    
-    .bg-yellow-100 {
-        background-color: #fef3c7 !important;
-        color: #854d0e !important;
-    }
-    
-    .bg-orange-100 {
-        background-color: #ffedd5 !important;
-        color: #9a3412 !important;
-    }
-    
-    .bg-red-100 {
-        background-color: #fee2e2 !important;
-        color: #991b1b !important;
-    }
-    
-    /* Text colors */
-    .text-red-500 {
-        color: #ef4444 !important;
-    }
-    
-    .text-gray-900 {
-        color: #111827 !important;
-    }
-    
-    .text-gray-700 {
-        color: #374151 !important;
+    /* Footer with page numbers */
+    @page {
+        @bottom-right {
+            content: "Page " counter(page) " of " counter(pages);
+            font-size: 8pt;
+            font-family: Arial, sans-serif;
+        }
     }
 }
 
@@ -939,12 +1012,31 @@ thead th {
 
 <script>
 // Editable fields functionality
+let searchTimeout;
 document.addEventListener('DOMContentLoaded', function() {
     const editableCells = document.querySelectorAll('.editable-cell');
     
     editableCells.forEach(cell => {
         // Store original value
         cell.dataset.original = cell.textContent.trim();
+        
+        // Handle input for searchable fields
+        if (cell.classList.contains('editable-searchable')) {
+            cell.addEventListener('input', function() {
+                const searchType = this.dataset.searchType;
+                const value = this.textContent.trim();
+                
+                clearTimeout(searchTimeout);
+                
+                if (value.length >= 2 && searchType) {
+                    searchTimeout = setTimeout(() => {
+                        performSearch(this, searchType, value);
+                    }, 300);
+                } else {
+                    hideSearchDropdown(this);
+                }
+            });
+        }
         
         // Handle focus - select all text
         cell.addEventListener('focus', function() {
@@ -961,38 +1053,133 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 0);
         });
         
-        // Handle blur - save changes
+        // Handle blur - save changes (with delay for dropdown clicks)
         cell.addEventListener('blur', function() {
-            const newValue = this.textContent.trim();
-            const originalValue = this.dataset.original;
-            
-            if (newValue === '') {
-                this.textContent = '—';
-            }
-            
-            // Only save if changed
-            if (newValue !== originalValue && newValue !== '—') {
-                savePurokGrupo(this);
-            } else if ((newValue === '—' || newValue === '') && originalValue !== '' && originalValue !== '—') {
-                // Clearing the field
-                savePurokGrupo(this);
-            }
+            setTimeout(() => {
+                const dropdown = this.parentElement.querySelector('.search-dropdown');
+                if (dropdown && !dropdown.matches(':hover')) {
+                    const newValue = this.textContent.trim();
+                    const originalValue = this.dataset.original;
+                    
+                    if (newValue === '') {
+                        this.textContent = '—';
+                    }
+                    
+                    // Only save if changed
+                    if (newValue !== originalValue && newValue !== '—') {
+                        savePurokGrupo(this);
+                    } else if ((newValue === '—' || newValue === '') && originalValue !== '' && originalValue !== '—') {
+                        // Clearing the field
+                        savePurokGrupo(this);
+                    }
+                    
+                    hideSearchDropdown(this);
+                }
+            }, 200);
         });
         
         // Handle Enter key - save and blur
         cell.addEventListener('keydown', function(e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
+                hideSearchDropdown(this);
                 this.blur();
             }
             if (e.key === 'Escape') {
                 const original = this.dataset.original;
                 this.textContent = original || '—';
+                hideSearchDropdown(this);
                 this.blur();
             }
         });
     });
+    
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.editable-cell-wrapper')) {
+            document.querySelectorAll('.search-dropdown').forEach(dropdown => {
+                dropdown.classList.add('hidden');
+            });
+        }
+    });
 });
+
+function performSearch(element, searchType, query) {
+    const dropdown = element.parentElement.querySelector('.search-dropdown');
+    if (!dropdown) return;
+    
+    const apiUrl = searchType === 'control' 
+        ? '<?php echo BASE_URL; ?>/api/search-legacy.php?search=' + encodeURIComponent(query)
+        : '<?php echo BASE_URL; ?>/api/search-tarheta.php?search=' + encodeURIComponent(query);
+    
+    fetch(apiUrl)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.records && data.records.length > 0) {
+                let html = '<div class="py-1">';
+                
+                // Add results count header
+                html += `<div class="px-3 py-1.5 bg-gray-50 border-b border-gray-200 text-xs text-gray-600 font-medium">
+                    Found ${data.records.length} match${data.records.length > 1 ? 'es' : ''}
+                </div>`;
+                
+                data.records.forEach(record => {
+                    const displayValue = searchType === 'control' 
+                        ? record.control_number 
+                        : record.registry_number;
+                    const displayName = record.full_name || 'Unknown';
+                    const location = record.local_name || record.district_name || '';
+                    
+                    html += `
+                        <div class="px-3 py-2 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-0 transition-colors"
+                             onclick="selectSearchResult('${escapeHtml(displayValue)}', this.closest('.editable-cell-wrapper'))">
+                            <div class="flex items-center justify-between gap-2">
+                                <div class="flex-1 min-w-0">
+                                    <div class="text-sm font-semibold text-blue-600">${escapeHtml(displayValue)}</div>
+                                    <div class="text-sm text-gray-900 mt-0.5">${escapeHtml(displayName)}</div>
+                                    ${location ? `<div class="text-xs text-gray-500 mt-0.5">${escapeHtml(location)}</div>` : ''}
+                                </div>
+                                <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                </svg>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                html += '</div>';
+                dropdown.innerHTML = html;
+                dropdown.classList.remove('hidden');
+            } else {
+                dropdown.innerHTML = '<div class="px-3 py-2 text-sm text-gray-500 text-center">No matches found</div>';
+                dropdown.classList.remove('hidden');
+            }
+        })
+        .catch(error => {
+            console.error('Search error:', error);
+            hideSearchDropdown(element);
+        });
+}
+
+function selectSearchResult(value, wrapper) {
+    const cell = wrapper.querySelector('.editable-cell');
+    cell.textContent = value;
+    hideSearchDropdown(cell);
+    cell.focus();
+}
+
+function hideSearchDropdown(element) {
+    const dropdown = element.parentElement?.querySelector('.search-dropdown');
+    if (dropdown) {
+        dropdown.classList.add('hidden');
+    }
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text || '';
+    return div.innerHTML;
+}
 
 function savePurokGrupo(element) {
     const officerId = element.dataset.officerId;

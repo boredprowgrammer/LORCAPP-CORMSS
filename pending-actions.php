@@ -876,6 +876,7 @@ function executeAddOfficer($data, $db) {
     // Extract data
     $hasExistingRecord = $data['has_existing_record'] ?? false;
     $existingOfficerUuid = $data['existing_officer_uuid'] ?? '';
+    $existingOfficerIdInput = $data['existing_officer_id'] ?? '';
     $lastName = $data['last_name'] ?? '';
     $firstName = $data['first_name'] ?? '';
     $middleInitial = $data['middle_initial'] ?? '';
@@ -895,7 +896,18 @@ function executeAddOfficer($data, $db) {
     $existingOfficerId = null;
     $existingOfficerUuid = null;
     
-    if ($hasExistingRecord && !empty($existingOfficerUuid)) {
+    if ($hasExistingRecord && !empty($existingOfficerIdInput)) {
+        // User explicitly selected existing officer (by ID)
+        $stmt = $db->prepare("SELECT officer_id, officer_uuid FROM officers WHERE officer_id = ?");
+        $stmt->execute([$existingOfficerIdInput]);
+        $officer = $stmt->fetch();
+        
+        if ($officer) {
+            $existingOfficerId = $officer['officer_id'];
+            $existingOfficerUuid = $officer['officer_uuid'];
+        }
+    } elseif ($hasExistingRecord && !empty($existingOfficerUuid)) {
+        // Fallback: try by UUID
         $stmt = $db->prepare("SELECT officer_id, officer_uuid FROM officers WHERE officer_uuid = ?");
         $stmt->execute([$existingOfficerUuid]);
         $officer = $stmt->fetch();

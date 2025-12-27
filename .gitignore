@@ -27,9 +27,6 @@ backup_keys_*.txt
 # Migration backups
 migration_backup_*/
 
-# Vendor dependencies
-vendor/
-node_modules/
 
 # IDE specific files
 .vscode/
