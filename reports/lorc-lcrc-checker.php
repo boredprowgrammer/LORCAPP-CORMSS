@@ -1127,7 +1127,8 @@ function performSearch(element, searchType, query) {
                     const displayValue = searchType === 'control' 
                         ? record.control_number 
                         : record.registry_number;
-                    const displayName = record.full_name || 'Unknown';
+                    // Handle both full_name (from search-tarheta) and name (from search-legacy)
+                    const displayName = record.full_name || record.name || '';
                     const location = record.local_name || record.district_name || '';
                     
                     html += `
@@ -1136,7 +1137,7 @@ function performSearch(element, searchType, query) {
                             <div class="flex items-center justify-between gap-2">
                                 <div class="flex-1 min-w-0">
                                     <div class="text-sm font-semibold text-blue-600">${escapeHtml(displayValue)}</div>
-                                    <div class="text-sm text-gray-900 mt-0.5">${escapeHtml(displayName)}</div>
+                                    ${displayName ? `<div class="text-sm text-gray-900 mt-0.5">${escapeHtml(displayName)}</div>` : ''}
                                     ${location ? `<div class="text-xs text-gray-500 mt-0.5">${escapeHtml(location)}</div>` : ''}
                                 </div>
                                 <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
