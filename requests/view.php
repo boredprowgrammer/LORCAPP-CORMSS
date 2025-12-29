@@ -30,7 +30,8 @@ $stmt = $db->prepare("
            o.officer_uuid,
            existing_o.last_name_encrypted as existing_last_name,
            existing_o.first_name_encrypted as existing_first_name,
-           existing_o.middle_initial_encrypted as existing_middle_initial
+           existing_o.middle_initial_encrypted as existing_middle_initial,
+           existing_o.district_code as existing_district_code
     FROM officer_requests r
     LEFT JOIN districts d ON r.district_code = d.district_code
     LEFT JOIN local_congregations l ON r.local_code = l.local_code
@@ -57,16 +58,33 @@ $canManage = $user['role'] === 'admin' ||
              ($user['role'] === 'local' && $user['local_code'] === $request['local_code']);
 
 // Decrypt personal information - use existing officer's name for CODE D
-if ($request['record_code'] === 'D' && $request['existing_officer_uuid']) {
-    $lastName = Encryption::decrypt($request['existing_last_name'], $request['district_code']);
-    $firstName = Encryption::decrypt($request['existing_first_name'], $request['district_code']);
-    $middleInitial = $request['existing_middle_initial'] ? Encryption::decrypt($request['existing_middle_initial'], $request['district_code']) : '';
-} else {
-    $lastName = Encryption::decrypt($request['last_name_encrypted'], $request['district_code']);
-    $firstName = Encryption::decrypt($request['first_name_encrypted'], $request['district_code']);
-    $middleInitial = $request['middle_initial_encrypted'] ? Encryption::decrypt($request['middle_initial_encrypted'], $request['district_code']) : '';
+try {
+    if ($request['record_code'] === 'D' && $request['existing_officer_uuid']) {
+        // Use existing officer's district code for decryption
+        $districtCodeForDecryption = $request['existing_district_code'] ?? $request['district_code'];
+        
+        // Check if we have the encrypted data
+        if (empty($request['existing_last_name']) || empty($request['existing_first_name'])) {
+            throw new Exception("Missing encrypted name data for existing officer. UUID: {$request['existing_officer_uuid']}");
+        }
+        
+        $lastName = Encryption::decrypt($request['existing_last_name'], $districtCodeForDecryption);
+        $firstName = Encryption::decrypt($request['existing_first_name'], $districtCodeForDecryption);
+        $middleInitial = $request['existing_middle_initial'] ? Encryption::decrypt($request['existing_middle_initial'], $districtCodeForDecryption) : '';
+    } else {
+        $lastName = Encryption::decrypt($request['last_name_encrypted'], $request['district_code']);
+        $firstName = Encryption::decrypt($request['first_name_encrypted'], $request['district_code']);
+        $middleInitial = $request['middle_initial_encrypted'] ? Encryption::decrypt($request['middle_initial_encrypted'], $request['district_code']) : '';
+    }
+    $fullName = "$lastName, $firstName" . ($middleInitial ? " $middleInitial." : "");
+} catch (Exception $e) {
+    error_log("Request decryption error for request_id {$request['request_id']}: " . $e->getMessage());
+    error_log("Request data: record_code={$request['record_code']}, existing_uuid={$request['existing_officer_uuid']}, existing_district={$request['existing_district_code']}, request_district={$request['district_code']}");
+    $fullName = '[DECRYPT ERROR]';
+    $lastName = '';
+    $firstName = '';
+    $middleInitial = '';
 }
-$fullName = "$lastName, $firstName" . ($middleInitial ? " $middleInitial." : "");
 
 // Handle workflow actions
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $canManage) {
@@ -224,7 +242,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $canManage) {
                            o.officer_uuid,
                            existing_o.last_name_encrypted as existing_last_name,
                            existing_o.first_name_encrypted as existing_first_name,
-                           existing_o.middle_initial_encrypted as existing_middle_initial
+                           existing_o.middle_initial_encrypted as existing_middle_initial,
+                           existing_o.district_code as existing_district_code
                     FROM officer_requests r
                     LEFT JOIN districts d ON r.district_code = d.district_code
                     LEFT JOIN local_congregations l ON r.local_code = l.local_code
@@ -241,14 +260,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $canManage) {
                 $request = $stmt->fetch(PDO::FETCH_ASSOC);
                 
                 // Re-decrypt names after refresh
-                if ($request['record_code'] === 'D' && $request['existing_officer_uuid']) {
-                    $lastName = Encryption::decrypt($request['existing_last_name'], $request['district_code']);
-                    $firstName = Encryption::decrypt($request['existing_first_name'], $request['district_code']);
-                    $middleInitial = $request['existing_middle_initial'] ? Encryption::decrypt($request['existing_middle_initial'], $request['district_code']) : '';
-                } else {
-                    $lastName = Encryption::decrypt($request['last_name_encrypted'], $request['district_code']);
-                    $firstName = Encryption::decrypt($request['first_name_encrypted'], $request['district_code']);
-                    $middleInitial = $request['middle_initial_encrypted'] ? Encryption::decrypt($request['middle_initial_encrypted'], $request['district_code']) : '';
+                try {
+                    if ($request['record_code'] === 'D' && $request['existing_officer_uuid']) {
+                        // Use existing officer's district code for decryption
+                        $districtCodeForDecryption = $request['existing_district_code'] ?? $request['district_code'];
+                        $lastName = Encryption::decrypt($request['existing_last_name'], $districtCodeForDecryption);
+                        $firstName = Encryption::decrypt($request['existing_first_name'], $districtCodeForDecryption);
+                        $middleInitial = $request['existing_middle_initial'] ? Encryption::decrypt($request['existing_middle_initial'], $districtCodeForDecryption) : '';
+                    } else {
+                        $lastName = Encryption::decrypt($request['last_name_encrypted'], $request['district_code']);
+                        $firstName = Encryption::decrypt($request['first_name_encrypted'], $request['district_code']);
+                        $middleInitial = $request['middle_initial_encrypted'] ? Encryption::decrypt($request['middle_initial_encrypted'], $request['district_code']) : '';
+                    }
+                    $fullName = "$lastName, $firstName" . ($middleInitial ? " $middleInitial." : "");
+                } catch (Exception $e) {
+                    error_log("Request re-decryption error for request_id {$request['request_id']}: " . $e->getMessage());
+                    $fullName = '[DECRYPT ERROR]';
+                    $lastName = '';
+                    $firstName = '';
+                    $middleInitial = '';
                 }
                 $fullName = trim("$lastName, $firstName" . ($middleInitial ? " $middleInitial" : ""));
                 break;
@@ -699,7 +729,7 @@ ob_start();
     function displayResults(officers) {
         const resultsHtml = officers.map(officer => `
             <div class="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-200 last:border-0" 
-                 onclick="selectOfficer('${officer.id}', '${escapeHtml(officer.name)}', '${escapeHtml(officer.location)}')">
+                 onclick="selectOfficer('${officer.uuid}', '${escapeHtml(officer.name)}', '${escapeHtml(officer.location)}')">
                 <p class="font-semibold text-gray-900">${escapeHtml(officer.name)}</p>
                 <p class="text-sm text-gray-600">${escapeHtml(officer.location)}</p>
             </div>

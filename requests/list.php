@@ -42,7 +42,8 @@ $query = "SELECT
     u.full_name as requested_by_name,
     o.last_name_encrypted as existing_last_name,
     o.first_name_encrypted as existing_first_name,
-    o.middle_initial_encrypted as existing_middle_initial
+    o.middle_initial_encrypted as existing_middle_initial,
+    o.district_code as existing_district_code
 FROM officer_requests r
 LEFT JOIN districts d ON r.district_code = d.district_code
 LEFT JOIN local_congregations l ON r.local_code = l.local_code
@@ -88,9 +89,9 @@ if (!empty($searchQuery)) {
         $query .= " OR LOWER(AES_DECRYPT(r.first_name_encrypted, UNHEX(SHA2(r.district_code, 256)))) LIKE ?";
         $params[] = "%$word%";
         $params[] = "%$word%";
-        // Existing officer names (CODE D)
-        $query .= " OR LOWER(AES_DECRYPT(o.last_name_encrypted, UNHEX(SHA2(r.district_code, 256)))) LIKE ?";
-        $query .= " OR LOWER(AES_DECRYPT(o.first_name_encrypted, UNHEX(SHA2(r.district_code, 256)))) LIKE ?";
+        // Existing officer names (CODE D) - use their own district code
+        $query .= " OR LOWER(AES_DECRYPT(o.last_name_encrypted, UNHEX(SHA2(o.district_code, 256)))) LIKE ?";
+        $query .= " OR LOWER(AES_DECRYPT(o.first_name_encrypted, UNHEX(SHA2(o.district_code, 256)))) LIKE ?";
         $params[] = "%$word%";
         $params[] = "%$word%";
     }
@@ -323,20 +324,34 @@ ob_start();
 
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <?php foreach ($requests as $request):
-                    // Decrypt name
-                    if ($request['record_code'] === 'D' && $request['existing_officer_uuid']) {
-                        $lastName = Encryption::decrypt($request['existing_last_name'], $request['district_code']);
-                        $firstName = Encryption::decrypt($request['existing_first_name'], $request['district_code']);
-                        $middleInitial = $request['existing_middle_initial'] ? Encryption::decrypt($request['existing_middle_initial'], $request['district_code']) : '';
-                    } else {
-                        $lastName = Encryption::decrypt($request['last_name_encrypted'], $request['district_code']);
-                        $firstName = Encryption::decrypt($request['first_name_encrypted'], $request['district_code']);
-                        $middleInitial = $request['middle_initial_encrypted'] ? Encryption::decrypt($request['middle_initial_encrypted'], $request['district_code']) : '';
-                    }
-                    if ($lastName === '' && $firstName === '') {
+                    // Decrypt name with error handling
+                    try {
+                        if ($request['record_code'] === 'D' && $request['existing_officer_uuid']) {
+                            // Use existing officer's district code for decryption
+                            $districtCodeForDecryption = $request['existing_district_code'] ?? $request['district_code'];
+                            
+                            // Check if we have the encrypted data
+                            if (empty($request['existing_last_name']) || empty($request['existing_first_name'])) {
+                                throw new Exception("Missing encrypted name data for existing officer UUID: {$request['existing_officer_uuid']}");
+                            }
+                            
+                            $lastName = Encryption::decrypt($request['existing_last_name'], $districtCodeForDecryption);
+                            $firstName = Encryption::decrypt($request['existing_first_name'], $districtCodeForDecryption);
+                            $middleInitial = $request['existing_middle_initial'] ? Encryption::decrypt($request['existing_middle_initial'], $districtCodeForDecryption) : '';
+                        } else {
+                            $lastName = Encryption::decrypt($request['last_name_encrypted'], $request['district_code']);
+                            $firstName = Encryption::decrypt($request['first_name_encrypted'], $request['district_code']);
+                            $middleInitial = $request['middle_initial_encrypted'] ? Encryption::decrypt($request['middle_initial_encrypted'], $request['district_code']) : '';
+                        }
+                        
+                        if ($lastName === '' && $firstName === '') {
+                            $fullName = '[DECRYPT ERROR]';
+                        } else {
+                            $fullName = "$lastName, $firstName" . ($middleInitial ? " $middleInitial." : "");
+                        }
+                    } catch (Exception $e) {
+                        error_log("Request list decryption error for request_id {$request['request_id']}: " . $e->getMessage());
                         $fullName = '[DECRYPT ERROR]';
-                    } else {
-                        $fullName = "$lastName, $firstName" . ($middleInitial ? " $middleInitial." : "");
                     }
                     $statusInfo = $statusConfig[$request['status']];
                 ?>

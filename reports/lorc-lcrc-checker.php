@@ -549,6 +549,7 @@ ob_start();
                                       title="Click to edit or search"
                                       ><?php echo $officer['control_number'] ? Security::escape($officer['control_number']) : '—'; ?></span>
                                 <div class="search-dropdown hidden absolute z-50 mt-1 w-64 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto"></div>
+                                <span class="loading-spinner hidden"></span>
                                 <span class="save-indicator hidden ml-2 text-xs text-green-600">✓</span>
                             </div>
                         </td>
@@ -565,6 +566,7 @@ ob_start();
                                       title="Click to edit or search"
                                       ><?php echo $officer['registry_number'] ? Security::escape($officer['registry_number']) : '—'; ?></span>
                                 <div class="search-dropdown hidden absolute z-50 mt-1 w-96 bg-white border border-gray-300 rounded-lg shadow-lg max-h-64 overflow-y-auto"></div>
+                                <span class="loading-spinner hidden"></span>
                                 <span class="save-indicator hidden ml-2 text-xs text-green-600">✓</span>
                             </div>
                         </td>
@@ -588,6 +590,7 @@ ob_start();
                                       data-original="<?php echo Security::escape($officer['purok'] ?? ''); ?>"
                                       title="Click to edit"
                                       ><?php echo $officer['purok'] ? Security::escape($officer['purok']) : '—'; ?></span>
+                                <span class="loading-spinner hidden"></span>
                                 <span class="save-indicator hidden ml-2 text-xs text-green-600">✓</span>
                             </div>
                         </td>
@@ -600,6 +603,7 @@ ob_start();
                                       data-original="<?php echo Security::escape($officer['grupo'] ?? ''); ?>"
                                       title="Click to edit"
                                       ><?php echo $officer['grupo'] ? Security::escape($officer['grupo']) : '—'; ?></span>
+                                <span class="loading-spinner hidden"></span>
                                 <span class="save-indicator hidden ml-2 text-xs text-green-600">✓</span>
                             </div>
                         </td>
@@ -839,8 +843,30 @@ ob_start();
 
 /* Saving state */
 .saving {
-    opacity: 0.5;
+    opacity: 0.7;
     pointer-events: none;
+}
+
+/* Loading spinner */
+.loading-spinner {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border: 2px solid #e5e7eb;
+    border-top-color: #3b82f6;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    margin-left: 6px;
+    vertical-align: middle;
+}
+
+/* Hidden state for spinner */
+.loading-spinner.hidden {
+    display: none !important;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
 }
 
 @media print {
@@ -1057,24 +1083,30 @@ document.addEventListener('DOMContentLoaded', function() {
         cell.addEventListener('blur', function() {
             setTimeout(() => {
                 const dropdown = this.parentElement.querySelector('.search-dropdown');
-                if (dropdown && !dropdown.matches(':hover')) {
-                    const newValue = this.textContent.trim();
-                    const originalValue = this.dataset.original;
-                    
-                    if (newValue === '') {
-                        this.textContent = '—';
-                    }
-                    
-                    // Only save if changed
-                    if (newValue !== originalValue && newValue !== '—') {
-                        savePurokGrupo(this);
-                    } else if ((newValue === '—' || newValue === '') && originalValue !== '' && originalValue !== '—') {
-                        // Clearing the field
-                        savePurokGrupo(this);
-                    }
-                    
-                    hideSearchDropdown(this);
+                
+                // Check if dropdown exists and is being hovered (for searchable fields)
+                if (dropdown && dropdown.matches(':hover')) {
+                    return;
                 }
+                
+                const newValue = this.textContent.trim();
+                const originalValue = this.dataset.original || '';
+                
+                // Normalize the new value for comparison (— is same as empty)
+                const normalizedNewValue = newValue === '—' ? '' : newValue;
+                const normalizedOriginalValue = originalValue === '—' ? '' : originalValue;
+                
+                // Update display to show dash if empty
+                if (newValue === '') {
+                    this.textContent = '—';
+                }
+                
+                // Save if value actually changed
+                if (normalizedNewValue !== normalizedOriginalValue) {
+                    savePurokGrupo(this);
+                }
+                
+                hideSearchDropdown(this);
             }, 200);
         });
         
@@ -1164,9 +1196,14 @@ function performSearch(element, searchType, query) {
 
 function selectSearchResult(value, wrapper) {
     const cell = wrapper.querySelector('.editable-cell');
+    const oldValue = cell.textContent.trim();
     cell.textContent = value;
     hideSearchDropdown(cell);
-    cell.focus();
+    
+    // Save if value changed
+    if (value !== oldValue && value !== cell.dataset.original) {
+        savePurokGrupo(cell);
+    }
 }
 
 function hideSearchDropdown(element) {
@@ -1192,25 +1229,39 @@ function savePurokGrupo(element) {
         value = '';
     }
     
-    // Show saving state
+    // Get wrapper and UI elements
+    const wrapper = element.closest('.editable-cell-wrapper');
+    if (!wrapper) {
+        return;
+    }
+    
+    const indicator = wrapper.querySelector('.save-indicator');
+    const spinner = wrapper.querySelector('.loading-spinner');
+    
+    // Show saving state - ONLY during API call
     element.classList.add('saving');
-    const indicator = element.parentElement.querySelector('.save-indicator');
+    if (indicator) indicator.classList.add('hidden');
+    if (spinner) spinner.classList.remove('hidden');
+    
+    const payload = {
+        officer_id: officerId,
+        field: field,
+        value: value,
+        csrf_token: '<?php echo Security::generateCSRFToken(); ?>'
+    };
     
     fetch('<?php echo BASE_URL; ?>/api/update-purok-grupo.php', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-            officer_id: officerId,
-            field: field,
-            value: value,
-            csrf_token: '<?php echo Security::generateCSRFToken(); ?>'
-        })
+        body: JSON.stringify(payload)
     })
     .then(response => response.json())
     .then(data => {
+        // Hide spinner immediately after response
         element.classList.remove('saving');
+        if (spinner) spinner.classList.add('hidden');
         
         if (data.success) {
             // Update original value
@@ -1234,8 +1285,9 @@ function savePurokGrupo(element) {
         }
     })
     .catch(error => {
-        console.error('Error:', error);
+        // Hide spinner on error
         element.classList.remove('saving');
+        if (spinner) spinner.classList.add('hidden');
         alert('Error saving changes');
         element.textContent = element.dataset.original || '—';
     });
