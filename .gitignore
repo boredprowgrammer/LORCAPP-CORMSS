@@ -12,7 +12,7 @@ test-*.php
 *-test.php
 debug-*.php
 check-*.php
-verify-*.php
+
 audit-*.php
 
 # Migration and setup scripts (one-time use)

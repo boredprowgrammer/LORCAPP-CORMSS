@@ -165,6 +165,37 @@ header("Referrer-Policy: strict-origin-when-cross-origin");
             display: flex !important;
         }
         
+        /* Diagonal Watermark Overlay */
+        .watermark-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            overflow: hidden;
+            opacity: 1;
+        }
+        
+        .watermark-text {
+            position: absolute;
+            font-family: 'Inter', sans-serif;
+            font-size: 12pt;
+            font-weight: 700;
+            color: rgba(100, 116, 139, 0.08);
+            letter-spacing: 2px;
+            white-space: nowrap;
+            user-select: none;
+            transform: rotate(-45deg);
+        }
+        
+        @media print {
+            .watermark-overlay {
+                display: none !important;
+            }
+        }
+        
         /* Simple Spinner */
         .simple-spinner {
             width: 50px;
@@ -774,11 +805,17 @@ if (Security::isLoggedIn()) {
             </div>
         </div>
         
+        <!-- Diagonal Watermark Overlay -->
+        <div id="watermarkOverlay" class="watermark-overlay"></div>
+        
     <?php else: ?>
         <!-- Guest Layout (Login/Register Pages) -->
         <div class="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-blue-50 to-indigo-100">
             <?php echo $content ?? ''; ?>
         </div>
+        
+        <!-- Diagonal Watermark Overlay -->
+        <div id="watermarkOverlay" class="watermark-overlay"></div>
     <?php endif; ?>
     
     <!-- Scripts -->
@@ -955,6 +992,100 @@ if (Security::isLoggedIn()) {
             updateClock();
             setInterval(updateClock, 1000);
         });
+
+        // Generate Diagonal Watermark Pattern
+        function generateWatermark() {
+            const overlay = document.getElementById('watermarkOverlay');
+            if (!overlay) return;
+
+            const today = new Date();
+            const dateStr = today.getFullYear() + '-' + 
+                          String(today.getMonth() + 1).padStart(2, '0') + '-' + 
+                          String(today.getDate()).padStart(2, '0');
+            const randomNum = Math.floor(1000000 + Math.random() * 9000000);
+            const watermarkText = 'CONFIDENTIAL-' + dateStr + '-' + randomNum;
+
+            const widthSpacer = 400;
+            const heightSpacer = 300;
+            const textWidth = 400; // Approximate width of rotated text
+            const textHeight = 30;
+
+            const cols = Math.ceil(window.innerWidth / widthSpacer) + 5;
+            const rows = Math.ceil(window.innerHeight / heightSpacer) + 5;
+
+            overlay.innerHTML = '';
+
+            for (let row = 0; row < rows; row++) {
+                for (let col = 0; col < cols; col++) {
+                    const span = document.createElement('span');
+                    span.className = 'watermark-text';
+                    span.textContent = watermarkText;
+                    span.style.left = (col * widthSpacer - 200) + 'px';
+                    span.style.top = (row * heightSpacer - 100) + 'px';
+                    overlay.appendChild(span);
+                }
+            }
+        }
+
+        // Generate watermark on page load and window resize
+        document.addEventListener('DOMContentLoaded', generateWatermark);
+        window.addEventListener('resize', generateWatermark);
+
+        // Developer Mode with Secret Key Combination
+        let devMode = false;
+        let keySequence = [];
+        const secretCombo = ['Control', 'Shift', 'D'];
+
+        // Disable right-click by default
+        document.addEventListener('contextmenu', function(e) {
+            if (!devMode) {
+                e.preventDefault();
+                return false;
+            }
+        });
+
+        // Listen for secret key combination
+        document.addEventListener('keydown', function(e) {
+            keySequence.push(e.key);
+            if (keySequence.length > 3) {
+                keySequence.shift();
+            }
+
+            // Check if Ctrl+Shift+D is pressed
+            if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+                e.preventDefault();
+                promptDeveloperPin();
+            }
+        });
+
+        function promptDeveloperPin() {
+            const pin = prompt('Enter Developer PIN:');
+            if (!pin) return;
+
+            // Verify PIN via AJAX
+            fetch('<?php echo BASE_URL; ?>/api/verify-dev-pin.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': csrfToken
+                },
+                body: JSON.stringify({ pin: pin })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    devMode = true;
+                    alert('Developer Mode Enabled');
+                    console.log('%c🔧 Developer Mode Active', 'color: #10b981; font-size: 16px; font-weight: bold;');
+                } else {
+                    alert('Invalid PIN');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error verifying PIN');
+            });
+        }
     </script>
     
     <?php if (isset($extraScripts)): ?>
