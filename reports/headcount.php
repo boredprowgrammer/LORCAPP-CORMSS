@@ -70,7 +70,7 @@ ob_start();
 
 <div class="space-y-4">
     <!-- Header -->
-    <div class="flex items-center justify-between p-4 bg-white rounded-lg shadow-sm border border-gray-200">
+    <div class="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200">
         <div>
             <h1 class="text-2xl font-bold text-gray-900">Headcount Report</h1>
             <p class="text-sm text-gray-500">Real-time officer headcount across locations</p>
@@ -81,7 +81,7 @@ ob_start();
     </div>
     
     <!-- District Totals -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 p-4">
         <div class="flex items-center gap-2 mb-3">
             <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
@@ -110,7 +110,7 @@ ob_start();
     </div>
     
     <!-- Detailed Table -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 p-4">
         <div class="flex items-center gap-2 mb-3">
             <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
@@ -128,7 +128,7 @@ ob_start();
                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Updated</th>
                     </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
+                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200">
                     <?php if (empty($headcounts)): ?>
                         <tr>
                             <td colspan="4" class="text-center py-8">

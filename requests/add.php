@@ -146,7 +146,7 @@ ob_start();
             <h2 class="text-3xl font-bold text-gray-900">New Officer Request</h2>
             <p class="text-sm text-gray-500">Submit an application for aspiring church officer</p>
         </div>
-        <a href="list.php" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+        <a href="list.php" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 transition-colors">
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
             </svg>
@@ -181,7 +181,7 @@ ob_start();
     <?php endif; ?>
 
     <!-- Request Form -->
-    <form method="POST" class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 space-y-6" x-data="{
+    <form method="POST" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 p-6 space-y-6" x-data="{
             code: 'A',
             searchQuery: '',
             searchResults: [],
@@ -314,7 +314,7 @@ ob_start();
                             <input 
                                 type="text" 
                                 id="local-display"
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer bg-white"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer bg-white dark:bg-gray-800"
                                 placeholder="Select Local Congregation"
                                 readonly
                                 onclick="openLocalModal()"
@@ -349,7 +349,7 @@ ob_start();
                         <input 
                             type="text" 
                             id="department-display"
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer bg-white"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer bg-white dark:bg-gray-800"
                             placeholder="Select Department"
                             readonly
                             onclick="openDepartmentModal()"
@@ -485,7 +485,7 @@ ob_start();
 
         <!-- Submit Buttons -->
         <div class="flex items-center justify-end space-x-3 pt-4 border-t border-gray-200">
-            <a href="list.php" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+            <a href="list.php" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 transition-colors">
                 Cancel
             </a>
             <button type="submit" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">
@@ -580,7 +580,7 @@ function filterDepartments() {
 <div id="department-modal" class="hidden fixed inset-0 z-50 overflow-y-auto">
     <div class="flex items-center justify-center min-h-screen p-4">
         <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" onclick="closeDepartmentModal()"></div>
-        <div class="relative bg-white rounded-lg shadow-xl max-w-md w-full max-h-[80vh] flex flex-col">
+        <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full max-h-[80vh] flex flex-col">
             <!-- Header -->
             <div class="flex items-center justify-between p-4 border-b">
                 <h3 class="text-lg font-semibold text-gray-900">Select Department</h3>
@@ -619,7 +619,7 @@ function filterDepartments() {
 <div id="local-modal" class="hidden fixed inset-0 z-50 overflow-y-auto">
     <div class="flex items-center justify-center min-h-screen p-4">
         <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" onclick="closeLocalModal()"></div>
-        <div class="relative bg-white rounded-lg shadow-xl max-w-md w-full max-h-[80vh] flex flex-col">
+        <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full max-h-[80vh] flex flex-col">
             <!-- Header -->
             <div class="flex items-center justify-between p-4 border-b">
                 <h3 class="text-lg font-semibold text-gray-900">Select Local Congregation</h3>

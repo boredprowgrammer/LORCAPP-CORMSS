@@ -338,12 +338,12 @@ ob_start();
 
 <div class="max-w-4xl mx-auto space-y-6">
     <!-- Header -->
-    <div class="flex items-center justify-between bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+    <div class="flex items-center justify-between bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 p-4">
         <div>
             <h1 class="text-2xl font-bold text-gray-900">Edit Officer</h1>
             <p class="text-sm text-gray-600">Update officer information</p>
         </div>
-        <a href="<?php echo BASE_URL; ?>/officers/view.php?id=<?php echo urlencode($officerUuid); ?>" class="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+        <a href="<?php echo BASE_URL; ?>/officers/view.php?id=<?php echo urlencode($officerUuid); ?>" class="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 transition-colors">
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
             </svg>
@@ -351,7 +351,7 @@ ob_start();
         </a>
     </div>
     
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 p-6">
         <?php if (!empty($error)): ?>
             <div class="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
                 <div class="flex items-center">
@@ -474,7 +474,7 @@ ob_start();
                                     <input 
                                         type="text" 
                                         id="local-display"
-                                        class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer bg-white"
+                                        class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer bg-white dark:bg-gray-800"
                                         placeholder="Select Local Congregation"
                                         readonly
                                         onclick="openLocalModal()"
@@ -566,7 +566,7 @@ ob_start();
                                 <input type="hidden" name="legacy_officer_id" id="legacy_officer_id" value="<?php echo Security::escape($officer['legacy_officer_id'] ?? ''); ?>">
                                 
                                 <!-- Search Results Dropdown -->
-                                <div id="control_results" class="hidden absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-96 overflow-y-auto">
+                                <div id="control_results" class="hidden absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 rounded-lg shadow-lg max-h-96 overflow-y-auto">
                                     <div id="control_results_list"></div>
                                 </div>
                                 
@@ -599,7 +599,7 @@ ob_start();
                             >
                             <input type="hidden" name="registry_number" id="registry_number_hidden" value="<?php echo Security::escape($registryNumber ?? ''); ?>">
                             <input type="hidden" name="tarheta_control_id" id="tarheta_control_id" value="<?php echo Security::escape($officer['tarheta_control_id'] ?? ''); ?>">
-                            <div id="tarheta_results" class="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg hidden max-h-60 overflow-y-auto"></div>
+                            <div id="tarheta_results" class="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 rounded-lg shadow-lg hidden max-h-60 overflow-y-auto"></div>
                         </div>
                         <p class="text-xs text-gray-500 mt-1">Search for records from Tarheta Control or enter manually</p>
                     </div>
@@ -802,7 +802,7 @@ ob_start();
                 
                 <!-- Submit Buttons -->
                 <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200">
-                    <a href="<?php echo BASE_URL; ?>/officers/view.php?id=<?php echo urlencode($officerUuid); ?>" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                    <a href="<?php echo BASE_URL; ?>/officers/view.php?id=<?php echo urlencode($officerUuid); ?>" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg font-medium text-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 transition-colors">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                         </svg>
@@ -1113,7 +1113,7 @@ document.addEventListener('click', function(event) {
 <div id="local-modal" class="hidden fixed inset-0 z-50 overflow-y-auto">
     <div class="flex items-center justify-center min-h-screen p-4">
         <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" onclick="closeLocalModal()"></div>
-        <div class="relative bg-white rounded-lg shadow-xl max-w-md w-full max-h-[80vh] flex flex-col">
+        <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full max-h-[80vh] flex flex-col">
             <!-- Header -->
             <div class="flex items-center justify-between p-4 border-b">
                 <h3 class="text-lg font-semibold text-gray-900">Select Local Congregation</h3>

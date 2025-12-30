@@ -138,7 +138,7 @@ ob_start();
                 <a href="import-from-lorcapp.php" class="px-4 py-2 border border-green-300 text-green-700 rounded-lg hover:bg-green-50 transition-colors">
                     Import from LORCAPP
                 </a>
-                <a href="list.php" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                <a href="list.php" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 transition-colors">
                     ← Back to List
                 </a>
             </div>
@@ -174,7 +174,7 @@ ob_start();
     </div>
 
     <!-- Requests List -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200">
         <div class="p-4 border-b border-gray-200 bg-gray-50">
             <h2 class="text-lg font-semibold text-gray-900">Officer Requests</h2>
             <p class="text-sm text-gray-600 mt-1">
@@ -283,7 +283,7 @@ ob_start();
     <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
         <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" onclick="closeLinkModal()"></div>
         
-        <div class="inline-block w-full max-w-2xl p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl">
+        <div class="inline-block w-full max-w-2xl p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white dark:bg-gray-800 shadow-xl rounded-2xl">
             <h3 class="text-lg font-bold text-gray-900 mb-4">Link to LORCAPP Record</h3>
             
             <p class="text-sm text-gray-600 mb-4">
@@ -322,7 +322,7 @@ ob_start();
                 </div>
                 
                 <div class="flex items-center justify-end space-x-3 pt-4">
-                    <button type="button" onclick="closeLinkModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                    <button type="button" onclick="closeLinkModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 transition-colors">
                         Cancel
                     </button>
                     <button type="submit" id="link_button" disabled class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">

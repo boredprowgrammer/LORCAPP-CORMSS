@@ -457,7 +457,7 @@ ob_start();
 
 <div class="max-w-7xl mx-auto space-y-6">
     <!-- Header -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 p-6">
         <div class="flex items-center justify-between">
             <div class="flex items-center space-x-4">
                 <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -480,12 +480,12 @@ ob_start();
     </div>
 
     <!-- Filters -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 p-6">
         <form method="GET" class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <!-- Status Filter -->
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
-                <select name="status" class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white" onchange="this.form.submit()">
+                <select name="status" class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white dark:bg-gray-800" onchange="this.form.submit()">
                     <option value="all" <?php echo $filterStatus === 'all' ? 'selected' : ''; ?>>
                         All (<?php echo $statusCounts['all']; ?>)
                     </option>
@@ -522,7 +522,7 @@ ob_start();
                     Search
                 </button>
                 <?php if (!empty($searchQuery) || $filterStatus !== 'all'): ?>
-                    <a href="call-up-list.php" class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                    <a href="call-up-list.php" class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white dark:bg-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
                         Clear
                     </a>
                 <?php endif; ?>
@@ -531,7 +531,7 @@ ob_start();
     </div>
 
     <!-- Call-Up Slips List -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <?php if (empty($slips)): ?>
             <div class="text-center py-12 px-4">
                 <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -557,7 +557,7 @@ ob_start();
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
+                    <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200">
                         <?php foreach ($slips as $slip): 
                             // Get officer name (either from database or manual entry)
                             if (!empty($slip['manual_officer_name'])) {
@@ -731,7 +731,7 @@ ob_start();
 
 <!-- Mark Responded Modal -->
 <div id="respondModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden items-center justify-center z-50">
-    <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4">
         <div class="px-6 py-4 border-b border-gray-200">
             <h3 class="text-lg font-semibold text-gray-900">Mark as Responded</h3>
         </div>
@@ -753,7 +753,7 @@ ob_start();
             
             <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end gap-2 rounded-b-lg">
                 <button type="button" 
-                    class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                    class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white dark:bg-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                     onclick="closeRespondModal()">
                     Cancel
                 </button>

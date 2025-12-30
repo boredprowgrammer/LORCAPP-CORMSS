@@ -241,10 +241,10 @@ ob_start();
 
 <div class="space-y-6">
     <!-- Welcome Header -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+    <div class="bg-white dark:bg-gray-800 dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
             <div>
-                <h1 class="text-xl sm:text-2xl font-semibold text-gray-900"><?php echo Security::escape($currentUser['full_name']); ?></h1>
+                <h1 class="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-gray-100"><?php echo Security::escape($currentUser['full_name']); ?></h1>
                 <p class="text-xs sm:text-sm text-gray-500 mt-1"><?php echo formatDate(date('Y-m-d'), 'l, F d, Y'); ?> • Week <?php echo getCurrentWeekNumber(); ?></p>
             </div>
             <div class="flex items-center gap-2 sm:gap-3">
@@ -275,12 +275,12 @@ ob_start();
             <div class="fixed inset-0 bg-black/50 transition-opacity" onclick="closeAnnouncementsModal()"></div>
             
             <!-- Modal Container -->
-            <div class="relative bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[85vh] flex flex-col">
+            <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-4xl max-h-[85vh] flex flex-col">
                 
                 <!-- Simple Header -->
-                <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-                    <h3 class="text-lg font-semibold text-gray-900">Announcements (<?php echo count($userAnnouncements); ?>)</h3>
-                    <button onclick="closeAnnouncementsModal()" class="text-gray-400 hover:text-gray-600 p-1">
+                <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Announcements (<?php echo count($userAnnouncements); ?>)</h3>
+                    <button onclick="closeAnnouncementsModal()" class="text-gray-400 hover:text-gray-600 dark:text-gray-400 p-1">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                         </svg>
@@ -320,7 +320,7 @@ ob_start();
                             <div class="<?php echo $colorClass; ?> rounded p-4 relative">
                                 <!-- Close button -->
                                 <button onclick="dismissAnnouncement(<?php echo $announcement['announcement_id']; ?>)" 
-                                        class="absolute top-3 right-3 text-gray-400 hover:text-gray-600">
+                                        class="absolute top-3 right-3 text-gray-400 hover:text-gray-600 dark:text-gray-400">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                                     </svg>
@@ -330,14 +330,14 @@ ob_start();
                                 <div class="pr-6">
                                     <!-- Title with badge -->
                                     <div class="flex items-center gap-2 mb-2">
-                                        <h4 class="font-semibold text-gray-900"><?php echo Security::escape($announcement['title']); ?></h4>
+                                        <h4 class="font-semibold text-gray-900 dark:text-gray-100"><?php echo Security::escape($announcement['title']); ?></h4>
                                         <span class="inline-block px-2 py-0.5 text-xs font-medium rounded <?php echo $badgeClass; ?>">
                                             <?php echo strtoupper($announcement['priority']); ?>
                                         </span>
                                     </div>
                                     
                                     <!-- Message -->
-                                    <p class="text-sm text-gray-700 mb-2 whitespace-pre-wrap"><?php echo nl2br(Security::escape($announcement['message'])); ?></p>
+                                    <p class="text-sm text-gray-700 dark:text-gray-300 mb-2 whitespace-pre-wrap"><?php echo nl2br(Security::escape($announcement['message'])); ?></p>
                                     
                                     <!-- Metadata -->
                                     <div class="flex items-center gap-3 text-xs text-gray-500">
@@ -366,9 +366,9 @@ ob_start();
                 </div>
                 
                 <!-- Simple Footer -->
-                <div class="flex items-center justify-end gap-2 px-6 py-3 border-t border-gray-200 bg-gray-50">
+                <div class="flex items-center justify-end gap-2 px-6 py-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50">
                     <button onclick="closeAnnouncementsModal()" 
-                            class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50">
+                            class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 rounded hover:bg-gray-50">
                         Close
                     </button>
                     <button onclick="dismissAllAnnouncements()" 
@@ -497,7 +497,7 @@ ob_start();
     <!-- Key Metrics Grid - 6 Cards -->
     <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
         <!-- Total Officers -->
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4 hover:shadow-md transition-shadow">
+        <div class="bg-white dark:bg-gray-800 dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-3 sm:p-4 hover:shadow-md transition-shadow">
             <div class="flex flex-col sm:flex-row items-start sm:items-center sm:space-x-3 space-y-2 sm:space-y-0">
                 <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
                     <svg class="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -505,14 +505,14 @@ ob_start();
                     </svg>
                 </div>
                 <div class="min-w-0">
-                    <p class="text-xl sm:text-2xl font-bold text-gray-900 truncate"><?php echo number_format($stats['total_officers']); ?></p>
+                    <p class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 truncate"><?php echo number_format($stats['total_officers']); ?></p>
                     <p class="text-xs text-gray-500 truncate">Total</p>
                 </div>
             </div>
         </div>
         
         <!-- Active Officers -->
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4 hover:shadow-md transition-shadow">
+        <div class="bg-white dark:bg-gray-800 dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-3 sm:p-4 hover:shadow-md transition-shadow">
             <div class="flex flex-col sm:flex-row items-start sm:items-center sm:space-x-3 space-y-2 sm:space-y-0">
                 <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0">
                     <svg class="w-5 h-5 sm:w-6 sm:h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -527,7 +527,7 @@ ob_start();
         </div>
         
         <!-- Inactive Officers -->
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4 hover:shadow-md transition-shadow">
+        <div class="bg-white dark:bg-gray-800 dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-3 sm:p-4 hover:shadow-md transition-shadow">
             <div class="flex flex-col sm:flex-row items-start sm:items-center sm:space-x-3 space-y-2 sm:space-y-0">
                 <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-red-100 flex items-center justify-center flex-shrink-0">
                     <svg class="w-5 h-5 sm:w-6 sm:h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -542,7 +542,7 @@ ob_start();
         </div>
         
         <!-- Transfers This Week -->
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4 hover:shadow-md transition-shadow">
+        <div class="bg-white dark:bg-gray-800 dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-3 sm:p-4 hover:shadow-md transition-shadow">
             <div class="flex flex-col sm:flex-row items-start sm:items-center sm:space-x-3 space-y-2 sm:space-y-0">
                 <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-cyan-100 flex items-center justify-center flex-shrink-0">
                     <svg class="w-5 h-5 sm:w-6 sm:h-6 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -557,7 +557,7 @@ ob_start();
         </div>
         
         <!-- New Officers This Month -->
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4 hover:shadow-md transition-shadow">
+        <div class="bg-white dark:bg-gray-800 dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-3 sm:p-4 hover:shadow-md transition-shadow">
             <div class="flex flex-col sm:flex-row items-start sm:items-center sm:space-x-3 space-y-2 sm:space-y-0">
                 <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-purple-100 flex items-center justify-center flex-shrink-0">
                     <svg class="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -572,7 +572,7 @@ ob_start();
         </div>
         
         <!-- Removals This Month -->
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4 hover:shadow-md transition-shadow">
+        <div class="bg-white dark:bg-gray-800 dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-3 sm:p-4 hover:shadow-md transition-shadow">
             <div class="flex flex-col sm:flex-row items-start sm:items-center sm:space-x-3 space-y-2 sm:space-y-0">
                 <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-yellow-100 flex items-center justify-center flex-shrink-0">
                     <svg class="w-5 h-5 sm:w-6 sm:h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -590,17 +590,17 @@ ob_start();
     <!-- Main Content Grid -->
     <div class="grid grid-cols-1 lg:grid-cols-<?php echo in_array($currentUser['role'], ['local', 'district']) ? '4' : '3'; ?> gap-4 sm:gap-6">
         <!-- Top Departments -->
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
+        <div class="bg-white dark:bg-gray-800 dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-5">
             <div class="flex items-center space-x-2 mb-4">
                 <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
                 </svg>
-                <h3 class="font-semibold text-gray-900">Top Departments</h3>
+                <h3 class="font-semibold text-gray-900 dark:text-gray-100">Top Departments</h3>
             </div>
             <div class="space-y-2">
                 <?php foreach ($topDepartments as $dept): ?>
                     <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                        <span class="text-sm text-gray-700 truncate flex-1"><?php echo Security::escape($dept['department']); ?></span>
+                        <span class="text-sm text-gray-700 dark:text-gray-300 truncate flex-1"><?php echo Security::escape($dept['department']); ?></span>
                         <span class="ml-3 px-2.5 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-full"><?php echo $dept['count']; ?></span>
                     </div>
                 <?php endforeach; ?>
@@ -624,13 +624,13 @@ ob_start();
         
         <!-- Messages Mini Inbox -->
         <?php if (in_array($currentUser['role'], ['local', 'district'])): ?>
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-5">
+        <div class="bg-white dark:bg-gray-800 dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-5">
             <div class="flex items-center justify-between mb-3 sm:mb-4">
                 <div class="flex items-center space-x-2">
                     <svg class="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
                     </svg>
-                    <h3 class="text-sm sm:text-base font-semibold text-gray-900">Messages</h3>
+                    <h3 class="text-sm sm:text-base font-semibold text-gray-900 dark:text-gray-100">Messages</h3>
                     <?php if ($unreadMessageCount > 0): ?>
                         <span class="inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold text-white bg-indigo-600 rounded-full"><?php echo $unreadMessageCount; ?></span>
                     <?php endif; ?>
@@ -666,7 +666,7 @@ ob_start();
                             </div>
                             <div class="ml-2 sm:ml-3 flex-1 min-w-0">
                                 <div class="flex items-center justify-between">
-                                    <p class="text-xs sm:text-sm font-medium text-gray-900 truncate <?php echo $isUnread ? 'font-semibold' : ''; ?>">
+                                    <p class="text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-100 truncate <?php echo $isUnread ? 'font-semibold' : ''; ?>">
                                         <?php echo Security::escape($msg['display_name'] ?? 'Unknown'); ?>
                                     </p>
                                     <span class="text-xs text-gray-400 ml-2 flex-shrink-0">
@@ -682,7 +682,7 @@ ob_start();
                                         ?>
                                     </span>
                                 </div>
-                                <p class="text-xs text-gray-500 truncate mt-0.5 <?php echo $isUnread ? 'font-medium text-gray-700' : ''; ?>">
+                                <p class="text-xs text-gray-500 truncate mt-0.5 <?php echo $isUnread ? 'font-medium text-gray-700 dark:text-gray-300' : ''; ?>">
                                     <?php if ($isOwnMessage): ?>
                                         <span class="text-gray-400">You sent a message</span>
                                     <?php else: ?>
@@ -720,19 +720,19 @@ ob_start();
         <?php endif; ?>
         
         <!-- Headcount Overview -->
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
+        <div class="bg-white dark:bg-gray-800 dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-5">
             <div class="flex items-center space-x-2 mb-4">
                 <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
                 </svg>
-                <h3 class="font-semibold text-gray-900">Headcount Overview</h3>
+                <h3 class="font-semibold text-gray-900 dark:text-gray-100">Headcount Overview</h3>
             </div>
             <div class="space-y-3">
                 <?php foreach ($headcountData as $data): ?>
                     <div>
                         <div class="flex justify-between text-xs mb-1.5">
-                            <span class="text-gray-700 truncate flex-1"><?php echo Security::escape($data['district_name'] ?? $data['local_name']); ?></span>
-                            <span class="font-semibold text-gray-900 ml-2"><?php echo number_format($data['count']); ?></span>
+                            <span class="text-gray-700 dark:text-gray-300 truncate flex-1"><?php echo Security::escape($data['district_name'] ?? $data['local_name']); ?></span>
+                            <span class="font-semibold text-gray-900 dark:text-gray-100 ml-2"><?php echo number_format($data['count']); ?></span>
                         </div>
                         <div class="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
                             <div class="bg-green-500 h-2 rounded-full transition-all duration-300" 
@@ -759,12 +759,12 @@ ob_start();
         </div>
         
         <!-- Recent Activities -->
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
+        <div class="bg-white dark:bg-gray-800 dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-5">
             <div class="flex items-center space-x-2 mb-4">
                 <svg class="w-5 h-5 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                 </svg>
-                <h3 class="font-semibold text-gray-900">Recent Activity</h3>
+                <h3 class="font-semibold text-gray-900 dark:text-gray-100">Recent Activity</h3>
             </div>
             <div class="space-y-2 max-h-80 overflow-y-auto">
                 <?php foreach ($recentActivities as $activity): ?>
@@ -785,8 +785,8 @@ ob_start();
                             </svg>
                         </div>
                         <div class="flex-1 min-w-0">
-                            <p class="text-sm font-medium text-gray-900 truncate"><?php echo Security::escape($activity['full_name'] ?? 'System'); ?></p>
-                            <p class="text-xs text-gray-600 truncate"><?php echo Security::escape($activity['action']); ?></p>
+                            <p class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate"><?php echo Security::escape($activity['full_name'] ?? 'System'); ?></p>
+                            <p class="text-xs text-gray-600 dark:text-gray-400 truncate"><?php echo Security::escape($activity['action']); ?></p>
                             <p class="text-xs text-gray-400 mt-0.5"><?php echo formatDateTime($activity['created_at']); ?></p>
                         </div>
                     </div>
@@ -813,12 +813,12 @@ ob_start();
     </div>
     
     <!-- Quick Actions -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
+    <div class="bg-white dark:bg-gray-800 dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-5">
         <div class="flex items-center space-x-2 mb-4">
             <svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
             </svg>
-            <h3 class="font-semibold text-gray-900">Quick Actions</h3>
+            <h3 class="font-semibold text-gray-900 dark:text-gray-100">Quick Actions</h3>
         </div>
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
             <a href="<?php echo BASE_URL; ?>/officers/add.php" class="flex items-center justify-center px-4 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors shadow-sm">
@@ -827,7 +827,7 @@ ob_start();
                 </svg>
                 <span class="text-sm font-medium">Add Officer</span>
             </a>
-            <a href="<?php echo BASE_URL; ?>/officers/list.php" class="flex items-center justify-center px-4 py-3 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+            <a href="<?php echo BASE_URL; ?>/officers/list.php" class="flex items-center justify-center px-4 py-3 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
                 </svg>

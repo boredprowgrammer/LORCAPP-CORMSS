@@ -410,7 +410,7 @@ ob_start();
     <?php endif; ?>
     
     <!-- Users Table -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200">
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
@@ -423,7 +423,7 @@ ob_start();
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
+                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200">
                     <?php foreach ($users as $user): ?>
                         <tr class="hover:bg-gray-50 transition-colors">
                             <td class="px-6 py-4">
@@ -528,7 +528,7 @@ ob_start();
 <div id="createUserModal" class="hidden fixed inset-0 z-50 overflow-y-auto">
     <div class="flex items-center justify-center min-h-screen px-4 py-6">
         <div onclick="closeCreateUserModal()" class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity"></div>
-        <div onclick="event.stopPropagation()" class="relative bg-white rounded-lg shadow-xl w-full max-w-2xl p-6 transform transition-all">
+        <div onclick="event.stopPropagation()" class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl p-6 transform transition-all">
             
             <div class="flex items-center justify-between mb-4">
                 <h3 class="text-lg font-bold text-gray-900">Create New User</h3>
@@ -586,7 +586,7 @@ ob_start();
                         <input 
                             type="text" 
                             id="modal-district-display"
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer bg-white"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer bg-white dark:bg-gray-800"
                             placeholder="Select District"
                             readonly
                             onclick="openDistrictModal()"
@@ -607,7 +607,7 @@ ob_start();
                         <input 
                             type="text" 
                             id="modal-local-display"
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer bg-white"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer bg-white dark:bg-gray-800"
                             placeholder="Select Local Congregation"
                             readonly
                             onclick="openLocalModal()"
@@ -634,7 +634,7 @@ ob_start();
             </div>
             
             <div class="flex items-center justify-end space-x-3 pt-4">
-                <button type="button" onclick="closeCreateUserModal()" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors">Cancel</button>
+                <button type="button" onclick="closeCreateUserModal()" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 transition-colors">Cancel</button>
                 <button type="submit" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">Create User</button>
             </div>
         </form>
@@ -1173,7 +1173,7 @@ function closeResetPasswordModal() {
 <div id="district-modal" class="hidden fixed inset-0 z-50 overflow-y-auto">
     <div class="flex items-center justify-center min-h-screen p-4">
         <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" onclick="closeDistrictModal()"></div>
-        <div class="relative bg-white rounded-lg shadow-xl max-w-md w-full max-h-[80vh] flex flex-col">
+        <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full max-h-[80vh] flex flex-col">
             <div class="flex items-center justify-between p-4 border-b">
                 <h3 class="text-lg font-semibold text-gray-900">Select District</h3>
                 <button type="button" onclick="closeDistrictModal()" class="text-gray-400 hover:text-gray-500">
@@ -1200,7 +1200,7 @@ function closeResetPasswordModal() {
 <div id="local-modal" class="hidden fixed inset-0 z-50 overflow-y-auto">
     <div class="flex items-center justify-center min-h-screen p-4">
         <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" onclick="closeLocalModal()"></div>
-        <div class="relative bg-white rounded-lg shadow-xl max-w-md w-full max-h-[80vh] flex flex-col">
+        <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full max-h-[80vh] flex flex-col">
             <div class="flex items-center justify-between p-4 border-b">
                 <h3 class="text-lg font-semibold text-gray-900">Select Local Congregation</h3>
                 <button type="button" onclick="closeLocalModal()" class="text-gray-400 hover:text-gray-500">
@@ -1223,7 +1223,7 @@ function closeResetPasswordModal() {
 <div id="editUserModal" class="hidden fixed inset-0 z-50 overflow-y-auto">
     <div class="flex items-center justify-center min-h-screen px-4 py-6">
         <div onclick="closeEditUserModal()" class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity"></div>
-        <div onclick="event.stopPropagation()" class="relative bg-white rounded-lg shadow-xl w-full max-w-2xl p-6 transform transition-all">
+        <div onclick="event.stopPropagation()" class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl p-6 transform transition-all">
             
             <div class="flex items-center justify-between mb-4">
                 <h3 class="text-lg font-bold text-gray-900">Edit User</h3>
@@ -1271,7 +1271,7 @@ function closeResetPasswordModal() {
                         <input 
                             type="text" 
                             id="edit-district-display"
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer bg-white"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer bg-white dark:bg-gray-800"
                             placeholder="Select District"
                             readonly
                             onclick="openEditDistrictModal()"
@@ -1292,7 +1292,7 @@ function closeResetPasswordModal() {
                         <input 
                             type="text" 
                             id="edit-local-display"
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer bg-white"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer bg-white dark:bg-gray-800"
                             placeholder="Select Local Congregation"
                             readonly
                             onclick="openEditLocalModal()"
@@ -1319,7 +1319,7 @@ function closeResetPasswordModal() {
             </div>
             
             <div class="flex items-center justify-end space-x-3 pt-4">
-                <button type="button" onclick="closeEditUserModal()" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors">Cancel</button>
+                <button type="button" onclick="closeEditUserModal()" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 transition-colors">Cancel</button>
                 <button type="submit" class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors">Update User</button>
             </div>
         </form>
@@ -1331,7 +1331,7 @@ function closeResetPasswordModal() {
 <div id="resetPasswordModal" class="hidden fixed inset-0 z-50 overflow-y-auto">
     <div class="flex items-center justify-center min-h-screen px-4 py-6">
         <div onclick="closeResetPasswordModal()" class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity"></div>
-        <div onclick="event.stopPropagation()" class="relative bg-white rounded-lg shadow-xl w-full max-w-md p-6 transform transition-all">
+        <div onclick="event.stopPropagation()" class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md p-6 transform transition-all">
             
             <div class="flex items-center justify-between mb-4">
                 <h3 class="text-lg font-bold text-gray-900">Reset Password</h3>
@@ -1370,7 +1370,7 @@ function closeResetPasswordModal() {
             </div>
             
             <div class="flex items-center justify-end space-x-3 pt-4">
-                <button type="button" onclick="closeResetPasswordModal()" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors">Cancel</button>
+                <button type="button" onclick="closeResetPasswordModal()" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 transition-colors">Cancel</button>
                 <button type="submit" class="inline-flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 transition-colors">Reset Password</button>
             </div>
         </form>
@@ -1382,7 +1382,7 @@ function closeResetPasswordModal() {
 <div id="permissionsModal" class="hidden fixed inset-0 z-50 overflow-y-auto">
     <div class="flex items-center justify-center min-h-screen px-4 py-6">
         <div onclick="closePermissionsModal()" class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity"></div>
-        <div onclick="event.stopPropagation()" class="relative bg-white rounded-lg shadow-xl w-full max-w-4xl p-6 transform transition-all max-h-[85vh] overflow-y-auto">
+        <div onclick="event.stopPropagation()" class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-4xl p-6 transform transition-all max-h-[85vh] overflow-y-auto">
             
             <div class="flex items-center justify-between mb-4">
                 <h3 class="text-lg font-bold text-gray-900" id="permissionsModalTitle">Manage User Permissions</h3>
@@ -1407,19 +1407,19 @@ function closeResetPasswordModal() {
                         Officer Management
                     </h4>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <label class="flex items-center p-3 bg-white rounded border border-gray-200 hover:bg-blue-50 cursor-pointer transition-colors">
+                        <label class="flex items-center p-3 bg-white dark:bg-gray-800 rounded border border-gray-200 hover:bg-blue-50 cursor-pointer transition-colors">
                             <input type="checkbox" name="can_view_officers" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
                             <span class="ml-2 text-sm text-gray-700">View Officers</span>
                         </label>
-                        <label class="flex items-center p-3 bg-white rounded border border-gray-200 hover:bg-blue-50 cursor-pointer transition-colors">
+                        <label class="flex items-center p-3 bg-white dark:bg-gray-800 rounded border border-gray-200 hover:bg-blue-50 cursor-pointer transition-colors">
                             <input type="checkbox" name="can_add_officers" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
                             <span class="ml-2 text-sm text-gray-700">Add Officers</span>
                         </label>
-                        <label class="flex items-center p-3 bg-white rounded border border-gray-200 hover:bg-blue-50 cursor-pointer transition-colors">
+                        <label class="flex items-center p-3 bg-white dark:bg-gray-800 rounded border border-gray-200 hover:bg-blue-50 cursor-pointer transition-colors">
                             <input type="checkbox" name="can_edit_officers" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
                             <span class="ml-2 text-sm text-gray-700">Edit Officers</span>
                         </label>
-                        <label class="flex items-center p-3 bg-white rounded border border-gray-200 hover:bg-blue-50 cursor-pointer transition-colors">
+                        <label class="flex items-center p-3 bg-white dark:bg-gray-800 rounded border border-gray-200 hover:bg-blue-50 cursor-pointer transition-colors">
                             <input type="checkbox" name="can_delete_officers" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
                             <span class="ml-2 text-sm text-gray-700">Delete Officers</span>
                         </label>
@@ -1435,15 +1435,15 @@ function closeResetPasswordModal() {
                         Transfers & Removal
                     </h4>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                        <label class="flex items-center p-3 bg-white rounded border border-gray-200 hover:bg-green-50 cursor-pointer transition-colors">
+                        <label class="flex items-center p-3 bg-white dark:bg-gray-800 rounded border border-gray-200 hover:bg-green-50 cursor-pointer transition-colors">
                             <input type="checkbox" name="can_transfer_in" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
                             <span class="ml-2 text-sm text-gray-700">Transfer In</span>
                         </label>
-                        <label class="flex items-center p-3 bg-white rounded border border-gray-200 hover:bg-green-50 cursor-pointer transition-colors">
+                        <label class="flex items-center p-3 bg-white dark:bg-gray-800 rounded border border-gray-200 hover:bg-green-50 cursor-pointer transition-colors">
                             <input type="checkbox" name="can_transfer_out" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
                             <span class="ml-2 text-sm text-gray-700">Transfer Out</span>
                         </label>
-                        <label class="flex items-center p-3 bg-white rounded border border-gray-200 hover:bg-green-50 cursor-pointer transition-colors">
+                        <label class="flex items-center p-3 bg-white dark:bg-gray-800 rounded border border-gray-200 hover:bg-green-50 cursor-pointer transition-colors">
                             <input type="checkbox" name="can_remove_officers" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
                             <span class="ml-2 text-sm text-gray-700">Remove Officers</span>
                         </label>
@@ -1459,11 +1459,11 @@ function closeResetPasswordModal() {
                         Officer Requests
                     </h4>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <label class="flex items-center p-3 bg-white rounded border border-gray-200 hover:bg-purple-50 cursor-pointer transition-colors">
+                        <label class="flex items-center p-3 bg-white dark:bg-gray-800 rounded border border-gray-200 hover:bg-purple-50 cursor-pointer transition-colors">
                             <input type="checkbox" name="can_view_requests" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
                             <span class="ml-2 text-sm text-gray-700">View Requests</span>
                         </label>
-                        <label class="flex items-center p-3 bg-white rounded border border-gray-200 hover:bg-purple-50 cursor-pointer transition-colors">
+                        <label class="flex items-center p-3 bg-white dark:bg-gray-800 rounded border border-gray-200 hover:bg-purple-50 cursor-pointer transition-colors">
                             <input type="checkbox" name="can_manage_requests" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
                             <span class="ml-2 text-sm text-gray-700">Manage Requests (Approve/Reject)</span>
                         </label>
@@ -1479,19 +1479,19 @@ function closeResetPasswordModal() {
                         Reports & Analytics
                     </h4>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <label class="flex items-center p-3 bg-white rounded border border-gray-200 hover:bg-yellow-50 cursor-pointer transition-colors">
+                        <label class="flex items-center p-3 bg-white dark:bg-gray-800 rounded border border-gray-200 hover:bg-yellow-50 cursor-pointer transition-colors">
                             <input type="checkbox" name="can_view_reports" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
                             <span class="ml-2 text-sm text-gray-700">View Reports</span>
                         </label>
-                        <label class="flex items-center p-3 bg-white rounded border border-gray-200 hover:bg-yellow-50 cursor-pointer transition-colors">
+                        <label class="flex items-center p-3 bg-white dark:bg-gray-800 rounded border border-gray-200 hover:bg-yellow-50 cursor-pointer transition-colors">
                             <input type="checkbox" name="can_view_headcount" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
                             <span class="ml-2 text-sm text-gray-700">View Headcount</span>
                         </label>
-                        <label class="flex items-center p-3 bg-white rounded border border-gray-200 hover:bg-yellow-50 cursor-pointer transition-colors">
+                        <label class="flex items-center p-3 bg-white dark:bg-gray-800 rounded border border-gray-200 hover:bg-yellow-50 cursor-pointer transition-colors">
                             <input type="checkbox" name="can_view_departments" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
                             <span class="ml-2 text-sm text-gray-700">View Departments</span>
                         </label>
-                        <label class="flex items-center p-3 bg-white rounded border border-gray-200 hover:bg-yellow-50 cursor-pointer transition-colors">
+                        <label class="flex items-center p-3 bg-white dark:bg-gray-800 rounded border border-gray-200 hover:bg-yellow-50 cursor-pointer transition-colors">
                             <input type="checkbox" name="can_export_reports" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
                             <span class="ml-2 text-sm text-gray-700">Export Reports</span>
                         </label>
@@ -1507,11 +1507,11 @@ function closeResetPasswordModal() {
                         Other Features
                     </h4>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <label class="flex items-center p-3 bg-white rounded border border-gray-200 hover:bg-indigo-50 cursor-pointer transition-colors">
+                        <label class="flex items-center p-3 bg-white dark:bg-gray-800 rounded border border-gray-200 hover:bg-indigo-50 cursor-pointer transition-colors">
                             <input type="checkbox" name="can_view_calendar" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
                             <span class="ml-2 text-sm text-gray-700">View Calendar</span>
                         </label>
-                        <label class="flex items-center p-3 bg-white rounded border border-gray-200 hover:bg-indigo-50 cursor-pointer transition-colors">
+                        <label class="flex items-center p-3 bg-white dark:bg-gray-800 rounded border border-gray-200 hover:bg-indigo-50 cursor-pointer transition-colors">
                             <input type="checkbox" name="can_view_announcements" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
                             <span class="ml-2 text-sm text-gray-700">View Announcements</span>
                         </label>
@@ -1527,23 +1527,23 @@ function closeResetPasswordModal() {
                         Admin Features
                     </h4>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <label class="flex items-center p-3 bg-white rounded border border-gray-200 hover:bg-red-100 cursor-pointer transition-colors">
+                        <label class="flex items-center p-3 bg-white dark:bg-gray-800 rounded border border-gray-200 hover:bg-red-100 cursor-pointer transition-colors">
                             <input type="checkbox" name="can_manage_users" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
                             <span class="ml-2 text-sm text-gray-700">Manage Users</span>
                         </label>
-                        <label class="flex items-center p-3 bg-white rounded border border-gray-200 hover:bg-red-100 cursor-pointer transition-colors">
+                        <label class="flex items-center p-3 bg-white dark:bg-gray-800 rounded border border-gray-200 hover:bg-red-100 cursor-pointer transition-colors">
                             <input type="checkbox" name="can_manage_announcements" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
                             <span class="ml-2 text-sm text-gray-700">Manage Announcements</span>
                         </label>
-                        <label class="flex items-center p-3 bg-white rounded border border-gray-200 hover:bg-red-100 cursor-pointer transition-colors">
+                        <label class="flex items-center p-3 bg-white dark:bg-gray-800 rounded border border-gray-200 hover:bg-red-100 cursor-pointer transition-colors">
                             <input type="checkbox" name="can_manage_districts" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
                             <span class="ml-2 text-sm text-gray-700">Manage Districts & Locals</span>
                         </label>
-                        <label class="flex items-center p-3 bg-white rounded border border-gray-200 hover:bg-red-100 cursor-pointer transition-colors">
+                        <label class="flex items-center p-3 bg-white dark:bg-gray-800 rounded border border-gray-200 hover:bg-red-100 cursor-pointer transition-colors">
                             <input type="checkbox" name="can_view_audit_log" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
                             <span class="ml-2 text-sm text-gray-700">View Audit Log</span>
                         </label>
-                        <label class="flex items-center p-3 bg-white rounded border border-gray-200 hover:bg-red-100 cursor-pointer transition-colors">
+                        <label class="flex items-center p-3 bg-white dark:bg-gray-800 rounded border border-gray-200 hover:bg-red-100 cursor-pointer transition-colors">
                             <input type="checkbox" name="can_view_legacy_registry" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
                             <span class="ml-2 text-sm text-gray-700">View Legacy Registry</span>
                         </label>
@@ -1551,7 +1551,7 @@ function closeResetPasswordModal() {
                 </div>
                 
                 <div class="flex items-center justify-end space-x-3 pt-4 border-t">
-                    <button type="button" onclick="closePermissionsModal()" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors">Cancel</button>
+                    <button type="button" onclick="closePermissionsModal()" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 transition-colors">Cancel</button>
                     <button type="submit" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">
                         Save Permissions
                     </button>

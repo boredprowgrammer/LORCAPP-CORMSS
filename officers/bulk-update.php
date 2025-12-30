@@ -187,7 +187,7 @@ ob_start();
         </div>
     <?php endif; ?>
     
-    <div class="bg-white rounded-lg shadow-md">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md">
         <div class="px-6 py-4 border-b border-gray-200">
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-3">

@@ -411,7 +411,7 @@ ob_start();
 ?>
 
 <div class="max-w-4xl mx-auto">
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 p-6">
         <div class="flex items-center space-x-3 mb-6">
             <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
                 <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -637,7 +637,7 @@ ob_start();
                 
                 <!-- Submit Button -->
                 <div class="flex items-center justify-end space-x-3 pt-4">
-                    <a href="<?php echo BASE_URL; ?>/officers/list.php" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                    <a href="<?php echo BASE_URL; ?>/officers/list.php" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 transition-colors">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                         </svg>

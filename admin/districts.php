@@ -149,7 +149,7 @@ ob_start();
     <?php endif; ?>
     
     <!-- Districts -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 p-6">
         <div class="flex items-center gap-2 mb-4">
             <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
@@ -169,7 +169,7 @@ ob_start();
                     <h4 class="text-lg font-bold text-gray-900 mb-1"><?php echo Security::escape($district['district_name']); ?></h4>
                     <p class="text-xs text-gray-500 mb-3">Code: <?php echo Security::escape($district['district_code']); ?></p>
                     <div class="border-t border-gray-200 my-2"></div>
-                    <div class="bg-white rounded-lg border border-gray-200 p-3">
+                    <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 p-3">
                         <div class="text-xs text-gray-500 mb-1">Local Congregations</div>
                         <div class="text-2xl font-bold text-gray-900"><?php echo $localCount; ?></div>
                     </div>
@@ -191,7 +191,7 @@ ob_start();
     </div>
     
     <!-- Local Congregations -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 p-6">
         <div class="flex items-center gap-2 mb-4">
             <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
@@ -210,7 +210,7 @@ ob_start();
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
                     </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
+                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200">
                     <?php if (empty($locals)): ?>
                         <tr>
                             <td colspan="5" class="text-center py-8">
@@ -259,7 +259,7 @@ ob_start();
      style="display: none;">
     <div class="flex items-center justify-center min-h-screen px-4">
         <div @click="show = false" class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity"></div>
-        <div @click.stop class="relative bg-white rounded-lg shadow-xl w-full max-w-md p-6 transform transition-all"
+        <div @click.stop class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md p-6 transform transition-all"
              x-show="show"
              x-transition:enter="ease-out duration-300"
              x-transition:enter-start="opacity-0 translate-y-4"
@@ -306,7 +306,7 @@ ob_start();
             </div>
             
             <div class="flex items-center justify-end space-x-3 pt-4">
-                <button type="button" @click="show = false" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors">Cancel</button>
+                <button type="button" @click="show = false" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 transition-colors">Cancel</button>
                 <button type="submit" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">Create District</button>
             </div>
         </form>
@@ -323,7 +323,7 @@ ob_start();
      style="display: none;">
     <div class="flex items-center justify-center min-h-screen px-4">
         <div @click="show = false" class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity"></div>
-        <div @click.stop class="relative bg-white rounded-lg shadow-xl w-full max-w-md p-6 transform transition-all"
+        <div @click.stop class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md p-6 transform transition-all"
              x-show="show"
              x-transition:enter="ease-out duration-300"
              x-transition:enter-start="opacity-0 translate-y-4"
@@ -382,7 +382,7 @@ ob_start();
             </div>
             
             <div class="flex items-center justify-end space-x-3 pt-4">
-                <button type="button" @click="show = false" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors">Cancel</button>
+                <button type="button" @click="show = false" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 transition-colors">Cancel</button>
                 <button type="submit" class="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition-colors">Create Local</button>
             </div>
         </form>

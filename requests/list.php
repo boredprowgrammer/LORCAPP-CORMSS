@@ -211,7 +211,7 @@ ob_start();
             $count = $statusCounts[$status] ?? 0;
             $config = $statusConfig[$status];
         ?>
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 p-4">
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm text-gray-500"><?php echo $config['label']; ?></p>
@@ -228,7 +228,7 @@ ob_start();
     </div>
 
     <!-- Filters -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 p-4">
         <form method="GET" class="flex flex-wrap gap-4">
             <div class="flex-1 min-w-[200px]">
                 <input 
@@ -244,7 +244,7 @@ ob_start();
                     <input 
                         type="text" 
                         id="status-display"
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer bg-white"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer bg-white dark:bg-gray-800"
                         placeholder="All Status"
                         readonly
                         onclick="openStatusModal()"
@@ -271,7 +271,7 @@ ob_start();
                 Filter
             </button>
             <?php if ($statusFilter !== 'all' || !empty($searchQuery)): ?>
-            <a href="list.php" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+            <a href="list.php" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 transition-colors">
                 Clear
             </a>
             <?php endif; ?>
@@ -291,7 +291,7 @@ ob_start();
                 </button>
             </div>
             <div class="flex items-center gap-2">
-                <select id="bulkAction" class="px-3 py-2 border border-blue-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                <select id="bulkAction" class="px-3 py-2 border border-blue-300 rounded-lg text-sm bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                     <option value="">Select action...</option>
                     <option value="approve_seminar">Approve for Seminar</option>
                     <option value="mark_in_seminar">Mark In Seminar</option>
@@ -312,7 +312,7 @@ ob_start();
     <?php endif; ?>
 
     <!-- Requests Cards -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 p-4">
         <?php if (empty($requests)): ?>
             <div class="p-8 text-center text-gray-500">
                 <p class="font-medium">No requests found</p>
@@ -355,7 +355,7 @@ ob_start();
                     }
                     $statusInfo = $statusConfig[$request['status']];
                 ?>
-                <div class="bg-white border border-gray-100 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
+                <div class="bg-white dark:bg-gray-800 border border-gray-100 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
                     <div class="flex items-start justify-between">
                         <div class="flex items-start gap-3">
                             <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-medium">
@@ -406,7 +406,7 @@ ob_start();
                                     <button @click="open = !open" @click.away="open = false" type="button" class="px-3 py-1 bg-green-50 text-green-700 rounded-lg text-sm">
                                         Update
                                     </button>
-                                    <div x-show="open" x-transition class="absolute right-0 mt-2 w-56 rounded-lg shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10" style="display: none;">
+                                    <div x-show="open" x-transition class="absolute right-0 mt-2 w-56 rounded-lg shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 z-10" style="display: none;">
                                         <div class="py-1">
                                             <?php
                                             // Define next possible statuses based on current status
@@ -483,7 +483,7 @@ ob_start();
     <div id="delete-modal" class="hidden fixed inset-0 z-50 overflow-y-auto">
         <div class="flex items-center justify-center min-h-screen p-4">
             <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" onclick="closeDeleteModal()"></div>
-            <div class="relative bg-white rounded-lg shadow-xl max-w-md w-full flex flex-col">
+            <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full flex flex-col">
                 <div class="flex items-center justify-between p-4 border-b">
                     <h3 class="text-lg font-semibold text-gray-900">Delete Request</h3>
                     <button type="button" onclick="closeDeleteModal()" class="text-gray-400 hover:text-gray-500">
@@ -653,7 +653,7 @@ function filterStatuses() {
 <div id="status-modal" class="hidden fixed inset-0 z-50 overflow-y-auto">
     <div class="flex items-center justify-center min-h-screen p-4">
         <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" onclick="closeStatusModal()"></div>
-        <div class="relative bg-white rounded-lg shadow-xl max-w-md w-full max-h-[80vh] flex flex-col">
+        <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full max-h-[80vh] flex flex-col">
             <!-- Header -->
             <div class="flex items-center justify-between p-4 border-b">
                 <h3 class="text-lg font-semibold text-gray-900">Select Status</h3>
@@ -700,7 +700,7 @@ function filterStatuses() {
 <div id="request-modal" class="hidden fixed inset-0 z-50 overflow-y-auto">
     <div class="flex items-center justify-center min-h-screen p-4">
         <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" onclick="closeRequestModal()"></div>
-        <div onclick="event.stopPropagation()" class="relative bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+        <div onclick="event.stopPropagation()" class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
             
             <!-- Modal Header -->
             <div class="flex items-center justify-between p-6 border-b border-gray-200">
@@ -731,7 +731,7 @@ function filterStatuses() {
             </div>
             
             <!-- Action Loading Overlay -->
-            <div id="modal-action-loading" class="hidden absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center z-50">
+            <div id="modal-action-loading" class="hidden absolute inset-0 bg-white dark:bg-gray-800 bg-opacity-90 flex items-center justify-center z-50">
                 <div class="text-center">
                     <div class="relative w-16 h-16 mx-auto mb-4">
                         <div class="absolute inset-0 border-4 border-blue-200 rounded-full"></div>
@@ -860,7 +860,7 @@ function filterStatuses() {
                     <?php if ($canManage): ?>
                     <div id="content-workflow" class="tab-content hidden space-y-4">
                         <!-- Record Code Section -->
-                        <div id="record-code-section" class="bg-white border border-gray-200 rounded-lg p-4">
+                        <div id="record-code-section" class="bg-white dark:bg-gray-800 border border-gray-200 rounded-lg p-4">
                             <h4 class="font-semibold text-gray-900 mb-3">Record Code</h4>
                             <div id="record-code-content"></div>
                         </div>
@@ -910,7 +910,7 @@ function filterStatuses() {
 <div id="seminar-modal" class="hidden fixed inset-0 z-50 overflow-y-auto">
     <div class="flex items-center justify-center min-h-screen p-4">
         <div class="fixed inset-0 bg-gray-900 bg-opacity-75" onclick="closeAdd SeminarModal()"></div>
-        <div class="relative bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+        <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
             <h3 class="text-lg font-bold text-gray-900 mb-4">Add Seminar Date</h3>
             <div class="space-y-4">
                 <div>
@@ -1105,7 +1105,7 @@ function populateRequirements(data) {
         if (checked) completedCount++;
         
         html += `
-            <div class="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
+            <div class="flex items-center justify-between p-4 bg-white dark:bg-gray-800 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
                 <div class="flex items-center space-x-3">
                     <input type="checkbox" 
                            ${checked ? 'checked' : ''} 
@@ -1130,7 +1130,7 @@ function populateRequirements(data) {
     // R5-13 Seminar (auto-complete)
     if (r513Complete) completedCount++;
     html += `
-        <div class="flex items-center justify-between p-4 bg-white border ${r513Complete ? 'border-green-300 bg-green-50' : 'border-gray-200'} rounded-lg">
+        <div class="flex items-center justify-between p-4 bg-white dark:bg-gray-800 border ${r513Complete ? 'border-green-300 bg-green-50' : 'border-gray-200'} rounded-lg">
             <div class="flex items-center space-x-3">
                 <input type="checkbox" 
                        ${r513Complete ? 'checked' : ''} 
@@ -1416,7 +1416,7 @@ function populateSeminar(data) {
     seminarDates.forEach((seminar, index) => {
         const attended = seminar.attended || false;
         html += `
-            <div class="p-4 border ${attended ? 'border-green-300 bg-green-50' : 'border-gray-200 bg-white'} rounded-lg">
+            <div class="p-4 border ${attended ? 'border-green-300 bg-green-50' : 'border-gray-200 bg-white dark:bg-gray-800'} rounded-lg">
                 <div class="flex items-center justify-between">
                     <div class="flex-1">
                         <div class="font-medium text-gray-900">${new Date(seminar.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
@@ -1752,7 +1752,7 @@ function populateWorkflow(data) {
         
         nextActions.forEach(action => {
             html += `
-                <div class="bg-white border-2 border-${action.color}-200 rounded-lg p-4 mb-3">
+                <div class="bg-white dark:bg-gray-800 border-2 border-${action.color}-200 rounded-lg p-4 mb-3">
                     <div class="flex items-center justify-between mb-3">
                         <span class="text-base font-medium text-gray-900">${action.label}</span>
                         <svg class="w-5 h-5 text-${action.color}-600" fill="currentColor" viewBox="0 0 20 20">
@@ -2193,7 +2193,7 @@ function generatePalasumpaan(event) {
         <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" onclick="closePalasumpaanModal()"></div>
 
         <!-- Modal panel -->
-        <div class="inline-block w-full max-w-lg p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl">
+        <div class="inline-block w-full max-w-lg p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white dark:bg-gray-800 shadow-xl rounded-2xl">
             
             <div class="flex items-center justify-between mb-4">
                 <h3 class="text-lg font-bold text-gray-900">Generate Palasumpaan</h3>
@@ -2262,7 +2262,7 @@ function generatePalasumpaan(event) {
                 <div class="flex items-center justify-end space-x-3 pt-4">
                     <button type="button" 
                             onclick="closePalasumpaanModal()"
-                            class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                            class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 transition-colors">
                         Cancel
                     </button>
                     <button type="submit" 
@@ -2282,7 +2282,7 @@ function generatePalasumpaan(event) {
         <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" onclick="closeR513Modal()"></div>
 
         <!-- Modal panel -->
-        <div class="inline-block w-full max-w-lg p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl">
+        <div class="inline-block w-full max-w-lg p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white dark:bg-gray-800 shadow-xl rounded-2xl">
             
             <div class="flex items-center justify-between mb-4">
                 <h3 class="text-lg font-bold text-gray-900">Generate R5-13 Certificate</h3>
@@ -2336,7 +2336,7 @@ function generatePalasumpaan(event) {
             <div class="flex items-center justify-end space-x-3 pt-4">
                 <button type="button" 
                         onclick="closeR513Modal()"
-                        class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                        class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 transition-colors">
                     Cancel
                 </button>
                 <button type="button"

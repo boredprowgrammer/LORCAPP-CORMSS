@@ -266,7 +266,7 @@ document.addEventListener('alpine:init', () => {
 <div class="max-w-4xl mx-auto space-y-6" x-data="callupForm" x-cloak>
 
     <!-- Header -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 p-6">
         <div class="flex items-center justify-between">
             <div class="flex items-center space-x-3">
                 <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -307,7 +307,7 @@ document.addEventListener('alpine:init', () => {
     <?php endif; ?>
 
     <!-- Form -->
-    <form method="POST" class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 space-y-6">
+    <form method="POST" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 p-6 space-y-6">
         <input type="hidden" name="csrf_token" value="<?php echo Security::generateCSRFToken(); ?>">
         <input type="hidden" name="officer_uuid" :value="selectedOfficer ? selectedOfficer.uuid : ''">
         
@@ -347,7 +347,7 @@ document.addEventListener('alpine:init', () => {
                         id="manual-district"
                         x-model="manualDistrict"
                         @change="filterLocalsByDistrict()"
-                        class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white"
+                        class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white dark:bg-gray-800"
                         :required="useManualInput">
                         <option value="">Select District</option>
                         <?php foreach ($allDistricts as $dist): ?>
@@ -366,7 +366,7 @@ document.addEventListener('alpine:init', () => {
                     <select name="manual_local_code" 
                         id="manual-local"
                         x-model="manualLocal"
-                        class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white"
+                        class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white dark:bg-gray-800"
                         :disabled="!manualDistrict"
                         :required="useManualInput">
                         <option value="">Select Local</option>
@@ -390,7 +390,7 @@ document.addEventListener('alpine:init', () => {
                     
                     <!-- Search Results -->
                     <div x-show="searchResults.length > 0" 
-                        class="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                        class="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                         <template x-for="officer in searchResults" :key="officer.id">
                             <div @click="selectOfficer(officer)" 
                                 class="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-0">
@@ -442,7 +442,7 @@ document.addEventListener('alpine:init', () => {
                 <input 
                     type="text" 
                     id="department-display"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer bg-white text-sm"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer bg-white dark:bg-gray-800 text-sm"
                     placeholder="Select Department"
                     readonly
                     onclick="openDepartmentModal()"
@@ -512,7 +512,7 @@ document.addEventListener('alpine:init', () => {
 
         <!-- Actions -->
         <div class="flex items-center justify-between pt-4 border-t border-gray-200">
-            <a href="list.php" class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+            <a href="list.php" class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white dark:bg-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
                 Cancel
             </a>
             <button type="submit" 
@@ -531,7 +531,7 @@ document.addEventListener('alpine:init', () => {
 <div id="department-modal" class="hidden fixed inset-0 z-50 overflow-y-auto">
     <div class="flex items-center justify-center min-h-screen p-4">
         <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" onclick="closeDepartmentModal()"></div>
-        <div class="relative bg-white rounded-lg shadow-xl max-w-md w-full max-h-[80vh] flex flex-col">
+        <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full max-h-[80vh] flex flex-col">
             <!-- Header -->
             <div class="flex items-center justify-between p-4 border-b">
                 <h3 class="text-lg font-semibold text-gray-900">Select Department</h3>

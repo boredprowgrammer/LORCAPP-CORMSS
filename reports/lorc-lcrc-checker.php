@@ -173,6 +173,12 @@ try {
         $hasPurok = !empty($officer['purok']);
         $hasGrupo = !empty($officer['grupo']);
         
+        // Check R5-18 requirements using new dedicated fields
+        $hasR518 = isset($officer['r518_submitted']) && $officer['r518_submitted'] == 1;
+        $hasPicture = isset($officer['r518_picture_attached']) && $officer['r518_picture_attached'] == 1;
+        $hasSignatories = isset($officer['r518_signatories_complete']) && $officer['r518_signatories_complete'] == 1;
+        $r518Status = $officer['r518_completion_status'] ?? 'pending';
+        
         // Determine issue status
         $hasControl = !empty($controlNumber);
         $hasRegistry = !empty($registryNumber);
@@ -201,6 +207,16 @@ try {
             $issueType = 'no_grupo';
         }
         
+        // R5-18 Checker mode - check if officer is missing any R5-18 requirements
+        if ($filterIssue === 'r518_checker') {
+            if (!$hasR518 || !$hasPicture || !$hasSignatories) {
+                $issueType = 'r518_checker';
+            } else {
+                // Skip if complete
+                continue;
+            }
+        }
+        
         $statistics['total']++;
         
         // Apply issue filter
@@ -226,7 +242,14 @@ try {
             'has_control' => $hasControl,
             'has_registry' => $hasRegistry,
             'has_purok' => $hasPurok,
-            'has_grupo' => $hasGrupo
+            'has_grupo' => $hasGrupo,
+            'has_r518' => $hasR518,
+            'has_picture' => $hasPicture,
+            'has_data_verify' => $officer['r518_data_verify'] == 1,
+            'r518_status' => $r518Status,
+            'r518_notes' => $officer['r518_notes'] ?? null,
+            'r518_verified_at' => $officer['r518_verified_at'] ?? null,
+            'has_signatories' => $hasSignatories
         ];
     }
     
@@ -251,7 +274,7 @@ ob_start();
 
 <div class="space-y-6">
     <!-- Header -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
                 <h1 class="text-xl sm:text-2xl font-semibold text-gray-900">LORC/LCRC Checker</h1>
@@ -259,6 +282,12 @@ ob_start();
             </div>
             <?php if (!empty($officers)): ?>
             <div class="flex gap-2">
+                <a href="<?php echo BASE_URL; ?>/reports/r518-checker.php" class="inline-flex items-center justify-center px-3 sm:px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors shadow-sm print:hidden text-sm">
+                    <svg class="w-4 h-4 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    <span class="hidden sm:inline">R5-18 Checker</span>
+                </a>
                 <button onclick="openPrintView()" class="inline-flex items-center justify-center px-3 sm:px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors shadow-sm print:hidden text-sm">
                     <svg class="w-4 h-4 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
@@ -302,7 +331,7 @@ ob_start();
 
     <!-- Statistics Summary -->
     <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 print:hidden">
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4">
             <div class="flex items-center">
                 <div class="flex-shrink-0 bg-blue-100 rounded-lg p-2 sm:p-3">
                     <svg class="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -316,7 +345,7 @@ ob_start();
             </div>
         </div>
         
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4">
             <div class="flex items-center">
                 <div class="flex-shrink-0 bg-green-100 rounded-lg p-2 sm:p-3">
                     <svg class="w-5 h-5 sm:w-6 sm:h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -330,7 +359,7 @@ ob_start();
             </div>
         </div>
         
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4">
             <div class="flex items-center">
                 <div class="flex-shrink-0 bg-yellow-100 rounded-lg p-2 sm:p-3">
                     <svg class="w-5 h-5 sm:w-6 sm:h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -344,7 +373,7 @@ ob_start();
             </div>
         </div>
         
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4">
             <div class="flex items-center">
                 <div class="flex-shrink-0 bg-orange-100 rounded-lg p-2 sm:p-3">
                     <svg class="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -358,7 +387,7 @@ ob_start();
             </div>
         </div>
         
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4 col-span-2 sm:col-span-1">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4 col-span-2 sm:col-span-1">
             <div class="flex items-center">
                 <div class="flex-shrink-0 bg-red-100 rounded-lg p-2 sm:p-3">
                     <svg class="w-5 h-5 sm:w-6 sm:h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -374,7 +403,7 @@ ob_start();
     </div>
 
     <!-- Filters -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-5 print:hidden">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 p-4 sm:p-5 print:hidden">
         <form method="GET" action="" class="space-y-4">
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
                 <div>
@@ -473,7 +502,7 @@ ob_start();
 
     <!-- Report Table -->
     <?php if (!empty($officers)): ?>
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <!-- Desktop Table View - Hidden on mobile -->
         <div class="hidden md:block overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
@@ -493,13 +522,20 @@ ob_start();
                         <?php if ($showDepartments): ?>
                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tungkulin</th>
                         <?php endif; ?>
+                        <?php if ($filterIssue === 'r518_checker'): ?>
+                        <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Has R5-18?</th>
+                        <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Has 2x2 Picture?</th>
+                        <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Complete Signatories?</th>
+                        <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Data Verification</th>
+                        <?php else: ?>
                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Purok</th>
                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Grupo</th>
+                        <?php endif; ?>
                         <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">LORC/LCRC Check</th>
                         <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider print:hidden">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
+                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200">
                     <?php foreach ($officers as $officer): 
                         $rowClass = '';
                         $statusBadge = '';
@@ -532,6 +568,27 @@ ob_start();
                                 $rowClass = 'bg-pink-50';
                                 $statusBadge = '<span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-pink-100 text-pink-800">✗ No Purok & Grupo</span>';
                                 break;
+                            case 'r518_checker':
+                                $rowClass = 'bg-blue-50';
+                                $r518StatusLabel = '';
+                                switch($officer['r518_status']) {
+                                    case 'verified':
+                                        $r518StatusLabel = '<span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800" title="Verified: ' . ($officer['r518_verified_at'] ? date('M d, Y', strtotime($officer['r518_verified_at'])) : '') . '">✓ Verified</span>';
+                                        break;
+                                    case 'complete':
+                                        $r518StatusLabel = '<span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-800">✓ Complete</span>';
+                                        break;
+                                    case 'incomplete':
+                                        $r518StatusLabel = '<span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-yellow-100 text-yellow-800">⚠ Incomplete</span>';
+                                        break;
+                                    default:
+                                        $r518StatusLabel = '<span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-800">○ Pending</span>';
+                                }
+                                $statusBadge = $r518StatusLabel;
+                                if (!empty($officer['r518_notes'])) {
+                                    $statusBadge .= '<div class="text-xs text-gray-500 mt-1" title="' . Security::escape($officer['r518_notes']) . '">📝 Has Notes</div>';
+                                }
+                                break;
                         }
                     ?>
                     <tr class="<?php echo $rowClass; ?>">
@@ -548,7 +605,7 @@ ob_start();
                                       data-search-type="control"
                                       title="Click to edit or search"
                                       ><?php echo $officer['control_number'] ? Security::escape($officer['control_number']) : '—'; ?></span>
-                                <div class="search-dropdown hidden absolute z-50 mt-1 w-64 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto"></div>
+                                <div class="search-dropdown hidden absolute z-50 mt-1 w-64 bg-white dark:bg-gray-800 border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto"></div>
                                 <span class="loading-spinner hidden"></span>
                                 <span class="save-indicator hidden ml-2 text-xs text-green-600">✓</span>
                             </div>
@@ -565,7 +622,7 @@ ob_start();
                                       data-search-type="registry"
                                       title="Click to edit or search"
                                       ><?php echo $officer['registry_number'] ? Security::escape($officer['registry_number']) : '—'; ?></span>
-                                <div class="search-dropdown hidden absolute z-50 mt-1 w-96 bg-white border border-gray-300 rounded-lg shadow-lg max-h-64 overflow-y-auto"></div>
+                                <div class="search-dropdown hidden absolute z-50 mt-1 w-96 bg-white dark:bg-gray-800 border border-gray-300 rounded-lg shadow-lg max-h-64 overflow-y-auto"></div>
                                 <span class="loading-spinner hidden"></span>
                                 <span class="save-indicator hidden ml-2 text-xs text-green-600">✓</span>
                             </div>
@@ -581,6 +638,54 @@ ob_start();
                             <?php echo $officer['departments'] ? Security::escape($officer['departments']) : '—'; ?>
                         </td>
                         <?php endif; ?>
+                        <?php if ($filterIssue === 'r518_checker'): ?>
+                        <td class="px-4 py-3 text-center">
+                            <button type="button" 
+                                    class="r518-toggle-btn inline-flex items-center justify-center w-10 h-10 rounded-lg transition-all duration-200 <?php echo $officer['has_r518'] ? 'bg-green-100 hover:bg-green-200 text-green-700' : 'bg-gray-100 hover:bg-gray-200 text-gray-400'; ?>" 
+                                    data-officer-id="<?php echo $officer['officer_id']; ?>" 
+                                    data-field="r518_submitted" 
+                                    data-value="<?php echo $officer['has_r518'] ? 1 : 0; ?>"
+                                    title="<?php echo $officer['has_r518'] ? 'R5-18 Submitted - Click to mark as Not Submitted' : 'R5-18 Not Submitted - Click to mark as Submitted'; ?>">
+                                <i class="<?php echo $officer['has_r518'] ? 'fa-solid' : 'fa-regular'; ?> fa-thumbs-up text-xl"></i>
+                            </button>
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <button type="button" 
+                                    class="r518-toggle-btn inline-flex items-center justify-center w-10 h-10 rounded-lg transition-all duration-200 <?php echo $officer['has_picture'] ? 'bg-green-100 hover:bg-green-200 text-green-700' : 'bg-gray-100 hover:bg-gray-200 text-gray-400'; ?>" 
+                                    data-officer-id="<?php echo $officer['officer_id']; ?>" 
+                                    data-field="r518_picture_attached" 
+                                    data-value="<?php echo $officer['has_picture'] ? 1 : 0; ?>"
+                                    title="<?php echo $officer['has_picture'] ? '2x2 Picture Attached - Click to mark as Missing' : '2x2 Picture Missing - Click to mark as Attached'; ?>">
+                                <i class="<?php echo $officer['has_picture'] ? 'fa-solid' : 'fa-regular'; ?> fa-thumbs-up text-xl"></i>
+                            </button>
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <button type="button" 
+                                    class="r518-toggle-btn inline-flex items-center justify-center w-10 h-10 rounded-lg transition-all duration-200 <?php echo $officer['has_signatories'] ? 'bg-green-100 hover:bg-green-200 text-green-700' : 'bg-gray-100 hover:bg-gray-200 text-gray-400'; ?>" 
+                                    data-officer-id="<?php echo $officer['officer_id']; ?>" 
+                                    data-field="r518_signatories_complete" 
+                                    data-value="<?php echo $officer['has_signatories'] ? 1 : 0; ?>"
+                                    title="<?php echo $officer['has_signatories'] ? 'Signatories Complete - Click to mark as Incomplete' : 'Signatories Incomplete - Click to mark as Complete'; ?>">
+                                <i class="<?php echo $officer['has_signatories'] ? 'fa-solid' : 'fa-regular'; ?> fa-thumbs-up text-xl"></i>
+                            </button>
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <?php 
+                            $canVerifyData = $officer['has_r518'] && $officer['has_picture'] && $officer['has_signatories'];
+                            $isLocked = !$canVerifyData;
+                            ?>
+                            <button type="button" 
+                                    class="r518-toggle-btn inline-flex items-center justify-center w-10 h-10 rounded-lg transition-all duration-200 <?php echo $isLocked ? 'bg-gray-50 cursor-not-allowed opacity-50' : ($officer['has_data_verify'] ? 'bg-green-100 hover:bg-green-200 text-green-700' : 'bg-gray-100 hover:bg-gray-200 text-gray-400'); ?>" 
+                                    data-officer-id="<?php echo $officer['officer_id']; ?>" 
+                                    data-field="r518_data_verify" 
+                                    data-value="<?php echo $officer['has_data_verify'] ? 1 : 0; ?>"
+                                    data-locked="<?php echo $isLocked ? '1' : '0'; ?>"
+                                    <?php echo $isLocked ? 'disabled' : ''; ?>
+                                    title="<?php echo $isLocked ? '🔒 Complete all R5-18 requirements first (R5-18, Picture, Signatories)' : ($officer['has_data_verify'] ? 'Data Verified - Click to mark as Not Verified' : 'Data Not Verified - Click to mark as Verified'); ?>">
+                                <i class="<?php echo $officer['has_data_verify'] ? 'fa-solid' : 'fa-regular'; ?> fa-thumbs-up text-xl <?php echo $isLocked ? 'text-gray-300' : ''; ?>"></i>
+                            </button>
+                        </td>
+                        <?php else: ?>
                         <td class="px-4 py-3 text-sm">
                             <div class="editable-cell-wrapper relative inline-flex items-center">
                                 <span class="editable-cell" 
@@ -607,6 +712,7 @@ ob_start();
                                 <span class="save-indicator hidden ml-2 text-xs text-green-600">✓</span>
                             </div>
                         </td>
+                        <?php endif; ?>
                         <td class="px-4 py-3 text-center">
                             <?php echo $statusBadge; ?>
                         </td>
@@ -760,7 +866,7 @@ ob_start();
         </div>
     </div>
     <?php else: ?>
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-12">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 p-12">
         <div class="text-center">
             <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
@@ -1323,6 +1429,133 @@ function openPrintView() {
     
     // Open in new window
     window.open(printUrl, '_blank', 'width=1200,height=800');
+}
+
+// R5-18 Toggle Handler
+document.querySelectorAll('.r518-toggle-btn').forEach(btn => {
+    btn.addEventListener('click', async function() {
+        // Check if button is locked
+        if (this.dataset.locked === '1') {
+            return;
+        }
+        
+        const officerId = this.dataset.officerId;
+        const field = this.dataset.field;
+        const currentValue = parseInt(this.dataset.value);
+        const newValue = currentValue === 1 ? 0 : 1;
+        
+        // Disable button during update
+        this.disabled = true;
+        this.style.opacity = '0.6';
+        this.style.cursor = 'wait';
+        
+        try {
+            const formData = new FormData();
+            formData.append('officer_id', officerId);
+            formData.append('field', field);
+            formData.append('value', newValue);
+            formData.append('csrf_token', '<?php echo Security::generateCSRFToken(); ?>');
+            
+            const response = await fetch('<?php echo BASE_URL; ?>/api/update-r518-field.php', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                // Update button state
+                this.dataset.value = newValue;
+                const thumbsIcon = this.querySelector('i');
+                
+                if (newValue === 1) {
+                    thumbsIcon.className = 'fa-solid fa-thumbs-up text-xl';
+                    this.className = 'r518-toggle-btn inline-flex items-center justify-center w-10 h-10 rounded-lg transition-all duration-200 bg-green-100 hover:bg-green-200 text-green-700';
+                    this.title = this.title.replace('Click to mark as Submitted', 'Click to mark as Not Submitted')
+                                          .replace('Click to mark as Attached', 'Click to mark as Missing')
+                                          .replace('Click to mark as Complete', 'Click to mark as Incomplete')
+                                          .replace('Click to mark as Verified', 'Click to mark as Not Verified');
+                } else {
+                    thumbsIcon.className = 'fa-regular fa-thumbs-up text-xl';
+                    this.className = 'r518-toggle-btn inline-flex items-center justify-center w-10 h-10 rounded-lg transition-all duration-200 bg-gray-100 hover:bg-gray-200 text-gray-400';
+                    this.title = this.title.replace('Click to mark as Not Submitted', 'Click to mark as Submitted')
+                                          .replace('Click to mark as Missing', 'Click to mark as Attached')
+                                          .replace('Click to mark as Incomplete', 'Click to mark as Complete')
+                                          .replace('Click to mark as Not Verified', 'Click to mark as Verified');
+                }
+                
+                // Update data verify button lock state for this officer
+                updateDataVerifyLock(officerId);
+                
+                // Show success feedback
+                const originalTransform = this.style.transform;
+                this.style.transform = 'scale(1.2)';
+                setTimeout(() => {
+                    this.style.transform = originalTransform;
+                }, 200);
+            } else {
+                alert('Failed to update: ' + result.message);
+            }
+        } catch (error) {
+            console.error('Error updating R5-18 field:', error);
+            alert('An error occurred while updating. Please try again.');
+        } finally {
+            // Re-enable button
+            this.disabled = false;
+            this.style.opacity = '1';
+            this.style.cursor = 'pointer';
+        }
+    });
+});
+
+// Function to update data verify button lock state
+function updateDataVerifyLock(officerId) {
+    // Find all buttons for this officer in the same row
+    const row = document.querySelector(`tr:has(button[data-officer-id="${officerId}"])`);
+    if (!row) return;
+    
+    const buttons = row.querySelectorAll('.r518-toggle-btn');
+    let hasR518 = false, hasPicture = false, hasSignatories = false;
+    let dataVerifyBtn = null;
+    
+    buttons.forEach(btn => {
+        const field = btn.dataset.field;
+        const value = parseInt(btn.dataset.value);
+        
+        if (field === 'r518_submitted') hasR518 = value === 1;
+        if (field === 'r518_picture_attached') hasPicture = value === 1;
+        if (field === 'r518_signatories_complete') hasSignatories = value === 1;
+        if (field === 'r518_data_verify') dataVerifyBtn = btn;
+    });
+    
+    if (!dataVerifyBtn) return;
+    
+    const canVerify = hasR518 && hasPicture && hasSignatories;
+    const isLocked = !canVerify;
+    
+    dataVerifyBtn.dataset.locked = isLocked ? '1' : '0';
+    dataVerifyBtn.disabled = isLocked;
+    
+    const icon = dataVerifyBtn.querySelector('i');
+    
+    if (isLocked) {
+        dataVerifyBtn.className = 'r518-toggle-btn inline-flex items-center justify-center w-10 h-10 rounded-lg transition-all duration-200 bg-gray-50 cursor-not-allowed opacity-50';
+        dataVerifyBtn.title = '🔒 Complete all R5-18 requirements first (R5-18, Picture, Signatories)';
+        icon.className = 'fa-regular fa-thumbs-up text-xl text-gray-300';
+        // Reset to not verified if locked
+        dataVerifyBtn.dataset.value = '0';
+    } else {
+        const currentValue = parseInt(dataVerifyBtn.dataset.value);
+        if (currentValue === 1) {
+            dataVerifyBtn.className = 'r518-toggle-btn inline-flex items-center justify-center w-10 h-10 rounded-lg transition-all duration-200 bg-green-100 hover:bg-green-200 text-green-700';
+            dataVerifyBtn.title = 'Data Verified - Click to mark as Not Verified';
+            icon.className = 'fa-solid fa-thumbs-up text-xl';
+        } else {
+            dataVerifyBtn.className = 'r518-toggle-btn inline-flex items-center justify-center w-10 h-10 rounded-lg transition-all duration-200 bg-gray-100 hover:bg-gray-200 text-gray-400';
+            dataVerifyBtn.title = 'Data Not Verified - Click to mark as Verified';
+            icon.className = 'fa-regular fa-thumbs-up text-xl';
+        }
+    }
 }
 </script>
 

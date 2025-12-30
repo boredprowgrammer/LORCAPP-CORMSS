@@ -96,7 +96,7 @@ ob_start();
     </div>
 
     <!-- Requests Table -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200">
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">

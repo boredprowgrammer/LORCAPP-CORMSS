@@ -75,7 +75,7 @@ ob_start();
                 <h1 class="text-3xl font-bold text-gray-900">Bulk Palasumpaan Generator</h1>
                 <p class="text-gray-600 mt-1">Generate oath certificates for multiple officers at once</p>
             </div>
-            <a href="list.php" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+            <a href="list.php" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 transition-colors">
                 ← Back to List
             </a>
         </div>
@@ -92,7 +92,7 @@ ob_start();
     <?php else: ?>
     
     <!-- Bulk Actions Form -->
-    <div x-data="bulkGenerator()" class="bg-white rounded-lg shadow-sm border border-gray-200">
+    <div x-data="bulkGenerator()" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200">
         <!-- Oath Details Section -->
         <div class="p-6 border-b border-gray-200 bg-gray-50">
             <h2 class="text-lg font-semibold text-gray-900 mb-4">Common Oath Details</h2>
@@ -134,7 +134,7 @@ ob_start();
         </div>
 
         <!-- Selection Controls -->
-        <div class="p-4 bg-white border-b border-gray-200 flex items-center justify-between">
+        <div class="p-4 bg-white dark:bg-gray-800 border-b border-gray-200 flex items-center justify-between">
             <div class="flex items-center space-x-4">
                 <label class="flex items-center">
                     <input type="checkbox" 

@@ -76,7 +76,7 @@ ob_start();
     </div>
     
     <!-- Filters -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 p-6">
         <form method="GET" action="" class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Action</label>
@@ -123,13 +123,13 @@ ob_start();
     
     <!-- Stats -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 p-6">
             <div class="text-sm text-gray-500 mb-1">Total Logs</div>
             <div class="text-3xl font-bold text-blue-600"><?php echo number_format($totalRecords); ?></div>
             <div class="text-xs text-gray-400 mt-1">All recorded activities</div>
         </div>
         
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 p-6">
             <div class="text-sm text-gray-500 mb-1">Current Page</div>
             <div class="text-3xl font-bold text-purple-600"><?php echo $pagination['current_page']; ?> / <?php echo $pagination['total_pages']; ?></div>
             <div class="text-xs text-gray-400 mt-1">Viewing <?php echo $pagination['per_page']; ?> per page</div>
@@ -137,7 +137,7 @@ ob_start();
     </div>
     
     <!-- Audit Log Table -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200">
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
@@ -150,7 +150,7 @@ ob_start();
                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">IP Address</th>
                     </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
+                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200">
                     <?php if (empty($logs)): ?>
                         <tr>
                             <td colspan="6" class="text-center py-8">
@@ -223,7 +223,7 @@ ob_start();
                     <div class="inline-flex items-center space-x-1">
                         <?php if ($pagination['has_prev']): ?>
                             <a href="?page=<?php echo $pagination['current_page'] - 1; ?><?php echo $filterAction ? '&action=' . urlencode($filterAction) : ''; ?><?php echo $filterUser ? '&user_id=' . $filterUser : ''; ?>" 
-                               class="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-lg text-sm text-gray-700 bg-white hover:bg-gray-50 transition-colors">«</a>
+                               class="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-lg text-sm text-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 transition-colors">«</a>
                         <?php endif; ?>
                         
                         <?php 
@@ -232,14 +232,14 @@ ob_start();
                         for ($i = $start; $i <= $end; $i++): 
                         ?>
                             <a href="?page=<?php echo $i; ?><?php echo $filterAction ? '&action=' . urlencode($filterAction) : ''; ?><?php echo $filterUser ? '&user_id=' . $filterUser : ''; ?>" 
-                               class="inline-flex items-center px-3 py-1.5 border rounded-lg text-sm transition-colors <?php echo $i === $pagination['current_page'] ? 'bg-blue-600 border-blue-600 text-white' : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50'; ?>">
+                               class="inline-flex items-center px-3 py-1.5 border rounded-lg text-sm transition-colors <?php echo $i === $pagination['current_page'] ? 'bg-blue-600 border-blue-600 text-white' : 'border-gray-300 text-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50'; ?>">
                                 <?php echo $i; ?>
                             </a>
                         <?php endfor; ?>
                         
                         <?php if ($pagination['has_next']): ?>
                             <a href="?page=<?php echo $pagination['current_page'] + 1; ?><?php echo $filterAction ? '&action=' . urlencode($filterAction) : ''; ?><?php echo $filterUser ? '&user_id=' . $filterUser : ''; ?>" 
-                               class="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-lg text-sm text-gray-700 bg-white hover:bg-gray-50 transition-colors">»</a>
+                               class="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-lg text-sm text-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 transition-colors">»</a>
                         <?php endif; ?>
                     </div>
                 </div>

@@ -219,7 +219,7 @@ ob_start();
     <!-- Announcements List -->
     <div class="space-y-4">
         <?php if (empty($announcements)): ?>
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 p-12 text-center">
                 <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"></path>
                 </svg>
@@ -228,7 +228,7 @@ ob_start();
             </div>
         <?php else: ?>
             <?php foreach ($announcements as $announcement): ?>
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
                     <div class="flex items-start justify-between gap-4">
                         <div class="flex-1">
                             <div class="flex items-center gap-2 mb-2">
@@ -339,7 +339,7 @@ ob_start();
 <div id="announcementModal" class="hidden fixed inset-0 z-50 overflow-y-auto">
     <div class="flex items-center justify-center min-h-screen px-4 py-6">
         <div onclick="closeAnnouncementModal()" class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity"></div>
-        <div onclick="event.stopPropagation()" class="relative bg-white rounded-lg shadow-xl w-full max-w-3xl p-6 transform transition-all max-h-[90vh] overflow-y-auto">
+        <div onclick="event.stopPropagation()" class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-3xl p-6 transform transition-all max-h-[90vh] overflow-y-auto">
             
             <div class="flex items-center justify-between mb-4">
                 <h3 class="text-lg font-bold text-gray-900" id="modalTitle">Create New Announcement</h3>
@@ -434,7 +434,7 @@ ob_start();
             </div>
             
             <div class="flex items-center justify-end space-x-3 pt-4 border-t">
-                <button type="button" onclick="closeAnnouncementModal()" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors">Cancel</button>
+                <button type="button" onclick="closeAnnouncementModal()" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 transition-colors">Cancel</button>
                 <button type="submit" id="submitBtn" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">
                     Create Announcement
                 </button>

@@ -211,7 +211,7 @@ ob_start();
                 <a href="link-to-lorcapp.php" class="px-4 py-2 border border-blue-300 text-blue-700 rounded-lg hover:bg-blue-50 transition-colors">
                     Link Existing Requests
                 </a>
-                <a href="list.php" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                <a href="list.php" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 transition-colors">
                     ← Back to List
                 </a>
             </div>
@@ -231,7 +231,7 @@ ob_start();
     <?php unset($_SESSION['error']); endif; ?>
 
     <!-- Search Form -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
         <form method="GET" class="flex gap-4">
             <div class="flex-1">
                 <input 
@@ -248,7 +248,7 @@ ob_start();
     </div>
 
     <!-- Import Form -->
-    <form method="POST" x-data="importForm()" class="bg-white rounded-lg shadow-sm border border-gray-200">
+    <form method="POST" x-data="importForm()" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200">
         <input type="hidden" name="action" value="import">
         
         <!-- Import Configuration -->
@@ -302,7 +302,7 @@ ob_start();
                             <input 
                                 type="text" 
                                 id="local-display"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer bg-white"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer bg-white dark:bg-gray-800"
                                 placeholder="Select Local Congregation"
                                 readonly
                                 onclick="openLocalModal()"
@@ -326,7 +326,7 @@ ob_start();
                         <input 
                             type="text" 
                             id="department-display"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer bg-white"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer bg-white dark:bg-gray-800"
                             placeholder="Select Department"
                             readonly
                             onclick="openDepartmentModal()"
@@ -355,7 +355,7 @@ ob_start();
         </div>
 
         <!-- Selection Controls -->
-        <div class="p-4 bg-white border-b border-gray-200 flex items-center justify-between">
+        <div class="p-4 bg-white dark:bg-gray-800 border-b border-gray-200 flex items-center justify-between">
             <div class="flex items-center space-x-4">
                 <label class="flex items-center">
                     <input type="checkbox" 
@@ -584,7 +584,7 @@ function filterDepartments() {
 <div id="department-modal" class="hidden fixed inset-0 z-50 overflow-y-auto">
     <div class="flex items-center justify-center min-h-screen p-4">
         <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" onclick="closeDepartmentModal()"></div>
-        <div class="relative bg-white rounded-lg shadow-xl max-w-md w-full max-h-[80vh] flex flex-col">
+        <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full max-h-[80vh] flex flex-col">
             <!-- Header -->
             <div class="flex items-center justify-between p-4 border-b">
                 <h3 class="text-lg font-semibold text-gray-900">Select Department</h3>
@@ -623,7 +623,7 @@ function filterDepartments() {
 <div id="local-modal" class="hidden fixed inset-0 z-50 overflow-y-auto">
     <div class="flex items-center justify-center min-h-screen p-4">
         <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" onclick="closeLocalModal()"></div>
-        <div class="relative bg-white rounded-lg shadow-xl max-w-md w-full max-h-[80vh] flex flex-col">
+        <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full max-h-[80vh] flex flex-col">
             <!-- Header -->
             <div class="flex items-center justify-between p-4 border-b">
                 <h3 class="text-lg font-semibold text-gray-900">Select Local Congregation</h3>

@@ -285,7 +285,7 @@ ob_start();
     <!-- Header -->
     <div class="flex flex-wrap items-center justify-between gap-4">
         <div>
-            <a href="<?php echo BASE_URL; ?>/officers/list.php" class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors mb-2">
+            <a href="<?php echo BASE_URL; ?>/officers/list.php" class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-gray-700 bg-white dark:bg-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors mb-2">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                 </svg>
@@ -304,7 +304,7 @@ ob_start();
     </div>
     
     <!-- Officer Card -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 p-6">
         <div class="flex flex-col md:flex-row gap-6">
             <!-- Avatar -->
             <div class="flex-shrink-0">
@@ -433,7 +433,7 @@ ob_start();
     </div>
     
     <!-- Departments -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 p-6">
         <div class="flex items-center space-x-3 mb-6">
             <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                 <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -458,7 +458,7 @@ ob_start();
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
+                    <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200">
                         <?php foreach ($departments as $dept): ?>
                             <tr class="hover:bg-gray-50">
                                 <td class="px-4 py-3 font-semibold text-gray-900"><?php echo Security::escape($dept['department']); ?></td>
@@ -513,7 +513,7 @@ ob_start();
     
     <!-- Transfers -->
     <?php if (!empty($transfers)): ?>
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 p-6">
         <div class="flex items-center space-x-3 mb-6">
             <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
                 <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -535,7 +535,7 @@ ob_start();
                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Processed By</th>
                     </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
+                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200">
                     <?php foreach ($transfers as $transfer): ?>
                         <tr class="hover:bg-gray-50">
                             <td class="px-4 py-3">
@@ -558,7 +558,7 @@ ob_start();
     
     <!-- Removals -->
     <?php if (!empty($removals)): ?>
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 p-6">
         <div class="flex items-center space-x-3 mb-6">
             <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
                 <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -589,7 +589,7 @@ ob_start();
                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Processed By</th>
                     </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
+                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200">
                     <?php 
                     $removalCodes = getRemovalCodes();
                     $statusConfig = [
@@ -630,7 +630,7 @@ ob_start();
     <?php endif; ?>
     
     <!-- Officer Requests History -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 p-6">
         <div class="flex items-center space-x-3 mb-6">
             <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                 <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -712,7 +712,7 @@ ob_start();
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
+                    <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200">
                         <template x-for="request in requests" :key="request.request_id">
                             <tr class="hover:bg-gray-50">
                                 <td class="px-4 py-3">
@@ -769,7 +769,7 @@ ob_start();
          style="display: none;">
         <div class="flex items-center justify-center min-h-screen p-4">
             <div @click="closeModal()" class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity"></div>
-            <div @click.stop class="relative bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col transform transition-all"
+            <div @click.stop class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col transform transition-all"
                  x-show="showModal"
                  x-transition:enter="ease-out duration-300"
                  x-transition:enter-start="opacity-0 translate-y-4"
@@ -897,7 +897,7 @@ ob_start();
                             
                             <div class="space-y-3">
                                 <!-- R5-15/04 -->
-                                <div class="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
+                                <div class="flex items-center justify-between p-4 bg-white dark:bg-gray-800 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
                                     <div class="flex items-center space-x-3">
                                         <input type="checkbox" 
                                                :checked="requestData?.has_r515" 
@@ -916,7 +916,7 @@ ob_start();
                                 </div>
                                 
                                 <!-- Patotoo ng Katiwala -->
-                                <div class="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
+                                <div class="flex items-center justify-between p-4 bg-white dark:bg-gray-800 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
                                     <div class="flex items-center space-x-3">
                                         <input type="checkbox" 
                                                :checked="requestData?.has_patotoo_katiwala" 
@@ -935,7 +935,7 @@ ob_start();
                                 </div>
                                 
                                 <!-- Patotoo ng Kapisanan -->
-                                <div class="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
+                                <div class="flex items-center justify-between p-4 bg-white dark:bg-gray-800 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
                                     <div class="flex items-center space-x-3">
                                         <input type="checkbox" 
                                                :checked="requestData?.has_patotoo_kapisanan" 
@@ -954,7 +954,7 @@ ob_start();
                                 </div>
                                 
                                 <!-- Salaysay ng Magulang -->
-                                <div class="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
+                                <div class="flex items-center justify-between p-4 bg-white dark:bg-gray-800 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
                                     <div class="flex items-center space-x-3">
                                         <input type="checkbox" 
                                                :checked="requestData?.has_salaysay_magulang" 
@@ -973,7 +973,7 @@ ob_start();
                                 </div>
                                 
                                 <!-- Salaysay ng Pagtanggap -->
-                                <div class="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
+                                <div class="flex items-center justify-between p-4 bg-white dark:bg-gray-800 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
                                     <div class="flex items-center space-x-3">
                                         <input type="checkbox" 
                                                :checked="requestData?.has_salaysay_pagtanggap" 
@@ -992,7 +992,7 @@ ob_start();
                                 </div>
                                 
                                 <!-- R5-13 Seminar (Auto-complete) -->
-                                <div class="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg"
+                                <div class="flex items-center justify-between p-4 bg-white dark:bg-gray-800 border border-gray-200 rounded-lg"
                                      :class="requestData?.status === 'seminar_completed' || requestData?.status === 'requested_to_oath' || requestData?.status === 'ready_to_oath' || requestData?.status === 'oath_taken' ? 'border-green-300 bg-green-50' : 'border-gray-200'">
                                     <div class="flex items-center space-x-3">
                                         <input type="checkbox" 
@@ -1016,7 +1016,7 @@ ob_start();
                                 </div>
                                 
                                 <!-- 2x2 Picture -->
-                                <div class="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
+                                <div class="flex items-center justify-between p-4 bg-white dark:bg-gray-800 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
                                     <div class="flex items-center space-x-3">
                                         <input type="checkbox" 
                                                :checked="requestData?.has_picture" 
@@ -1137,7 +1137,7 @@ ob_start();
     </script>
 
     <!-- Call-Up Slips Section -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 p-6">
         <div class="flex items-center justify-between mb-6">
             <div class="flex items-center space-x-3">
                 <div class="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
@@ -1201,7 +1201,7 @@ ob_start();
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
+                    <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200">
                         <?php foreach ($callUpSlips as $slip): 
                             // Determine status styling
                             $statusConfig = [
@@ -1278,7 +1278,7 @@ ob_start();
      style="display: none;">
     <div class="flex items-center justify-center min-h-screen p-4">
         <div @click="show = false" class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity"></div>
-        <div @click.stop class="relative bg-white rounded-lg shadow-xl max-w-md w-full p-6 transform transition-all"
+        <div @click.stop class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6 transform transition-all"
              x-show="show"
              x-transition:enter="ease-out duration-300"
              x-transition:enter-start="opacity-0 translate-y-4"
@@ -1316,7 +1316,7 @@ ob_start();
                     <input type="hidden" name="department_id" x-model="deptId">
                     
                     <div class="flex justify-center space-x-3">
-                        <button type="button" @click="show = false" class="px-4 py-2 border border-gray-300 rounded-lg font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                        <button type="button" @click="show = false" class="px-4 py-2 border border-gray-300 rounded-lg font-medium text-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 transition-colors">
                             Cancel
                         </button>
                         <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg font-medium text-white bg-red-600 hover:bg-red-700 transition-colors">
@@ -1341,7 +1341,7 @@ ob_start();
      style="display: none;">
     <div class="flex items-center justify-center min-h-screen p-4">
         <div @click="show = false" class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity"></div>
-        <div @click.stop class="relative bg-white rounded-lg shadow-xl max-w-2xl w-full p-6 transform transition-all"
+        <div @click.stop class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full p-6 transform transition-all"
              x-show="show"
              x-transition:enter="ease-out duration-300"
              x-transition:enter-start="opacity-0 translate-y-4"
@@ -1425,7 +1425,7 @@ ob_start();
             </div>
             
             <div class="flex justify-end space-x-3 mt-6">
-                <button type="button" @click="show = false" class="px-4 py-2 border border-gray-300 rounded-lg font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">Cancel</button>
+                <button type="button" @click="show = false" class="px-4 py-2 border border-gray-300 rounded-lg font-medium text-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 transition-colors">Cancel</button>
                 <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg font-medium text-white bg-red-600 hover:bg-red-700 transition-colors">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>

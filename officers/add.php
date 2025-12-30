@@ -393,14 +393,14 @@ ob_start();
 ?>
 
 <div class="max-w-4xl mx-auto space-y-6">
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
         <div class="flex items-center space-x-3 mb-6">
             <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                 <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
                 </svg>
             </div>
-            <h2 class="text-2xl font-semibold text-gray-900">Add New Officer</h2>
+            <h2 class="text-2xl font-semibold text-gray-900 dark:text-gray-100">Add New Officer</h2>
         </div>
         
 
@@ -438,7 +438,7 @@ ob_start();
             <input type="hidden" name="existing_officer_id" x-model="selectedOfficerId">
             
             <!-- Record Type -->
-            <div class="flex items-start space-x-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <div class="flex items-start space-x-3 p-4 bg-gray-50 rounded-lg border border-gray-200 dark:border-gray-700">
                 <input 
                     type="checkbox" 
                     id="has_existing_record"
@@ -449,7 +449,7 @@ ob_start();
                     @change="selectedOfficer = null; searchQuery = ''; searchResults = []"
                 >
                 <label for="has_existing_record" class="flex-1 cursor-pointer">
-                    <span class="font-semibold text-gray-900 block">Officer has existing record?</span>
+                    <span class="font-semibold text-gray-900 dark:text-gray-100 block">Officer has existing record?</span>
                     <p class="text-xs text-gray-600 mt-1">Check this if the officer has served before (CODE D)</p>
                 </label>
             </div>
@@ -468,7 +468,7 @@ ob_start();
             
             <!-- Officer Search (CODE D) -->
             <div x-show="hasExisting" x-cloak class="space-y-4">
-                <div class="border-t border-gray-200 my-6 pt-6">
+                <div class="border-t border-gray-200 dark:border-gray-700 my-6 pt-6">
                     <h3 class="text-sm font-medium text-gray-700 mb-4">Search Existing Officer</h3>
                 </div>
                 
@@ -507,12 +507,12 @@ ob_start();
                     
                     <!-- Search Results Dropdown -->
                     <div x-show="searchResults.length > 0 && !selectedOfficer" 
-                         class="mt-2 bg-white rounded-lg shadow-lg border border-gray-200 max-h-64 overflow-y-auto">
+                         class="mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 max-h-64 overflow-y-auto">
                         <ul class="divide-y divide-gray-200">
                             <template x-for="officer in searchResults" :key="officer.id">
                                 <li>
                                     <button type="button" @click="selectedOfficer = officer; selectedOfficerId = officer.id; searchQuery = officer.name; searchResults = []" class="w-full px-4 py-3 hover:bg-gray-50 text-left transition-colors">
-                                        <div class="font-semibold text-gray-900 cursor-pointer name-mono" 
+                                        <div class="font-semibold text-gray-900 dark:text-gray-100 cursor-pointer name-mono" 
                                              :title="officer.full_name"
                                              @dblclick="$el.textContent = officer.full_name"
                                              x-text="officer.name"></div>
@@ -531,7 +531,7 @@ ob_start();
                                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
                                 </svg>
                                 <div>
-                                    <div class="font-semibold text-gray-900 cursor-pointer name-mono" 
+                                    <div class="font-semibold text-gray-900 dark:text-gray-100 cursor-pointer name-mono" 
                                          :title="selectedOfficer?.full_name"
                                          @dblclick="$el.textContent = selectedOfficer?.full_name"
                                          x-text="selectedOfficer?.name"></div>
@@ -548,7 +548,7 @@ ob_start();
                 </div>
             </div>                <!-- Personal Information (CODE A only) -->
                 <div x-show="!hasExisting" x-cloak>
-                    <div class="border-t border-gray-200 my-6 pt-6">
+                    <div class="border-t border-gray-200 dark:border-gray-700 my-6 pt-6">
                         <h3 class="text-sm font-medium text-gray-700 mb-4">Personal Information</h3>
                     </div>
                     
@@ -572,7 +572,7 @@ ob_start();
                                 <button 
                                     type="button"
                                     onclick="insertEnye('last_name')"
-                                    class="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 text-sm font-bold text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded"
+                                    class="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 text-sm font-bold text-gray-600 hover:text-gray-900 dark:text-gray-100 hover:bg-gray-100 rounded"
                                     title="Insert ñ"
                                 >ñ</button>
                             </div>
@@ -597,7 +597,7 @@ ob_start();
                                 <button 
                                     type="button"
                                     onclick="insertEnye('first_name')"
-                                    class="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 text-sm font-bold text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded"
+                                    class="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 text-sm font-bold text-gray-600 hover:text-gray-900 dark:text-gray-100 hover:bg-gray-100 rounded"
                                     title="Insert ñ"
                                 >ñ</button>
                             </div>
@@ -622,7 +622,7 @@ ob_start();
                 </div>
                 
                 <!-- Location Information -->
-                <div class="border-t border-gray-200 my-6 pt-6">
+                <div class="border-t border-gray-200 dark:border-gray-700 my-6 pt-6">
                     <h3 class="text-sm font-medium text-gray-700 mb-4">Location Information</h3>
                 </div>
                 
@@ -660,7 +660,7 @@ ob_start();
                                 <input 
                                     type="text" 
                                     id="local-display"
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer bg-white"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer bg-white dark:bg-gray-800"
                                     placeholder="Select Local Congregation"
                                     readonly
                                     onclick="openLocalModal()"
@@ -745,7 +745,7 @@ ob_start();
                             <input type="hidden" name="legacy_officer_id" id="legacy_officer_id" value="<?php echo Security::escape($_POST['legacy_officer_id'] ?? ''); ?>">
                             
                             <!-- Search Results Dropdown -->
-                            <div id="control_results" class="hidden absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-96 overflow-y-auto">
+                            <div id="control_results" class="hidden absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 rounded-lg shadow-lg max-h-96 overflow-y-auto">
                                 <div id="control_results_list"></div>
                             </div>
                             
@@ -777,14 +777,14 @@ ob_start();
                             <input type="hidden" name="registry_number" id="registry_number" value="<?php echo Security::escape($_POST['registry_number'] ?? ''); ?>">
                             <input type="hidden" name="tarheta_control_id" id="tarheta_control_id" value="">
                             <!-- Search Results Dropdown -->
-                            <div id="tarheta_results" class="hidden absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto"></div>
+                            <div id="tarheta_results" class="hidden absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto"></div>
                         </div>
                         <p class="text-xs text-gray-500 mt-1">Search for registry numbers from Tarheta or type manually</p>
                     </div>
                 </div>
                 
                 <!-- Department and Duty -->
-                <div class="border-t border-gray-200 my-6 pt-6">
+                <div class="border-t border-gray-200 dark:border-gray-700 my-6 pt-6">
                     <h3 class="text-sm font-medium text-gray-700 mb-4">Officer Assignment</h3>
                 </div>
                 
@@ -797,7 +797,7 @@ ob_start();
                             <input 
                                 type="text" 
                                 id="department-display"
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer bg-white"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer bg-white dark:bg-gray-800"
                                 placeholder="Select Department"
                                 readonly
                                 onclick="openDepartmentModal()"
@@ -882,8 +882,8 @@ ob_start();
                 </div>
                 
                 <!-- Submit Button -->
-                <div class="flex items-center justify-end space-x-3 pt-6 border-t border-gray-200">
-                    <a href="<?php echo BASE_URL; ?>/officers/list.php" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                <div class="flex items-center justify-end space-x-3 pt-6 border-t border-gray-200 dark:border-gray-700">
+                    <a href="<?php echo BASE_URL; ?>/officers/list.php" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg font-medium text-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                         </svg>
@@ -1017,10 +1017,10 @@ function filterDepartments() {
 <div id="department-modal" class="hidden fixed inset-0 z-50 overflow-y-auto">
     <div class="flex items-center justify-center min-h-screen p-4">
         <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" onclick="closeDepartmentModal()"></div>
-        <div class="relative bg-white rounded-lg shadow-xl max-w-md w-full max-h-[80vh] flex flex-col">
+        <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full max-h-[80vh] flex flex-col">
             <!-- Header -->
             <div class="flex items-center justify-between p-4 border-b">
-                <h3 class="text-lg font-semibold text-gray-900">Select Department</h3>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Select Department</h3>
                 <button type="button" onclick="closeDepartmentModal()" class="text-gray-400 hover:text-gray-500">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -1044,7 +1044,7 @@ function filterDepartments() {
                 <?php foreach (getDepartments() as $dept): ?>
                     <div class="department-item px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100"
                          onclick="selectDepartment('<?php echo Security::escape($dept); ?>')">
-                        <span class="text-gray-900"><?php echo Security::escape($dept); ?></span>
+                        <span class="text-gray-900 dark:text-gray-100"><?php echo Security::escape($dept); ?></span>
                     </div>
                 <?php endforeach; ?>
             </div>
@@ -1056,10 +1056,10 @@ function filterDepartments() {
 <div id="local-modal" class="hidden fixed inset-0 z-50 overflow-y-auto">
     <div class="flex items-center justify-center min-h-screen p-4">
         <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" onclick="closeLocalModal()"></div>
-        <div class="relative bg-white rounded-lg shadow-xl max-w-md w-full max-h-[80vh] flex flex-col">
+        <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full max-h-[80vh] flex flex-col">
             <!-- Header -->
             <div class="flex items-center justify-between p-4 border-b">
-                <h3 class="text-lg font-semibold text-gray-900">Select Local Congregation</h3>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Select Local Congregation</h3>
                 <button type="button" onclick="closeLocalModal()" class="text-gray-400 hover:text-gray-500">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -1175,7 +1175,7 @@ function searchTarheta(search) {
                     html += `
                         <div class="px-3 py-2 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-0 transition-colors" 
                              onclick="selectTarheta(${record.id}, '${escapeHtml(record.full_name)}', '${escapeHtml(record.registry_number)}', '${escapeHtml(record.last_name)}', '${escapeHtml(record.first_name)}', '${escapeHtml(record.middle_name)}', '${escapeHtml(record.husbands_surname || '')}')">
-                            <div class="text-sm font-medium text-gray-900">${escapeHtml(record.full_name)}</div>
+                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">${escapeHtml(record.full_name)}</div>
                             <div class="text-xs text-gray-600 mt-0.5">${additionalInfo.join(' • ')}</div>
                         </div>
                     `;
@@ -1301,7 +1301,7 @@ function searchControl(search) {
                     html += `
                         <div class="px-3 py-2 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-0 transition-colors" 
                              onclick="selectLegacyControl(${record.id}, '${escapeHtml(record.name)}', '${escapeHtml(record.control_number)}')">
-                            <div class="text-sm font-medium text-gray-900">${escapeHtml(record.name)}</div>
+                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">${escapeHtml(record.name)}</div>
                             <div class="text-xs text-gray-600 mt-0.5">Control#: ${escapeHtml(record.control_number)}</div>
                         </div>
                     `;
