@@ -23,6 +23,14 @@ $filterKapisanan = Security::sanitizeInput($_GET['kapisanan'] ?? '');
 $filterExtGws = Security::sanitizeInput($_GET['ext_gws'] ?? '');
 $filterStatus = Security::sanitizeInput($_GET['status'] ?? 'active');
 
+// Auto-set district and local based on user role
+if ($currentUser['role'] === 'district' || $currentUser['role'] === 'local') {
+    $filterDistrict = $currentUser['district_code'];
+}
+if ($currentUser['role'] === 'local') {
+    $filterLocal = $currentUser['local_code'];
+}
+
 // Get signatory names from cookies (empty by default)
 $sig1 = $_COOKIE['masterlist_sig1'] ?? '';
 $sig2 = $_COOKIE['masterlist_sig2'] ?? '';
@@ -55,6 +63,8 @@ if (!empty($filterDistrict)) {
         error_log("Load locals error: " . $e->getMessage());
     }
 }
+
+// Note: Signatories are managed via cookies and autocomplete from tarheta_control via AJAX
 
 // Get officers for masterlist
 $officers = [];
@@ -130,7 +140,10 @@ try {
         LEFT JOIN officer_removals r ON o.officer_id = r.officer_id
         $whereClause
         GROUP BY o.officer_id
-        ORDER BY lc.local_name, o.purok, o.grupo, o.officer_id
+        ORDER BY 
+            CASE WHEN o.control_number IS NULL OR o.control_number = '' THEN 1 ELSE 0 END,
+            o.control_number, 
+            o.officer_id
     ");
     
     $stmt->execute($params);
@@ -241,7 +254,7 @@ ob_start();
         <form method="GET" action="" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">District</label>
-                <select name="district" id="district" class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" onchange="loadLocals(this.value)">
+                <select name="district" id="district" class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" onchange="loadLocals(this.value)" <?php echo ($currentUser['role'] !== 'admin') ? 'disabled' : ''; ?>>
                     <option value="">All Districts</option>
                     <?php foreach ($districts as $district): ?>
                         <option value="<?php echo Security::escape($district['district_code']); ?>" <?php echo $filterDistrict === $district['district_code'] ? 'selected' : ''; ?>>
@@ -249,11 +262,14 @@ ob_start();
                         </option>
                     <?php endforeach; ?>
                 </select>
+                <?php if ($currentUser['role'] !== 'admin'): ?>
+                    <input type="hidden" name="district" value="<?php echo Security::escape($filterDistrict); ?>">
+                <?php endif; ?>
             </div>
             
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Local</label>
-                <select name="local" id="local" class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                <select name="local" id="local" class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" <?php echo ($currentUser['role'] === 'local') ? 'disabled' : ''; ?>>
                     <option value="">All Locals</option>
                     <?php foreach ($locals as $local): ?>
                         <option value="<?php echo Security::escape($local['local_code']); ?>" <?php echo $filterLocal === $local['local_code'] ? 'selected' : ''; ?>>
@@ -261,6 +277,9 @@ ob_start();
                         </option>
                     <?php endforeach; ?>
                 </select>
+                <?php if ($currentUser['role'] === 'local'): ?>
+                    <input type="hidden" name="local" value="<?php echo Security::escape($filterLocal); ?>">
+                <?php endif; ?>
             </div>
             
             <div>
@@ -306,27 +325,72 @@ ob_start();
     <!-- Signature Settings -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
         <h3 class="text-lg font-semibold text-gray-900 mb-4">Footer Signatories</h3>
-        <p class="text-sm text-gray-500 mb-4">Enter the names of the signatories for the masterlist footer. Leave blank to hide signature line.</p>
+        <p class="text-sm text-gray-500 mb-4">Type to search from tarheta control. Leave blank to hide signature line.</p>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-            <div>
+            <div class="relative">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Naghanda - Kalihim ng Purok</label>
-                <input type="text" id="sig1" value="<?php echo Security::escape($sig1); ?>" placeholder="Enter name" class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                <div class="relative">
+                    <input type="text" id="sig1" value="<?php echo Security::escape($sig1); ?>" placeholder="Type to search..." class="block w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" autocomplete="off">
+                    <div id="sig1-loading" class="hidden absolute right-3 top-1/2 transform -translate-y-1/2">
+                        <svg class="animate-spin h-4 w-4 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div id="sig1-suggestions" class="hidden absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto"></div>
             </div>
-            <div>
+            <div class="relative">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Pangulong Kalihim</label>
-                <input type="text" id="sig2" value="<?php echo Security::escape($sig2); ?>" placeholder="Enter name" class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                <div class="relative">
+                    <input type="text" id="sig2" value="<?php echo Security::escape($sig2); ?>" placeholder="Type to search..." class="block w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" autocomplete="off">
+                    <div id="sig2-loading" class="hidden absolute right-3 top-1/2 transform -translate-y-1/2">
+                        <svg class="animate-spin h-4 w-4 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div id="sig2-suggestions" class="hidden absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto"></div>
             </div>
-            <div>
+            <div class="relative">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Pamunuang Tagasubaybay</label>
-                <input type="text" id="sig3" value="<?php echo Security::escape($sig3); ?>" placeholder="Enter name" class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                <div class="relative">
+                    <input type="text" id="sig3" value="<?php echo Security::escape($sig3); ?>" placeholder="Type to search..." class="block w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" autocomplete="off">
+                    <div id="sig3-loading" class="hidden absolute right-3 top-1/2 transform -translate-y-1/2">
+                        <svg class="animate-spin h-4 w-4 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div id="sig3-suggestions" class="hidden absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto"></div>
             </div>
-            <div>
+            <div class="relative">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Pangulong Diakono/KSP</label>
-                <input type="text" id="sig4" value="<?php echo Security::escape($sig4); ?>" placeholder="Enter name" class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                <div class="relative">
+                    <input type="text" id="sig4" value="<?php echo Security::escape($sig4); ?>" placeholder="Type to search..." class="block w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" autocomplete="off">
+                    <div id="sig4-loading" class="hidden absolute right-3 top-1/2 transform -translate-y-1/2">
+                        <svg class="animate-spin h-4 w-4 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div id="sig4-suggestions" class="hidden absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto"></div>
             </div>
-            <div>
+            <div class="relative">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Pastor/Destinado</label>
-                <input type="text" id="sig5" value="<?php echo Security::escape($sig5); ?>" placeholder="Enter name" class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                <div class="relative">
+                    <input type="text" id="sig5" value="<?php echo Security::escape($sig5); ?>" placeholder="Type to search..." class="block w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" autocomplete="off">
+                    <div id="sig5-loading" class="hidden absolute right-3 top-1/2 transform -translate-y-1/2">
+                        <svg class="animate-spin h-4 w-4 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div id="sig5-suggestions" class="hidden absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto"></div>
             </div>
         </div>
         <div class="mt-4">
@@ -348,7 +412,7 @@ ob_start();
         $endIndex = min($startIndex + $entriesPerPage, count($officers));
         $pageOfficers = array_slice($officers, $startIndex, $entriesPerPage);
     ?>
-    <div id="masterlist-content-page-<?php echo $page + 1; ?>" class="masterlist-page" style="width: 869pt; margin: 0 auto; padding: 20pt; background: white; text-align: center; <?php echo $page > 0 ? 'page-break-before: always;' : ''; ?>">
+    <div id="masterlist-content-page-<?php echo $page + 1; ?>" class="masterlist-page" style="width: 100%; max-width: 12in; margin: 0 auto; padding: 0.3in; background: white; text-align: center; <?php echo $page > 0 ? 'page-break-before: always;' : ''; ?>">
         <p style="padding-top: 4pt;text-indent: 0pt;text-align: center; color: black; font-family:Verdana, sans-serif; font-style: normal; font-weight: bold; text-decoration: none; font-size: 14pt; margin:0pt;">MASTERLIST NG KASALUKUYANG MGA MAYTUNGKULIN</p>
         <p style="text-indent: 0pt;text-align: left;"><br/></p>
         
@@ -562,12 +626,15 @@ ob_start();
     /* Show masterlist pages */
     .masterlist-page {
         display: block !important;
-        margin: 0 auto !important;
-        padding: 20pt !important;
+        margin: 0 !important;
+        padding: 0.3in !important;
         text-align: center !important;
         page-break-after: always;
         page-break-before: auto;
         background: white !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
     }
     
     /* First page should not have page break before */
@@ -603,10 +670,10 @@ ob_start();
         background: white !important;
     }
     
-    /* Legal size landscape: 14in x 8.5in */
+    /* Long bond paper: 13in x 8.5in landscape */
     @page {
-        size: legal landscape;
-        margin: 0.5in;
+        size: 13in 8.5in;
+        margin: 0.3in;
     }
 }
 </style>
@@ -646,12 +713,14 @@ function openPrintView() {
         }
         
         .masterlist-page {
-            width: 869pt;
-            margin: 0 auto;
-            padding: 20pt;
+            width: 100%;
+            max-width: 100%;
+            margin: 0;
+            padding: 0.3in;
             text-align: center;
             background: white;
             page-break-after: always;
+            box-sizing: border-box;
         }
         
         .masterlist-page:last-of-type {
@@ -670,8 +739,8 @@ function openPrintView() {
         }
         
         @page {
-            size: legal landscape;
-            margin: 0.5in;
+            size: 13in 8.5in;
+            margin: 0.3in;
         }
         
         @media print {
@@ -762,6 +831,84 @@ async function loadLocals(districtCode) {
         console.error('Error loading locals:', error);
     }
 }
+
+// Autocomplete for signatory fields using tarheta search
+let searchTimeout = null;
+let currentFocusedField = null;
+
+function setupSignatoryAutocomplete(fieldId) {
+    const input = document.getElementById(fieldId);
+    const suggestions = document.getElementById(fieldId + '-suggestions');
+    const loading = document.getElementById(fieldId + '-loading');
+    
+    input.addEventListener('input', function() {
+        const query = this.value.trim();
+        
+        clearTimeout(searchTimeout);
+        
+        if (query.length < 2) {
+            suggestions.classList.add('hidden');
+            loading.classList.add('hidden');
+            return;
+        }
+        
+        // Show loading indicator
+        loading.classList.remove('hidden');
+        
+        searchTimeout = setTimeout(async () => {
+            try {
+                const response = await fetch('<?php echo BASE_URL; ?>/api/search-tarheta.php?search=' + encodeURIComponent(query));
+                const data = await response.json();
+                
+                // Hide loading indicator
+                loading.classList.add('hidden');
+                
+                if (data.success && data.records && data.records.length > 0) {
+                    let html = '';
+                    data.records.forEach(record => {
+                        const displayName = record.full_name.toUpperCase();
+                        html += `<div class="px-4 py-2 hover:bg-blue-50 cursor-pointer border-b border-gray-100" onclick="selectSignatory('${fieldId}', '${displayName.replace(/'/g, "\\'")}')">${displayName}</div>`;
+                    });
+                    suggestions.innerHTML = html;
+                    suggestions.classList.remove('hidden');
+                } else {
+                    suggestions.innerHTML = '<div class="px-4 py-2 text-sm text-gray-500">No results found</div>';
+                    suggestions.classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('Error searching tarheta:', error);
+                loading.classList.add('hidden');
+                suggestions.innerHTML = '<div class="px-4 py-2 text-sm text-red-500">Error searching</div>';
+                suggestions.classList.remove('hidden');
+            }
+        }, 300);
+    });
+    
+    input.addEventListener('focus', function() {
+        currentFocusedField = fieldId;
+    });
+    
+    input.addEventListener('blur', function() {
+        setTimeout(() => {
+            suggestions.classList.add('hidden');
+            loading.classList.add('hidden');
+        }, 200);
+    });
+}
+
+function selectSignatory(fieldId, name) {
+    document.getElementById(fieldId).value = name;
+    document.getElementById(fieldId + '-suggestions').classList.add('hidden');
+}
+
+// Initialize autocomplete for all signatory fields
+document.addEventListener('DOMContentLoaded', function() {
+    setupSignatoryAutocomplete('sig1');
+    setupSignatoryAutocomplete('sig2');
+    setupSignatoryAutocomplete('sig3');
+    setupSignatoryAutocomplete('sig4');
+    setupSignatoryAutocomplete('sig5');
+});
 </script>
 
 <?php
