@@ -53,6 +53,64 @@ A comprehensive Church Officers Registry and Request Management system built wit
   - Monitor signatory completion
   - Data verification workflow
 
+- **Masterlist Generator**
+  - Generate official officer masterlist reports
+  - Landscape orientation with professional formatting
+  - Control number sorting with nulls last
+  - Auto-filter by district/local based on user role
+  - Signatory autocomplete from tarheta records
+  - Cookie-based signatory preferences
+  - Print-optimized layout
+
+- **Announcement System**
+  - Create and manage system-wide announcements
+  - Target specific roles (Admin, District, Local)
+  - Location-based targeting (district/local specific)
+  - Priority levels (Low, Medium, High, Urgent)
+  - Announcement types (Info, Success, Warning, Error)
+  - Schedule with start/end dates
+  - Pin important announcements
+  - User dismissal tracking
+
+- **Real-Time Chat System**
+  - Encrypted messaging between users
+  - Conversation management with read receipts
+  - Typing indicators
+  - Real-time message updates
+  - User search and conversation history
+
+- **ISO 8601 Calendar**
+  - Week number tracking (Monday-Sunday)
+  - Monthly calendar view
+  - Integration with transfer tracking
+  - Quick navigation and date selection
+
+- **Security Audit System**
+  - Comprehensive security monitoring
+  - 90-day automatic key rotation
+  - Manual key rotation with data re-encryption
+  - Infisical machine identity integration
+  - Audit logging and compliance tracking
+
+- **Developer Mode**
+  - Protected with Ctrl+Shift+D key combination
+  - Right-click protection when disabled
+  - Diagonal watermark overlay on sensitive pages
+  - Development tools access control
+
+- **Legacy & Tarheta Control**
+  - Manage legacy control numbers
+  - Link legacy records to current officers
+  - Tarheta control number registry
+  - Search and autocomplete functionality
+
+- **Request Management System**
+  - Modal-based request workflow
+  - Requirements checklist tracking
+  - Approval workflow management
+  - Request status monitoring
+  - Document attachment support
+
 ### Security Features
 - **Name Encryption**: District-specific encryption keys for officer names
 - **Role-Based Access Control**: Admin, District User, and Local User roles
@@ -67,15 +125,18 @@ A comprehensive Church Officers Registry and Request Management system built wit
 - **Admin**: Full system access, manage all districts and users
 - **District User**: District-wide data management
 - **Local User**: Local congregation level access only
+- **Local Limited**: Restricted local access with limited permissions
 
 ### Modern UI/UX
 - Dark theme with Tailwind CSS + DaisyUI
-- Fully responsive design
+- Fully responsive design (mobile-first approach)
 - Alpine.js for interactive components
-- Font Awesome icons
+- Font Awesome 6.x icons
 - Smooth animations and transitions
 - Auto-dismissing alerts
 - Custom scrollbars
+- Print-optimized layouts
+- Inline editing capabilities
 
 ## Technology Stack
 
@@ -155,7 +216,15 @@ A comprehensive Church Officers Registry and Request Management system built wit
 - `officer_removals` - Removal records with codes
 - `headcount` - Real-time headcount tracking
 - `audit_log` - Complete activity audit trail
-- `officer_requests` - Aspiring officer requests (future release)
+- `officer_requests` - Aspiring officer requests
+- `announcements` - System announcements
+- `announcement_dismissals` - User dismissal tracking
+- `chat_messages` - Encrypted chat messages
+- `chat_conversations` - Conversation metadata
+- `chat_read_receipts` - Message read tracking
+- `legacy_officers` - Legacy control number records
+- `tarheta_control` - Tarheta registry numbers
+- `call_up_slips` - Officer call-up records
 
 ## Usage Guide
 
@@ -241,18 +310,37 @@ CORegistry and CORTracker/
 │   └── r5-transactions-logsheet.php  # R5 transaction PDF logsheet
 ├── requests/
 │   ├── bulk-palasumpaan.php          # Bulk oath certificate generator
-│   └── bulk-palasumpaan-generate.php # Bulk generator backend
+│   ├── bulk-palasumpaan-generate.php # Bulk generator backend
+│   └── list.php                      # Officer requests list
+├── legacy/
+│   └── list.php            # Legacy control numbers management
+├── tarheta/
+│   └── list.php            # Tarheta control registry
+├── calendar.php            # ISO 8601 week calendar
+├── chat.php                # Real-time messaging system
+├── security-audit.php      # Security monitoring dashboard
+├── rotate-keys-90days.php  # Automated key rotation script
+├── rotate-district-keys.php # Manual key rotation utility
 ├── admin/
 │   ├── users.php           # User management
 │   ├── districts.php       # District/local management
-│   └── audit.php           # Audit log viewer
+│   ├── audit.php           # Audit log viewer
+│   └── announcements.php   # Announcement management
 ├── api/
 │   ├── get-locals.php            # API: Get locals by district
 │   ├── search-officers.php       # API: Search officers
 │   ├── get-officer-details.php   # API: Get officer details
 │   ├── merge-officers.php        # API: Merge duplicate officers
 │   ├── search-legacy.php         # API: Search legacy records
-│   └── search-tarheta.php        # API: Search tarheta records
+│   ├── search-tarheta.php        # API: Search tarheta records
+│   ├── dismiss-announcement.php  # API: Dismiss announcements
+│   └── chat/                     # Real-time chat API endpoints
+│       ├── get-conversations.php
+│       ├── get-messages.php
+│       ├── send-message.php
+│       ├── mark-read.php
+│       ├── search-users.php
+│       └── typing-indicator.php
 ├── assets/
 │   └── js/
 │       └── officer-details-modal.js  # Officer details modal component
@@ -308,6 +396,12 @@ Complete documentation is available in the [`/documentation`](documentation/) fo
 - **[Feature Documentation](documentation/)** - Detailed feature implementations
 - **[API Documentation](documentation/)** - API endpoints and usage
 - **[Officer Details Modal](documentation/officer-details-modal.md)** - Modal component usage guide
+- **[Announcement System](documentation/ANNOUNCEMENTS.md)** - Announcement management documentation
+- **[Chat System](documentation/chat-system.md)** - Real-time messaging documentation
+- **[Calendar System](documentation/calendar.md)** - ISO 8601 calendar guide
+- **[Key Rotation](documentation/KEY_ROTATION_SUMMARY.md)** - 90-day key rotation system
+- **[Security Audit](documentation/SECURITY_AUDIT.md)** - Security monitoring guide
+- **[Call-Up System](documentation/CALL_UP_FEATURE.md)** - Officer call-up documentation
 
 For a complete index, see [documentation/README.md](documentation/README.md)
 
@@ -329,6 +423,14 @@ Proprietary - Church Officers Registry System
   - Bulk Palasumpaan (oath certificate) generator with batch processing
   - LORC/LCRC Checker with inline editing and duplicate detection
   - R5-18 Checker for form completeness verification
+  - Masterlist Generator with landscape orientation and signatory autocomplete
+  - Announcement System with role/location targeting and scheduling
+  - Real-Time Chat System with encryption and read receipts
+  - ISO 8601 Calendar for week tracking
+  - Security Audit System with 90-day key rotation
+  - Developer Mode with watermark and right-click protection
+  - Legacy & Tarheta Control management
+  - Request Management System with modal workflow
   - API endpoints for officer details and record merging
   
 - **Improvements**
@@ -336,11 +438,17 @@ Proprietary - Church Officers Registry System
   - Improved error logging with detailed context
   - Better mobile responsiveness across all pages
   - Optimized search functionality for legacy and tarheta records
+  - Control number sorting with nulls last in masterlist
+  - Auto-filter by district/local based on user role
+  - Print-optimized layouts for reports
+  - Inline editing capabilities for various fields
   
 - **Bug Fixes**
   - Fixed decryption failures when officer name data unavailable
   - Improved error handling in bulk operations
   - Enhanced validation for encrypted data fields
+  - Resolved CODE D merge issues
+  - Fixed unknown name display in search suggestions
 
 ### Version 1.0.0 (November 26, 2025)
 - Initial release
