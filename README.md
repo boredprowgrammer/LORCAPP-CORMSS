@@ -149,6 +149,58 @@ A comprehensive Church Officers Registry and Request Management system built wit
   - Font Awesome 6.x
 - **Security**: OpenSSL for encryption, Argon2ID for passwords
 
+## Libraries and Components
+
+### PHP Libraries (Composer)
+- **dompdf/dompdf** - PDF generation for reports and documents
+- **phpoffice/phpword** - Word document generation for Palasumpaan certificates
+- **infisical/php-sdk** - Secrets management and key rotation
+- **guzzlehttp/guzzle** - HTTP client for API integrations
+- **vlucas/phpdotenv** - Environment configuration management
+
+### Frontend Libraries (CDN)
+- **Tailwind CSS 3.4.1** - Utility-first CSS framework
+- **DaisyUI 4.6.1** - Tailwind CSS component library
+- **Alpine.js 3.13.3** - Lightweight JavaScript framework
+- **Font Awesome 6.5.1** - Icon library (Free Solid, Regular, Brands)
+
+### JavaScript Components
+- **Officer Details Modal** - Reusable modal component for quick officer view
+- **Chat System** - Real-time messaging with encryption
+- **Inline Editors** - Editable table cells with auto-save
+- **Search Autocomplete** - Searchable dropdowns for tarheta/legacy records
+- **Dark Mode Toggle** - Theme switching with persistent preferences
+
+### Security Components
+- **Encryption Class** - District-specific AES-256-GCM encryption
+- **ChatEncryption Class** - Message encryption with conversation keys
+- **Security Class** - CSRF protection, input sanitization, XSS prevention
+- **Session Management** - Secure session handling with timeout
+- **Audit Logger** - Comprehensive activity tracking
+
+### Database Components
+- **Database Singleton** - PDO connection management
+- **Prepared Statements** - SQL injection prevention
+- **Transaction Support** - Atomic operations for data integrity
+
+### PDF Generation
+- **Dompdf** - HTML to PDF conversion for:
+  - Masterlist reports
+  - R5 transaction logsheets
+  - Control number logbooks
+  - Officer records
+
+### Document Processing
+- **PHPWord** - Template-based document generation:
+  - Palasumpaan certificates (oath certificates)
+  - Bulk certificate processing
+  - Word document exports
+  
+### External Integrations
+- **Stirling PDF API** - PDF merging and processing for bulk operations
+- **Better Stack** - Uptime monitoring and status badges
+- **Infisical** - Secrets management and automated key rotation
+
 ## Installation
 
 ### Prerequisites
