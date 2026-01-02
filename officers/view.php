@@ -233,9 +233,17 @@ try {
     
     // Get departments
     $stmt = $db->prepare("
-        SELECT * FROM officer_departments 
-        WHERE officer_id = ? 
-        ORDER BY assigned_at DESC
+        SELECT 
+            od.*,
+            r.removal_code,
+            r.reason as removal_reason,
+            t.transfer_type,
+            t.transfer_date
+        FROM officer_departments od
+        LEFT JOIN officer_removals r ON r.department_id = od.id AND r.officer_id = od.officer_id
+        LEFT JOIN transfers t ON t.officer_id = od.officer_id AND t.transfer_type = 'out'
+        WHERE od.officer_id = ? 
+        ORDER BY od.assigned_at DESC
     ");
     $stmt->execute([$officer['officer_id']]);
     $departments = $stmt->fetchAll();
@@ -465,9 +473,24 @@ ob_start();
                                 <td class="px-4 py-3 text-gray-700"><?php echo Security::escape($dept['duty'] ?: '-'); ?></td>
                                 <td class="px-4 py-3 text-gray-700"><?php echo formatDate($dept['oath_date']); ?></td>
                                 <td class="px-4 py-3">
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium <?php echo $dept['is_active'] ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'; ?>">
-                                        <?php echo $dept['is_active'] ? 'Active' : 'Inactive'; ?>
-                                    </span>
+                                    <?php 
+                                    if ($dept['is_active']) {
+                                        echo '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">Active</span>';
+                                    } else {
+                                        // Smart logic: Check transfers first, then removal codes
+                                        if ($dept['transfer_type'] === 'out' && !empty($dept['transfer_date'])) {
+                                            echo '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">TRANSFERRED-OUT</span>';
+                                        } elseif ($dept['removal_code'] === 'C') {
+                                            echo '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">SUSPENDIDO (CODE-C)</span>';
+                                        } elseif ($dept['removal_code'] === 'D') {
+                                            echo '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800">LIPAT-KAPISANAN (CODE-D)</span>';
+                                        } elseif (!empty($dept['removal_reason']) && stripos($dept['removal_reason'], 'transfer') !== false) {
+                                            echo '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">TRANSFERRED-OUT</span>';
+                                        } else {
+                                            echo '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">Inactive</span>';
+                                        }
+                                    }
+                                    ?>
                                 </td>
                                 <td class="px-4 py-3 text-gray-700"><?php echo formatDateTime($dept['assigned_at']); ?></td>
                                 <td class="px-4 py-3">

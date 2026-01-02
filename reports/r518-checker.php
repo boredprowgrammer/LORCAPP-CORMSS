@@ -5,6 +5,7 @@
  */
 
 require_once __DIR__ . '/../config/config.php';
+require_once __DIR__ . '/../includes/ui-components.php';
 
 Security::requireLogin();
 requirePermission('can_view_reports');
@@ -500,11 +501,16 @@ $pageTitle = 'R5-18 Checker';
                                 </td>
                                 <td class="px-2 py-2 whitespace-nowrap text-center text-sm font-medium">
                                     <div class="flex items-center justify-center gap-1">
-                                        <a href="<?php echo BASE_URL; ?>/officers/view.php?id=<?php echo urlencode($officer['officer_uuid']); ?>" 
-                                           class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300" target="_blank" title="View">
+                                        <button onclick="OfficerDetailsModal.open('<?php echo $officer['officer_uuid']; ?>')" 
+                                           class="text-purple-600 hover:text-purple-900 dark:text-purple-400 dark:hover:text-purple-300" title="Quick View">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                            </svg>
+                                        </button>
+                                        <a href="<?php echo BASE_URL; ?>/officers/view.php?id=<?php echo urlencode($officer['officer_uuid']); ?>" 
+                                           class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300" target="_blank" title="View Full Page">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
                                             </svg>
                                         </a>
                                         <a href="<?php echo BASE_URL; ?>/officers/edit.php?id=<?php echo urlencode($officer['officer_uuid']); ?>" 
@@ -744,6 +750,13 @@ if (searchInput && tableRows.length > 0) {
 </script>
 
 <?php
+// Render the reusable officer details modal
+renderOfficerDetailsModal();
+
 $content = ob_get_clean();
+
+// Add the JavaScript file for the officer modal
+$extraScripts = '<script src="' . BASE_URL . '/assets/js/officer-details-modal.js"></script>';
+
 include __DIR__ . '/../includes/layout.php';
 ?>

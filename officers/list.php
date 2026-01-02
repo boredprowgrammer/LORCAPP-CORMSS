@@ -50,11 +50,17 @@ try {
             lc.local_name,
             GROUP_CONCAT(DISTINCT od.department SEPARATOR ', ') as departments,
             COUNT(DISTINCT od.department) as dept_count,
-            o.r518_data_verify
+            o.r518_data_verify,
+            MAX(r.removal_code) as latest_removal_code,
+            MAX(r.reason) as latest_removal_reason,
+            MAX(t.transfer_type) as latest_transfer_type,
+            MAX(t.transfer_date) as latest_transfer_date
         FROM officers o
         LEFT JOIN districts d ON o.district_code = d.district_code
         LEFT JOIN local_congregations lc ON o.local_code = lc.local_code
         LEFT JOIN officer_departments od ON o.officer_id = od.officer_id AND od.is_active = 1
+        LEFT JOIN officer_removals r ON r.officer_id = o.officer_id
+        LEFT JOIN transfers t ON t.officer_id = o.officer_id
         $whereClause
         GROUP BY o.officer_id
         ORDER BY o.created_at DESC
@@ -312,9 +318,24 @@ ob_start();
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <?php echo $officer['is_active'] ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'; ?>">
-                                        <?php echo $officer['is_active'] ? 'Active' : 'Inactive'; ?>
-                                    </span>
+                                    <?php 
+                                    if ($officer['is_active']) {
+                                        echo '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Active</span>';
+                                    } else {
+                                        // Smart logic to determine inactive type
+                                        if ($officer['latest_transfer_type'] === 'out' && !empty($officer['latest_transfer_date'])) {
+                                            echo '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">TRANSFERRED-OUT</span>';
+                                        } elseif ($officer['latest_removal_code'] === 'C') {
+                                            echo '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">SUSPENDIDO (CODE-C)</span>';
+                                        } elseif ($officer['latest_removal_code'] === 'D') {
+                                            echo '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">LIPAT-KAPISANAN (CODE-D)</span>';
+                                        } elseif (!empty($officer['latest_removal_reason']) && stripos($officer['latest_removal_reason'], 'transfer') !== false) {
+                                            echo '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">TRANSFERRED-OUT</span>';
+                                        } else {
+                                            echo '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Inactive</span>';
+                                        }
+                                    }
+                                    ?>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                     <div class="flex items-center space-x-2">
@@ -427,9 +448,24 @@ ob_start();
                             </div>
                             <div class="text-xs text-gray-500">ID: <?php echo Security::escape(substr($officer['officer_uuid'], 0, 8)); ?></div>
                             <div class="mt-1">
-                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium <?php echo $officer['is_active'] ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'; ?>">
-                                    <?php echo $officer['is_active'] ? 'Active' : 'Inactive'; ?>
-                                </span>
+                                <?php 
+                                if ($officer['is_active']) {
+                                    echo '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Active</span>';
+                                } else {
+                                    // Smart logic to determine inactive type
+                                    if ($officer['latest_transfer_type'] === 'out' && !empty($officer['latest_transfer_date'])) {
+                                        echo '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">TRANSFERRED-OUT</span>';
+                                    } elseif ($officer['latest_removal_code'] === 'C') {
+                                        echo '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">SUSPENDIDO (CODE-C)</span>';
+                                    } elseif ($officer['latest_removal_code'] === 'D') {
+                                        echo '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">LIPAT-KAPISANAN (CODE-D)</span>';
+                                    } elseif (!empty($officer['latest_removal_reason']) && stripos($officer['latest_removal_reason'], 'transfer') !== false) {
+                                        echo '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">TRANSFERRED-OUT</span>';
+                                    } else {
+                                        echo '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Inactive</span>';
+                                    }
+                                }
+                                ?>
                             </div>
                         </div>
                     </div>

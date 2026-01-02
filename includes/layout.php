@@ -1631,6 +1631,14 @@ if (Security::isLoggedIn()) {
                             </svg>
                             LORC/LCRC Checker
                         </a>
+                        
+                        <a href="<?php echo BASE_URL; ?>/reports/r5-transactions.php" 
+                           class="flex items-center px-4 py-3 text-sm font-medium rounded-lg <?php echo strpos($_SERVER['PHP_SELF'], 'r5-transactions.php') !== false ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'; ?>">
+                            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                            </svg>
+                            R5's Transactions
+                        </a>
                         <?php endif; ?>
                         
                         <?php if (hasPermission('can_view_departments')): ?>

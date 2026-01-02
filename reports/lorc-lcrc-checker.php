@@ -5,6 +5,7 @@
  */
 
 require_once __DIR__ . '/../config/config.php';
+require_once __DIR__ . '/../includes/ui-components.php';
 
 Security::requireLogin();
 requirePermission('can_view_reports');
@@ -67,7 +68,8 @@ $statistics = [
     'complete' => 0,
     'missing_control' => 0,
     'missing_registry' => 0,
-    'missing_both' => 0
+    'missing_both' => 0,
+    'duplicates' => 0
 ];
 
 try {
@@ -139,8 +141,10 @@ try {
     $stmt->execute($params);
     $allOfficers = $stmt->fetchAll();
     
-    // Decrypt and analyze
-    $rowNumber = 1;
+    // FIRST PASS: Build nameMap to detect ALL duplicates
+    $nameMap = []; // Track names by local to find duplicates
+    $decryptedData = []; // Store decrypted data for second pass
+    
     foreach ($allOfficers as $officer) {
         $decrypted = Encryption::decryptOfficerName(
             $officer['last_name_encrypted'],
@@ -148,6 +152,50 @@ try {
             $officer['middle_initial_encrypted'],
             $officer['district_code']
         );
+        
+        $fullName = trim($decrypted['last_name'] . ', ' . $decrypted['first_name'] . 
+                         (!empty($decrypted['middle_initial']) ? ' ' . $decrypted['middle_initial'] . '.' : ''));
+        
+        // Track duplicates by local + name
+        $localKey = $officer['local_code'] ?? 'unknown';
+        $nameKey = strtolower(str_replace([' ', ',', '.'], '', $fullName)); // Normalized name
+        
+        if (!isset($nameMap[$localKey])) {
+            $nameMap[$localKey] = [];
+        }
+        
+        if (!isset($nameMap[$localKey][$nameKey])) {
+            $nameMap[$localKey][$nameKey] = [];
+        }
+        $nameMap[$localKey][$nameKey][] = $officer['officer_id'];
+        
+        // Store decrypted data
+        $decryptedData[$officer['officer_id']] = [
+            'decrypted' => $decrypted,
+            'full_name' => $fullName,
+            'local_key' => $localKey,
+            'name_key' => $nameKey
+        ];
+    }
+    
+    // Count duplicates for statistics
+    foreach ($nameMap as $localKey => $names) {
+        foreach ($names as $nameKey => $officerIds) {
+            if (count($officerIds) > 1) {
+                $statistics['duplicates'] += count($officerIds);
+            }
+        }
+    }
+    
+    // SECOND PASS: Process officers with filters
+    $rowNumber = 1;
+    
+    foreach ($allOfficers as $officer) {
+        $officerId = $officer['officer_id'];
+        $decrypted = $decryptedData[$officerId]['decrypted'];
+        $fullName = $decryptedData[$officerId]['full_name'];
+        $localKey = $decryptedData[$officerId]['local_key'];
+        $nameKey = $decryptedData[$officerId]['name_key'];
         
         // Decrypt registry number if available
         $registryNumber = null;
@@ -219,17 +267,25 @@ try {
         
         $statistics['total']++;
         
+        // Check if duplicate
+        $isDuplicate = count($nameMap[$localKey][$nameKey]) > 1;
+        
         // Apply issue filter
-        if (!empty($filterIssue) && $filterIssue !== $issueType) {
-            continue;
+        if (!empty($filterIssue)) {
+            if ($filterIssue === 'duplicates' && !$isDuplicate) {
+                continue;
+            } elseif ($filterIssue !== 'duplicates' && $filterIssue !== $issueType) {
+                continue;
+            }
         }
         
         $officers[] = [
             'row_number' => $rowNumber++,
             'officer_id' => $officer['officer_id'],
             'officer_uuid' => $officer['officer_uuid'],
-            'full_name' => trim($decrypted['last_name'] . ', ' . $decrypted['first_name'] . 
-                              (!empty($decrypted['middle_initial']) ? ' ' . $decrypted['middle_initial'] . '.' : '')),
+            'full_name' => $fullName,
+            'is_duplicate' => $isDuplicate,
+            'duplicate_ids' => $isDuplicate ? $nameMap[$localKey][$nameKey] : [],
             'control_number' => $controlNumber,
             'registry_number' => $registryNumber,
             'oath_dates' => $officer['oath_dates'] ?? null,
@@ -330,7 +386,7 @@ ob_start();
     </div>
 
     <!-- Statistics Summary -->
-    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 print:hidden">
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 print:hidden">
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4">
             <div class="flex items-center">
                 <div class="flex-shrink-0 bg-blue-100 rounded-lg p-2 sm:p-3">
@@ -355,6 +411,20 @@ ob_start();
                 <div class="ml-3 sm:ml-4 min-w-0">
                     <p class="text-xs sm:text-sm text-gray-500 truncate">Complete</p>
                     <p class="text-lg sm:text-2xl font-semibold text-green-600"><?php echo number_format($statistics['complete']); ?></p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4">
+            <div class="flex items-center">
+                <div class="flex-shrink-0 bg-orange-100 rounded-lg p-2 sm:p-3">
+                    <svg class="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
+                    </svg>
+                </div>
+                <div class="ml-3 sm:ml-4 min-w-0">
+                    <p class="text-xs sm:text-sm text-gray-500 truncate">Duplicates</p>
+                    <p class="text-lg sm:text-2xl font-semibold text-orange-600"><?php echo number_format($statistics['duplicates']); ?></p>
                 </div>
             </div>
         </div>
@@ -455,6 +525,7 @@ ob_start();
                     <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">Issue Filter</label>
                     <select name="issue" class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
                         <option value="">All Records</option>
+                        <option value="duplicates" <?php echo $filterIssue === 'duplicates' ? 'selected' : ''; ?>>⚠ Show Duplicates Only</option>
                         <option value="complete" <?php echo $filterIssue === 'complete' ? 'selected' : ''; ?>>Complete Records</option>
                         <option value="missing_control" <?php echo $filterIssue === 'missing_control' ? 'selected' : ''; ?>>Missing Control Number</option>
                         <option value="missing_registry" <?php echo $filterIssue === 'missing_registry' ? 'selected' : ''; ?>>Missing Registry Number</option>
@@ -593,7 +664,12 @@ ob_start();
                     ?>
                     <tr class="<?php echo $rowClass; ?>">
                         <td class="px-4 py-3 text-sm text-gray-900"><?php echo $officer['row_number']; ?></td>
-                        <td class="px-4 py-3 text-sm text-gray-900 font-medium"><?php echo Security::escape($officer['full_name']); ?></td>
+                        <td class="px-4 py-3 text-sm text-gray-900 font-medium">
+                            <?php echo Security::escape($officer['full_name']); ?>
+                            <?php if ($officer['is_duplicate']): ?>
+                            <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800" title="Duplicate detected">⚠ DUP</span>
+                            <?php endif; ?>
+                        </td>
                         <?php if ($showControlNumber): ?>
                         <td class="px-4 py-3 text-sm <?php echo $officer['has_control'] ? 'text-gray-900' : 'text-red-500 font-semibold'; ?>">
                             <div class="editable-cell-wrapper relative" style="min-width: 120px;">
@@ -718,12 +794,27 @@ ob_start();
                         </td>
                         <td class="px-4 py-3 text-center print:hidden">
                             <div class="flex items-center justify-center gap-2">
+                                <?php if ($officer['is_duplicate']): ?>
+                                <button onclick="showMergeModal(<?php echo $officer['officer_id']; ?>, <?php echo htmlspecialchars(json_encode($officer['duplicate_ids'])); ?>, '<?php echo Security::escape($officer['full_name']); ?>')" 
+                                   class="inline-flex items-center px-2 py-1 text-xs font-medium text-orange-600 hover:text-orange-800 hover:bg-orange-50 rounded transition-colors"
+                                   title="Merge Duplicate">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
+                                    </svg>
+                                </button>
+                                <?php endif; ?>
+                                <button onclick="OfficerDetailsModal.open('<?php echo $officer['officer_uuid']; ?>')" 
+                                   class="inline-flex items-center px-2 py-1 text-xs font-medium text-purple-600 hover:text-purple-800 hover:bg-purple-50 rounded transition-colors"
+                                   title="Quick View">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                </button>
                                 <a href="<?php echo BASE_URL; ?>/officers/view.php?id=<?php echo urlencode($officer['officer_uuid']); ?>" 
                                    class="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition-colors"
-                                   title="View Officer">
+                                   title="View Full Page">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
                                     </svg>
                                 </a>
                                 <a href="<?php echo BASE_URL; ?>/officers/edit.php?id=<?php echo urlencode($officer['officer_uuid']); ?>" 
@@ -735,6 +826,13 @@ ob_start();
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                                     </svg>
                                 </a>
+                                <button onclick="deleteOfficer(<?php echo $officer['officer_id']; ?>, '<?php echo Security::escape($officer['full_name']); ?>')" 
+                                   class="inline-flex items-center px-2 py-1 text-xs font-medium text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors"
+                                   title="Delete Officer">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                    </svg>
+                                </button>
                             </div>
                         </td>
                     </tr>
@@ -789,12 +887,18 @@ ob_start();
                         <h3 class="text-sm font-semibold text-gray-900"><?php echo Security::escape($officer['full_name']); ?></h3>
                     </div>
                     <div class="flex gap-2 ml-2">
+                        <button onclick="OfficerDetailsModal.open('<?php echo $officer['officer_uuid']; ?>')" 
+                           class="inline-flex items-center justify-center w-8 h-8 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                           title="Quick View">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </button>
                         <a href="<?php echo BASE_URL; ?>/officers/view.php?id=<?php echo urlencode($officer['officer_uuid']); ?>" 
                            class="inline-flex items-center justify-center w-8 h-8 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                           title="View">
+                           title="View Full Page">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
                             </svg>
                         </a>
                         <a href="<?php echo BASE_URL; ?>/officers/edit.php?id=<?php echo urlencode($officer['officer_uuid']); ?>" 
@@ -1559,7 +1663,185 @@ function updateDataVerifyLock(officerId) {
 }
 </script>
 
+<!-- Merge Modal -->
+<div id="mergeModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white dark:bg-gray-800">
+        <div class="mt-3">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Merge Duplicate Officers</h3>
+            <p class="text-sm text-gray-600 mb-4">Select which officer record to keep as the primary. All duties will be merged.</p>
+            
+            <div id="mergeOfficersList" class="space-y-2 mb-6">
+                <!-- Will be populated by JavaScript -->
+            </div>
+            
+            <div class="flex justify-end gap-3">
+                <button onclick="closeMergeModal()" class="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400">Cancel</button>
+                <button id="confirmMergeBtn" onclick="confirmMerge()" class="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700">Merge Officers</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let mergeData = {
+    primaryId: null,
+    duplicateIds: [],
+    officerName: ''
+};
+
+function showMergeModal(currentOfficerId, allDuplicateIds, officerName) {
+    mergeData.duplicateIds = allDuplicateIds;
+    mergeData.officerName = officerName;
+    
+    const modal = document.getElementById('mergeModal');
+    const list = document.getElementById('mergeOfficersList');
+    
+    // Show modal immediately with loading state
+    modal.classList.remove('hidden');
+    list.innerHTML = `
+        <div class="flex flex-col items-center justify-center py-8">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mb-4"></div>
+            <p class="text-gray-600 font-medium">Loading officer details...</p>
+            <p class="text-gray-500 text-sm mt-1">Please wait</p>
+        </div>
+    `;
+    
+    // Fetch officer details for each duplicate
+    Promise.all(allDuplicateIds.map(id => 
+        fetch(`<?php echo BASE_URL; ?>/api/get-officer-details.php?officer_id=${id}`)
+            .then(r => r.json())
+    )).then(officers => {
+        list.innerHTML = officers.map(officer => {
+            // Format departments array into string
+            let deptString = '—';
+            if (officer.departments && Array.isArray(officer.departments) && officer.departments.length > 0) {
+                deptString = officer.departments.map(d => {
+                    let dept = d.department;
+                    if (d.duty) dept += ` (${d.duty})`;
+                    return dept;
+                }).join(', ');
+            }
+            
+            return `
+            <label class="flex items-start p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                <input type="radio" name="primaryOfficer" value="${officer.officer_id}" 
+                       class="mt-1 mr-3" ${officer.officer_id === currentOfficerId ? 'checked' : ''}>
+                <div class="flex-1">
+                    <div class="font-medium text-gray-900">${officer.full_name || officerName}</div>
+                    <div class="text-sm text-gray-600">Control: ${officer.control_number || '—'} | Registry: ${officer.registry_number || '—'}</div>
+                    <div class="text-sm text-gray-500">Departments: ${deptString}</div>
+                </div>
+            </label>
+            `;
+        }).join('');
+        
+        // Modal is already visible, just update content
+    }).catch(error => {
+        console.error('Error loading officers:', error);
+        list.innerHTML = `
+            <div class="text-center py-8">
+                <svg class="mx-auto h-12 w-12 text-red-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <p class="text-red-600 font-medium">Failed to load officer details</p>
+                <p class="text-gray-500 text-sm mt-1">Please try again</p>
+            </div>
+        `;
+    });
+}
+
+function closeMergeModal() {
+    document.getElementById('mergeModal').classList.add('hidden');
+    mergeData = { primaryId: null, duplicateIds: [], officerName: '' };
+}
+
+async function confirmMerge() {
+    const selectedRadio = document.querySelector('input[name="primaryOfficer"]:checked');
+    if (!selectedRadio) {
+        alert('Please select the primary officer to keep');
+        return;
+    }
+    
+    mergeData.primaryId = parseInt(selectedRadio.value);
+    
+    if (!confirm(`Merge all duplicate records into the selected officer?\\n\\nAll duties will be combined. Other duplicate records will be deleted.`)) {
+        return;
+    }
+    
+    const btn = document.getElementById('confirmMergeBtn');
+    btn.disabled = true;
+    btn.textContent = 'Merging...';
+    
+    try {
+        const formData = new FormData();
+        formData.append('primary_id', mergeData.primaryId);
+        formData.append('duplicate_ids', JSON.stringify(mergeData.duplicateIds));
+        formData.append('csrf_token', '<?php echo Security::generateCSRFToken(); ?>');
+        
+        const response = await fetch('<?php echo BASE_URL; ?>/api/merge-officers.php', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alert('Officers merged successfully!');
+            window.location.reload();
+        } else {
+            alert('Failed to merge: ' + result.message);
+        }
+    } catch (error) {
+        console.error('Error merging officers:', error);
+        alert('An error occurred while merging');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Merge Officers';
+    }
+}
+
+async function deleteOfficer(officerId, officerName) {
+    if (!confirm(`Are you sure you want to DELETE this officer?\\n\\n${officerName}\\n\\nThis action cannot be undone!`)) {
+        return;
+    }
+    
+    if (!confirm(`FINAL CONFIRMATION:\\n\\nDelete ${officerName}?\\n\\nAll related data (departments, requests, etc.) will also be removed.`)) {
+        return;
+    }
+    
+    try {
+        const formData = new FormData();
+        formData.append('officer_id', officerId);
+        formData.append('csrf_token', '<?php echo Security::generateCSRFToken(); ?>');
+        
+        const response = await fetch('<?php echo BASE_URL; ?>/api/delete-officer.php', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alert('Officer deleted successfully');
+            window.location.reload();
+        } else {
+            alert('Failed to delete: ' + result.message);
+        }
+    } catch (error) {
+        console.error('Error deleting officer:', error);
+        alert('An error occurred while deleting');
+    }
+}
+</script>
+
 <?php
+// Render the reusable officer details modal
+renderOfficerDetailsModal();
+
 $content = ob_get_clean();
+
+// Add the JavaScript file for the officer modal
+$extraScripts = '<script src="' . BASE_URL . '/assets/js/officer-details-modal.js"></script>';
+
 include __DIR__ . '/../includes/layout.php';
 ?>

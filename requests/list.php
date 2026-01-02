@@ -7,6 +7,7 @@
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/security.php';
+require_once __DIR__ . '/../includes/ui-components.php';
 
 Security::requireLogin();
 
@@ -326,32 +327,43 @@ ob_start();
                 <?php foreach ($requests as $request):
                     // Decrypt name with error handling
                     try {
-                        if ($request['record_code'] === 'D' && $request['existing_officer_uuid']) {
-                            // Use existing officer's district code for decryption
-                            $districtCodeForDecryption = $request['existing_district_code'] ?? $request['district_code'];
-                            
-                            // Check if we have the encrypted data
-                            if (empty($request['existing_last_name']) || empty($request['existing_first_name'])) {
-                                throw new Exception("Missing encrypted name data for existing officer UUID: {$request['existing_officer_uuid']}");
-                            }
-                            
-                            $lastName = Encryption::decrypt($request['existing_last_name'], $districtCodeForDecryption);
-                            $firstName = Encryption::decrypt($request['existing_first_name'], $districtCodeForDecryption);
-                            $middleInitial = $request['existing_middle_initial'] ? Encryption::decrypt($request['existing_middle_initial'], $districtCodeForDecryption) : '';
+                        // Prefer existing officer data if available
+                        if (!empty($request['existing_officer_uuid']) && !empty($request['existing_last_name'])) {
+                            // Use existing officer's encrypted data with their district code
+                            $districtCode = $request['existing_district_code'] ?? $request['district_code'];
+                            $decrypted = Encryption::decryptOfficerName(
+                                $request['existing_last_name'],
+                                $request['existing_first_name'],
+                                $request['existing_middle_initial'],
+                                $districtCode
+                            );
+                        } elseif (!empty($request['last_name_encrypted'])) {
+                            // Use request's encrypted data
+                            $decrypted = Encryption::decryptOfficerName(
+                                $request['last_name_encrypted'],
+                                $request['first_name_encrypted'],
+                                $request['middle_initial_encrypted'],
+                                $request['district_code']
+                            );
                         } else {
-                            $lastName = Encryption::decrypt($request['last_name_encrypted'], $request['district_code']);
-                            $firstName = Encryption::decrypt($request['first_name_encrypted'], $request['district_code']);
-                            $middleInitial = $request['middle_initial_encrypted'] ? Encryption::decrypt($request['middle_initial_encrypted'], $request['district_code']) : '';
+                            throw new Exception("No encrypted name data available");
                         }
                         
-                        if ($lastName === '' && $firstName === '') {
-                            $fullName = '[DECRYPT ERROR]';
+                        $lastName = $decrypted['last_name'] ?? '';
+                        $firstName = $decrypted['first_name'] ?? '';
+                        $middleInitial = $decrypted['middle_initial'] ?? '';
+                        
+                        if (empty($lastName) && empty($firstName)) {
+                            $fullName = '[Name Unavailable]';
                         } else {
                             $fullName = "$lastName, $firstName" . ($middleInitial ? " $middleInitial." : "");
                         }
                     } catch (Exception $e) {
-                        error_log("Request list decryption error for request_id {$request['request_id']}: " . $e->getMessage());
-                        $fullName = '[DECRYPT ERROR]';
+                        error_log("Request list decryption error for request_id {$request['request_id']}: " . $e->getMessage() . 
+                                 " | existing_uuid: " . ($request['existing_officer_uuid'] ?? 'null') . 
+                                 " | has_existing_name: " . (!empty($request['existing_last_name']) ? 'yes' : 'no') .
+                                 " | has_request_name: " . (!empty($request['last_name_encrypted']) ? 'yes' : 'no'));
+                        $fullName = '[Name Unavailable]';
                     }
                     $statusInfo = $statusConfig[$request['status']];
                 ?>
@@ -2353,6 +2365,13 @@ function generatePalasumpaan(event) {
 </script>
 
 <?php
+// Render the reusable officer details modal
+renderOfficerDetailsModal();
+
 $content = ob_get_clean();
+
+// Add the JavaScript file for the officer modal
+$extraScripts = '<script src="' . BASE_URL . '/assets/js/officer-details-modal.js"></script>';
+
 include __DIR__ . '/../includes/layout.php';
 

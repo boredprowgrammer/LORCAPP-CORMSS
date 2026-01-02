@@ -268,3 +268,142 @@ function renderLoadingSpinner($size = 'md') {
     </div>
     <?php
 }
+
+// Officer Details Modal Component
+function renderOfficerDetailsModal() {
+    ?>
+    <!-- Officer Details Modal -->
+    <div id="officerDetailsModal" class="hidden fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
+            <!-- Background overlay -->
+            <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" aria-hidden="true" onclick="OfficerDetailsModal.close()"></div>
+
+            <!-- Modal panel -->
+            <div class="relative inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-3xl sm:w-full">
+                <!-- Modal Header -->
+                <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
+                            <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100" id="modalOfficerName">Officer Details</h3>
+                            <p class="text-sm text-gray-500 dark:text-gray-400" id="modalOfficerUuid"></p>
+                        </div>
+                    </div>
+                    <button type="button" onclick="OfficerDetailsModal.close()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Modal Body -->
+                <div class="px-6 py-4 max-h-[70vh] overflow-y-auto">
+                    <!-- Loading State -->
+                    <div id="modalLoadingState" class="py-12 text-center">
+                        <?php renderLoadingSpinner('lg'); ?>
+                        <p class="mt-4 text-sm text-gray-500 dark:text-gray-400">Loading officer details...</p>
+                    </div>
+
+                    <!-- Error State -->
+                    <div id="modalErrorState" class="hidden py-12 text-center">
+                        <svg class="w-12 h-12 text-red-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">Failed to load officer details.</p>
+                        <button onclick="OfficerDetailsModal.close()" class="mt-4 text-blue-600 hover:text-blue-800 text-sm font-medium">Close</button>
+                    </div>
+
+                    <!-- Content -->
+                    <div id="modalContentArea" class="hidden space-y-6">
+                        <!-- Personal Information -->
+                        <div>
+                            <h4 class="text-sm font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide mb-3">Personal Information</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">Last Name</p>
+                                    <p class="font-semibold text-gray-900 dark:text-gray-100" id="modalLastName">-</p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">First Name</p>
+                                    <p class="font-semibold text-gray-900 dark:text-gray-100" id="modalFirstName">-</p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">Middle Initial</p>
+                                    <p class="font-semibold text-gray-900 dark:text-gray-100" id="modalMiddleInitial">-</p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">Status</p>
+                                    <p class="font-semibold" id="modalStatus">-</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Location Information -->
+                        <div>
+                            <h4 class="text-sm font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide mb-3">Location</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">District</p>
+                                    <p class="font-semibold text-gray-900 dark:text-gray-100" id="modalDistrict">-</p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">Local Congregation</p>
+                                    <p class="font-semibold text-gray-900 dark:text-gray-100" id="modalLocal">-</p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">Purok</p>
+                                    <p class="font-semibold text-gray-900 dark:text-gray-100" id="modalPurok">-</p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">Grupo</p>
+                                    <p class="font-semibold text-gray-900 dark:text-gray-100" id="modalGrupo">-</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Registry Information -->
+                        <div>
+                            <h4 class="text-sm font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide mb-3">Registry Information</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">Registry Number</p>
+                                    <p class="font-semibold text-gray-900 dark:text-gray-100" id="modalRegistryNumber">-</p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">Control Number</p>
+                                    <p class="font-semibold text-gray-900 dark:text-gray-100" id="modalControlNumber">-</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Departments -->
+                        <div>
+                            <h4 class="text-sm font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide mb-3">Departments</h4>
+                            <div id="modalDepartments" class="space-y-2">
+                                <p class="text-sm text-gray-500 dark:text-gray-400">No departments assigned</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="px-6 py-4 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                    <a id="modalViewFullPageLink" href="#" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                        </svg>
+                        View Full Page
+                    </a>
+                    <button type="button" onclick="OfficerDetailsModal.close()" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <?php
+}

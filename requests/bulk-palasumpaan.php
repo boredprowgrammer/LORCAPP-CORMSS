@@ -22,7 +22,7 @@ if (!$canManage) {
     exit;
 }
 
-// Get all oath_taken requests
+// Get only ready_to_oath requests (exclude already completed oaths)
 $query = "SELECT 
     r.request_id,
     r.last_name_encrypted,
@@ -39,12 +39,13 @@ $query = "SELECT
     l.local_name,
     o.last_name_encrypted as existing_last_name,
     o.first_name_encrypted as existing_first_name,
-    o.middle_initial_encrypted as existing_middle_initial
+    o.middle_initial_encrypted as existing_middle_initial,
+    o.district_code as existing_district_code
 FROM officer_requests r
 LEFT JOIN districts d ON r.district_code = d.district_code
 LEFT JOIN local_congregations l ON r.local_code = l.local_code
 LEFT JOIN officers o ON r.existing_officer_uuid = o.officer_uuid
-WHERE r.status IN ('ready_to_oath', 'oath_taken')";
+WHERE r.status = 'ready_to_oath'";
 
 $params = [];
 
@@ -87,7 +88,7 @@ ob_start();
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
         </svg>
         <h3 class="text-lg font-semibold text-yellow-900 mb-2">No Certificates Available</h3>
-        <p class="text-yellow-700">There are no officers with completed oaths (oath_taken status) to generate certificates for.</p>
+        <p class="text-yellow-700">There are no officers ready for oath certificate generation (ready_to_oath status).</p>
     </div>
     <?php else: ?>
     
@@ -160,29 +161,48 @@ ob_start();
             <?php foreach ($requests as $request): ?>
             <?php
                 // Decrypt names
-                if ($request['record_code'] === 'CODE D' && !empty($request['existing_officer_uuid'])) {
-                    $decrypted = Encryption::decryptOfficerName(
-                        $request['existing_last_name'],
-                        $request['existing_first_name'],
-                        $request['existing_middle_initial'],
-                        $request['district_code']
-                    );
-                    $lastName = $decrypted['last_name'];
-                    $firstName = $decrypted['first_name'];
-                    $middleInitial = $decrypted['middle_initial'];
-                } else {
-                    $decrypted = Encryption::decryptOfficerName(
-                        $request['last_name_encrypted'],
-                        $request['first_name_encrypted'],
-                        $request['middle_initial_encrypted'],
-                        $request['district_code']
-                    );
-                    $lastName = $decrypted['last_name'];
-                    $firstName = $decrypted['first_name'];
-                    $middleInitial = $decrypted['middle_initial'];
+                $lastName = '';
+                $firstName = '';
+                $middleInitial = '';
+                
+                try {
+                    // For CODE D or if existing officer is linked, prefer existing officer data
+                    if (!empty($request['existing_officer_uuid']) && 
+                        !empty($request['existing_last_name'])) {
+                        // Use existing officer's encrypted data with their district code
+                        $districtCode = $request['existing_district_code'] ?? $request['district_code'];
+                        $decrypted = Encryption::decryptOfficerName(
+                            $request['existing_last_name'],
+                            $request['existing_first_name'],
+                            $request['existing_middle_initial'],
+                            $districtCode
+                        );
+                    } elseif (!empty($request['last_name_encrypted'])) {
+                        // Use request's encrypted data
+                        $decrypted = Encryption::decryptOfficerName(
+                            $request['last_name_encrypted'],
+                            $request['first_name_encrypted'],
+                            $request['middle_initial_encrypted'],
+                            $request['district_code']
+                        );
+                    } else {
+                        throw new Exception("No encrypted name data available");
+                    }
+                    
+                    $lastName = $decrypted['last_name'] ?? '';
+                    $firstName = $decrypted['first_name'] ?? '';
+                    $middleInitial = $decrypted['middle_initial'] ?? '';
+                } catch (Exception $e) {
+                    error_log("Name decryption error for request {$request['request_id']}: " . $e->getMessage() . 
+                             " | existing_uuid: " . ($request['existing_officer_uuid'] ?? 'null') . 
+                             " | has_existing_name: " . (!empty($request['existing_last_name']) ? 'yes' : 'no') .
+                             " | has_request_name: " . (!empty($request['last_name_encrypted']) ? 'yes' : 'no'));
                 }
                 
                 $fullName = trim("$firstName " . ($middleInitial ? $middleInitial . '. ' : '') . "$lastName");
+                if (empty($fullName)) {
+                    $fullName = "[Name Unavailable - Request #{$request['request_id']}]";
+                }
             ?>
             <label class="flex items-center p-4 hover:bg-gray-50 cursor-pointer">
                 <input type="checkbox" 
@@ -260,22 +280,41 @@ function bulkGenerator() {
             
             this.generating = true;
             
-            // Open each certificate in a new tab with a delay
-            let delay = 0;
-            this.selectedRequests.forEach((requestId, index) => {
+            // Create form data
+            const formData = new FormData();
+            formData.append('request_ids', JSON.stringify(this.selectedRequests));
+            formData.append('oath_date', this.commonOathDate);
+            formData.append('oath_lokal', this.commonLokal);
+            formData.append('oath_distrito', this.commonDistrito);
+            
+            // Submit to bulk generator
+            fetch('bulk-palasumpaan-generate.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Generation failed');
+                }
+                return response.blob();
+            })
+            .then(blob => {
+                // Open PDF in new tab
+                const url = window.URL.createObjectURL(blob);
+                window.open(url, '_blank');
+                
+                // Clean up after a short delay
                 setTimeout(() => {
-                    const url = `../generate-palasumpaan.php?request_id=${requestId}&oath_date=${this.commonOathDate}&oath_lokal=${encodeURIComponent(this.commonLokal)}&oath_distrito=${encodeURIComponent(this.commonDistrito)}`;
-                    window.open(url, '_blank');
-                    
-                    // Reset generating state after last one
-                    if (index === this.selectedRequests.length - 1) {
-                        setTimeout(() => {
-                            this.generating = false;
-                            alert(`Successfully opened ${this.selectedRequests.length} certificate(s) in new tabs`);
-                        }, 500);
-                    }
-                }, delay);
-                delay += 1000; // 1 second delay between each
+                    window.URL.revokeObjectURL(url);
+                }, 1000);
+                
+                this.generating = false;
+                alert(`Successfully generated ${this.selectedRequests.length} certificate(s) in one PDF file`);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to generate certificates. Please try again.');
+                this.generating = false;
             });
         }
     }
