@@ -23,6 +23,36 @@ A comprehensive Church Officers Registry and Request Management system built wit
   - CODE D: Lipat Kapisanan (Transfer Kapisanan)
   - Automatic headcount adjustment
 
+- **Officer Details Modal**
+  - Quick view modal component for officer information
+  - View complete officer details without page navigation
+  - Integrated across multiple reports and pages
+  - Shows departments, oath dates, and assignment history
+
+- **R5 Transactions Tracking**
+  - Comprehensive R5 transactions management system
+  - Track oath taking, transfers, and removals by period
+  - Generate detailed transaction reports and PDF logsheets
+  - Period-based filtering and analytics
+
+- **Bulk Palasumpaan Generator**
+  - Generate multiple oath certificates (Palasumpaan) in batch
+  - Improved decryption handling with fallback logic
+  - Integration with Stirling PDF for efficient processing
+  - Error handling and validation
+
+- **LORC/LCRC Checker**
+  - Verify officer record completeness
+  - Inline editing for control numbers, registry numbers, purok, and grupo
+  - Duplicate detection and merge functionality
+  - Identify missing information and data gaps
+
+- **R5-18 Checker**
+  - Verify R5-18 form completeness
+  - Track 2x2 picture attachments
+  - Monitor signatory completion
+  - Data verification workflow
+
 ### Security Features
 - **Name Encryption**: District-specific encryption keys for officer names
 - **Role-Based Access Control**: Admin, District User, and Local User roles
@@ -201,15 +231,31 @@ CORegistry and CORTracker/
 │   ├── transfer-in.php     # Transfer in form
 │   └── transfer-out.php    # Transfer out form
 ├── reports/
-│   ├── headcount.php       # Headcount reports
-│   └── departments.php     # Department reports
+│   ├── headcount.php           # Headcount reports
+│   ├── departments.php         # Department reports
+│   ├── lorc-lcrc-checker.php   # LORC/LCRC completeness checker
+│   ├── r518-checker.php        # R5-18 form checker
+│   ├── r5-transactions.php     # R5 transactions tracking
+│   ├── r5-transactions-reports.php   # R5 transaction reports
+│   ├── r5-transactions-search.php    # R5 transaction search
+│   └── r5-transactions-logsheet.php  # R5 transaction PDF logsheet
+├── requests/
+│   ├── bulk-palasumpaan.php          # Bulk oath certificate generator
+│   └── bulk-palasumpaan-generate.php # Bulk generator backend
 ├── admin/
 │   ├── users.php           # User management
 │   ├── districts.php       # District/local management
 │   └── audit.php           # Audit log viewer
 ├── api/
-│   ├── get-locals.php      # API: Get locals by district
-│   └── search-officers.php # API: Search officers
+│   ├── get-locals.php            # API: Get locals by district
+│   ├── search-officers.php       # API: Search officers
+│   ├── get-officer-details.php   # API: Get officer details
+│   ├── merge-officers.php        # API: Merge duplicate officers
+│   ├── search-legacy.php         # API: Search legacy records
+│   └── search-tarheta.php        # API: Search tarheta records
+├── assets/
+│   └── js/
+│       └── officer-details-modal.js  # Officer details modal component
 ├── login.php               # Login page
 ├── logout.php              # Logout handler
 ├── dashboard.php           # Main dashboard
@@ -261,6 +307,7 @@ Complete documentation is available in the [`/documentation`](documentation/) fo
 - **[Deployment Guides](documentation/)** - Docker, Render, and Aiven deployment
 - **[Feature Documentation](documentation/)** - Detailed feature implementations
 - **[API Documentation](documentation/)** - API endpoints and usage
+- **[Officer Details Modal](documentation/officer-details-modal.md)** - Modal component usage guide
 
 For a complete index, see [documentation/README.md](documentation/README.md)
 
@@ -274,6 +321,26 @@ Proprietary - Church Officers Registry System
 © 2025 All Rights Reserved
 
 ## Changelog
+
+### Version 2.1 (January 2, 2026)
+- **New Features**
+  - Officer Details Modal component for quick view across all pages
+  - R5 Transactions tracking system with reports, search, and PDF generation
+  - Bulk Palasumpaan (oath certificate) generator with batch processing
+  - LORC/LCRC Checker with inline editing and duplicate detection
+  - R5-18 Checker for form completeness verification
+  - API endpoints for officer details and record merging
+  
+- **Improvements**
+  - Enhanced decryption handling with better fallback logic
+  - Improved error logging with detailed context
+  - Better mobile responsiveness across all pages
+  - Optimized search functionality for legacy and tarheta records
+  
+- **Bug Fixes**
+  - Fixed decryption failures when officer name data unavailable
+  - Improved error handling in bulk operations
+  - Enhanced validation for encrypted data fields
 
 ### Version 1.0.0 (November 26, 2025)
 - Initial release
