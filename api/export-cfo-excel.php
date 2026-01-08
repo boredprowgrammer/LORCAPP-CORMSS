@@ -1,10 +1,17 @@
 <?php
 /**
  * Export All CFO Data to Excel
- * Exports all filtered records (not just paginated)
+ * Exports all filtered records (not just paginated) with auto-sized columns
  */
 
 require_once __DIR__ . '/../config/config.php';
+require_once __DIR__ . '/../vendor/autoload.php';
+
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 
 Security::requireLogin();
 requirePermission('can_view_reports');
@@ -101,8 +108,12 @@ try {
     $records = $stmt->fetchAll();
     
     // Prepare data for Excel
-    $excelData = [];
-    $excelData[] = [
+    $spreadsheet = new Spreadsheet();
+    $sheet = $spreadsheet->getActiveSheet();
+    $sheet->setTitle('CFO Registry');
+    
+    // Set headers
+    $headers = [
         'ID',
         'Last Name',
         'First Name',
@@ -116,6 +127,37 @@ try {
         'Local Congregation'
     ];
     
+    // Write headers
+    $col = 'A';
+    foreach ($headers as $header) {
+        $sheet->setCellValue($col . '1', $header);
+        $col++;
+    }
+    
+    // Style headers
+    $sheet->getStyle('A1:K1')->applyFromArray([
+        'font' => [
+            'bold' => true,
+            'color' => ['rgb' => 'FFFFFF']
+        ],
+        'fill' => [
+            'fillType' => Fill::FILL_SOLID,
+            'startColor' => ['rgb' => '2563EB']
+        ],
+        'alignment' => [
+            'horizontal' => Alignment::HORIZONTAL_CENTER,
+            'vertical' => Alignment::VERTICAL_CENTER
+        ],
+        'borders' => [
+            'allBorders' => [
+                'borderStyle' => Border::BORDER_THIN,
+                'color' => ['rgb' => '000000']
+            ]
+        ]
+    ]);
+    
+    // Write data rows
+    $row = 2;
     foreach ($records as $record) {
         try {
             // Decrypt data
@@ -144,46 +186,68 @@ try {
             // Format status
             $status = ($record['cfo_status'] === 'transferred-out') ? 'Transferred Out' : 'Active';
             
-            $excelData[] = [
-                $record['id'],
-                $lastName,
-                $firstName,
-                $middleName ?: '-',
-                $registryNumber,
-                $husbandsSurname ?: '-',
-                $birthday,
-                $classification,
-                $status,
-                $record['district_name'],
-                $record['local_name']
-            ];
+            // Write row data
+            $sheet->setCellValue('A' . $row, $record['id']);
+            $sheet->setCellValue('B' . $row, $lastName);
+            $sheet->setCellValue('C' . $row, $firstName);
+            $sheet->setCellValue('D' . $row, $middleName ?: '-');
+            $sheet->setCellValue('E' . $row, $registryNumber);
+            $sheet->setCellValue('F' . $row, $husbandsSurname ?: '-');
+            $sheet->setCellValue('G' . $row, $birthday);
+            $sheet->setCellValue('H' . $row, $classification);
+            $sheet->setCellValue('I' . $row, $status);
+            $sheet->setCellValue('J' . $row, $record['district_name']);
+            $sheet->setCellValue('K' . $row, $record['local_name']);
+            
+            // Apply borders to data rows
+            $sheet->getStyle('A' . $row . ':K' . $row)->applyFromArray([
+                'borders' => [
+                    'allBorders' => [
+                        'borderStyle' => Border::BORDER_THIN,
+                        'color' => ['rgb' => 'CCCCCC']
+                    ]
+                ]
+            ]);
+            
+            // Alternate row colors
+            if ($row % 2 === 0) {
+                $sheet->getStyle('A' . $row . ':K' . $row)->applyFromArray([
+                    'fill' => [
+                        'fillType' => Fill::FILL_SOLID,
+                        'startColor' => ['rgb' => 'F9FAFB']
+                    ]
+                ]);
+            }
+            
+            $row++;
             
         } catch (Exception $e) {
             error_log("Decryption error for record {$record['id']}: " . $e->getMessage());
         }
     }
     
-    // Generate filename with timestamp
-    $timestamp = date('Y-m-d_His');
-    $filename = "CFO_Registry_Export_{$timestamp}.csv";
-    
-    // Set headers for CSV download
-    header('Content-Type: text/csv; charset=utf-8');
-    header('Content-Disposition: attachment; filename="' . $filename . '"');
-    header('Pragma: no-cache');
-    header('Expires: 0');
-    
-    // Output CSV
-    $output = fopen('php://output', 'w');
-    
-    // Add BOM for proper Excel UTF-8 encoding
-    fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
-    
-    foreach ($excelData as $row) {
-        fputcsv($output, $row, ',', '"', '\\');
+    // Auto-size columns based on content
+    foreach (range('A', 'K') as $col) {
+        $sheet->getColumnDimension($col)->setAutoSize(true);
     }
     
-    fclose($output);
+    // Center align ID column
+    $sheet->getStyle('A2:A' . ($row - 1))->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+    
+    // Generate filename with timestamp
+    $timestamp = date('Y-m-d_His');
+    $filename = "CFO_Registry_Export_{$timestamp}.xlsx";
+    
+    // Set headers for Excel download
+    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    header('Content-Disposition: attachment; filename="' . $filename . '"');
+    header('Cache-Control: max-age=0');
+    header('Pragma: public');
+    
+    // Write file to output
+    $writer = new Xlsx($spreadsheet);
+    $writer->save('php://output');
+    
     exit;
     
 } catch (Exception $e) {
