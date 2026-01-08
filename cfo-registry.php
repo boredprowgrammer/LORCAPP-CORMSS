@@ -467,6 +467,7 @@ $(document).ready(function() {
     table = $('#cfoTable').DataTable({
         processing: true,
         serverSide: true,
+        searchDelay: 500, // Debounce search by 500ms
         ajax: {
             url: 'api/get-cfo-data.php',
             data: function(d) {

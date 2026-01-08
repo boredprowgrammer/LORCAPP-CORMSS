@@ -67,18 +67,22 @@ try {
         $params[] = $filterLocal;
     }
     
+    // Search filter - use indexed search columns
+    if (!empty($searchValue)) {
+        $whereConditions[] = '(t.search_name LIKE ? OR t.search_registry LIKE ? OR d.district_name LIKE ? OR lc.local_name LIKE ?)';
+        $searchParam = '%' . $searchValue . '%';
+        $params[] = $searchParam;
+        $params[] = $searchParam;
+        $params[] = $searchParam;
+        $params[] = $searchParam;
+    }
+    
     $whereClause = !empty($whereConditions) ? 'WHERE ' . implode(' AND ', $whereConditions) : '';
     
     // Get total count (without search and filters)
     $stmtTotal = $db->prepare("SELECT COUNT(*) as total FROM tarheta_control t");
     $stmtTotal->execute([]);
     $totalRecords = $stmtTotal->fetch()['total'];
-    
-    // For search, we need to load more records since we search after decryption
-    // Adjust limit if search is active
-    $searchActive = !empty($searchValue);
-    $actualLimit = $searchActive ? 1000 : $length; // Load more for searching
-    $actualStart = $searchActive ? 0 : $start;
     
     // Get records with pagination
     $query = "
@@ -103,12 +107,17 @@ try {
         LEFT JOIN local_congregations lc ON t.local_code = lc.local_code
         $whereClause
         ORDER BY t.id DESC
-        LIMIT $actualStart, $actualLimit
+        LIMIT $start, $length
     ";
     
     $stmt = $db->prepare($query);
     $stmt->execute($params);
     $records = $stmt->fetchAll();
+    
+    // Get filtered count
+    $stmtFiltered = $db->prepare("SELECT COUNT(*) as total FROM tarheta_control t LEFT JOIN districts d ON t.district_code = d.district_code LEFT JOIN local_congregations lc ON t.local_code = lc.local_code $whereClause");
+    $stmtFiltered->execute($params);
+    $filteredRecords = $stmtFiltered->fetch()['total'];
     
     // Decrypt and format records
     $data = [];
@@ -139,14 +148,6 @@ try {
                 $fullName .= ' (' . $husbandsSurname . ')';
             }
             
-            // Apply search filter if provided
-            if ($searchActive) {
-                $searchIn = strtolower($fullName . ' ' . $registryNumber . ' ' . $record['district_name'] . ' ' . $record['local_name']);
-                if (strpos($searchIn, strtolower($searchValue)) === false) {
-                    continue; // Skip records that don't match search
-                }
-            }
-            
             $data[] = [
                 'id' => $record['id'],
                 'name' => $fullName,
@@ -165,19 +166,6 @@ try {
         } catch (Exception $e) {
             error_log("Decryption error for record {$record['id']}: " . $e->getMessage());
         }
-    }
-    
-    // Get filtered count
-    if ($searchActive) {
-        // When searching, filtered count is the count after search
-        $filteredRecords = count($data);
-        // Apply pagination to search results
-        $data = array_slice($data, $start, $length);
-    } else {
-        // When not searching, get filtered count from database
-        $stmtFiltered = $db->prepare("SELECT COUNT(*) as total FROM tarheta_control t $whereClause");
-        $stmtFiltered->execute($params);
-        $filteredRecords = $stmtFiltered->fetch()['total'];
     }
     
     echo json_encode([

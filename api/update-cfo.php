@@ -71,6 +71,9 @@ try {
     $updateFields = [];
     $params = [];
     
+    // Track if name fields are being updated to rebuild search index
+    $nameFieldsUpdated = false;
+    
     // Handle name fields with encryption
     if ($firstName !== null) {
         if (empty(trim($firstName))) {
@@ -78,11 +81,13 @@ try {
         }
         $updateFields[] = 'first_name_encrypted = ?';
         $params[] = Encryption::encrypt($firstName, $record['district_code']);
+        $nameFieldsUpdated = true;
     }
     
     if ($middleName !== null) {
         $updateFields[] = 'middle_name_encrypted = ?';
         $params[] = empty(trim($middleName)) ? null : Encryption::encrypt($middleName, $record['district_code']);
+        $nameFieldsUpdated = true;
     }
     
     if ($lastName !== null) {
@@ -91,6 +96,7 @@ try {
         }
         $updateFields[] = 'last_name_encrypted = ?';
         $params[] = Encryption::encrypt($lastName, $record['district_code']);
+        $nameFieldsUpdated = true;
     }
     
     if ($husbandsSurname !== null) {
@@ -101,6 +107,30 @@ try {
     if ($birthday !== null) {
         $updateFields[] = 'birthday_encrypted = ?';
         $params[] = empty(trim($birthday)) ? null : Encryption::encrypt($birthday, $record['district_code']);
+    }
+    
+    // Update search_name if any name fields were updated
+    if ($nameFieldsUpdated) {
+        // Get current values if not all provided
+        if ($firstName === null || $middleName === null || $lastName === null) {
+            $stmtNames = $db->prepare("SELECT first_name_encrypted, middle_name_encrypted, last_name_encrypted FROM tarheta_control WHERE id = ?");
+            $stmtNames->execute([$id]);
+            $currentNames = $stmtNames->fetch();
+            
+            if ($firstName === null) {
+                $firstName = Encryption::decrypt($currentNames['first_name_encrypted'], $record['district_code']);
+            }
+            if ($middleName === null && $currentNames['middle_name_encrypted']) {
+                $middleName = Encryption::decrypt($currentNames['middle_name_encrypted'], $record['district_code']);
+            }
+            if ($lastName === null) {
+                $lastName = Encryption::decrypt($currentNames['last_name_encrypted'], $record['district_code']);
+            }
+        }
+        
+        $searchName = trim($firstName . ' ' . $middleName . ' ' . $lastName);
+        $updateFields[] = 'search_name = ?';
+        $params[] = $searchName;
     }
     
     if ($cfoClassification !== null) {
