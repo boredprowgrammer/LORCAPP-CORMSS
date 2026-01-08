@@ -226,24 +226,54 @@ ob_start();
                         <label class="block text-sm font-medium text-gray-700 mb-2">
                             District <span class="text-red-600">*</span>
                         </label>
-                        <select name="district_code" id="district_code" required onchange="loadLocals(this.value)" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                            <option value="">Select District</option>
-                            <?php foreach ($districts as $district): ?>
-                                <option value="<?php echo Security::escape($district['district_code']); ?>" 
-                                    <?php echo (isset($_POST['district_code']) && $_POST['district_code'] === $district['district_code']) ? 'selected' : ''; ?>>
-                                    <?php echo Security::escape($district['district_name']); ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
+                        <?php if ($currentUser['role'] === 'district' || $currentUser['role'] === 'local'): ?>
+                            <!-- District/Local users: show readonly field -->
+                            <input type="text" value="<?php 
+                                foreach ($districts as $d) {
+                                    if ($d['district_code'] === $currentUser['district_code']) {
+                                        echo Security::escape($d['district_name']);
+                                        break;
+                                    }
+                                }
+                            ?>" readonly class="w-full px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-700">
+                            <input type="hidden" name="district_code" id="district_code" value="<?php echo Security::escape($currentUser['district_code']); ?>">
+                        <?php else: ?>
+                            <!-- Admin: show dropdown -->
+                            <select name="district_code" id="district_code" required onchange="loadLocals(this.value)" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <option value="">Select District</option>
+                                <?php foreach ($districts as $district): ?>
+                                    <option value="<?php echo Security::escape($district['district_code']); ?>" 
+                                        <?php echo (isset($_POST['district_code']) && $_POST['district_code'] === $district['district_code']) ? 'selected' : ''; ?>>
+                                        <?php echo Security::escape($district['district_name']); ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        <?php endif; ?>
                     </div>
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">
                             Local Congregation <span class="text-red-600">*</span>
                         </label>
-                        <select name="local_code" id="local_code" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                            <option value="">Select District First</option>
-                        </select>
+                        <?php if ($currentUser['role'] === 'local'): ?>
+                            <!-- Local users: show readonly field -->
+                            <?php
+                            $localName = '';
+                            try {
+                                $stmt = $db->prepare("SELECT local_name FROM local_congregations WHERE local_code = ?");
+                                $stmt->execute([$currentUser['local_code']]);
+                                $localRow = $stmt->fetch();
+                                $localName = $localRow ? $localRow['local_name'] : '';
+                            } catch (Exception $e) {}
+                            ?>
+                            <input type="text" value="<?php echo Security::escape($localName); ?>" readonly class="w-full px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-700">
+                            <input type="hidden" name="local_code" id="local_code" value="<?php echo Security::escape($currentUser['local_code']); ?>">
+                        <?php else: ?>
+                            <!-- Admin/District: show dropdown -->
+                            <select name="local_code" id="local_code" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <option value="">Select District First</option>
+                            </select>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
@@ -440,10 +470,14 @@ function autoClassify() {
 document.addEventListener('DOMContentLoaded', function() {
     autoClassify();
     
-    // Load locals if district is pre-selected
-    const districtSelect = document.getElementById('district_code');
-    if (districtSelect.value) {
-        loadLocals(districtSelect.value);
+    // Auto-load locals if district is pre-set (for district/local users with hidden district field)
+    const districtInput = document.getElementById('district_code');
+    if (districtInput) {
+        const districtCode = districtInput.value;
+        if (districtCode) {
+            console.log('Auto-loading locals for district:', districtCode);
+            loadLocals(districtCode);
+        }
     }
     
     // Add event listener for birthday field

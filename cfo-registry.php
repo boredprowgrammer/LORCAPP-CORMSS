@@ -197,7 +197,16 @@ ob_start();
 
     <!-- Filters -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-        <form id="filterForm" class="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <form id="filterForm" class="grid grid-cols-1 md:grid-cols-<?php 
+            // Adjust grid based on role
+            if ($currentUser['role'] === 'local') {
+                echo '3'; // Classification, Status, Apply button
+            } elseif ($currentUser['role'] === 'district') {
+                echo '4'; // Classification, Status, Local, Apply button
+            } else {
+                echo '5'; // All filters
+            }
+        ?> gap-4">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">CFO Classification</label>
                 <select id="filterClassification" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
@@ -218,19 +227,46 @@ ob_start();
                 </select>
             </div>
             
+            <?php if ($currentUser['role'] === 'admin'): ?>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">District</label>
                 <select id="filterDistrict" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                     <option value="">All Districts</option>
                 </select>
             </div>
+            <?php elseif ($currentUser['role'] === 'district'): ?>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">District</label>
+                <input type="text" id="filterDistrictDisplay" value="<?php 
+                    try {
+                        $stmt = $db->prepare("SELECT district_name FROM districts WHERE district_code = ?");
+                        $stmt->execute([$currentUser['district_code']]);
+                        $districtRow = $stmt->fetch();
+                        echo Security::escape($districtRow ? $districtRow['district_name'] : '');
+                    } catch (Exception $e) {}
+                ?>" readonly class="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-600 cursor-not-allowed">
+                <input type="hidden" id="filterDistrict" value="<?php echo Security::escape($currentUser['district_code']); ?>">
+            </div>
+            <?php endif; ?>
             
+            <?php if ($currentUser['role'] === 'admin'): ?>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Local</label>
                 <select id="filterLocal" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                     <option value="">All Locals</option>
                 </select>
             </div>
+            <?php elseif ($currentUser['role'] === 'district'): ?>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Local</label>
+                <select id="filterLocal" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <option value="">All Locals</option>
+                </select>
+            </div>
+            <?php elseif ($currentUser['role'] === 'local'): ?>
+            <input type="hidden" id="filterDistrict" value="<?php echo Security::escape($currentUser['district_code']); ?>">
+            <input type="hidden" id="filterLocal" value="<?php echo Security::escape($currentUser['local_code']); ?>">
+            <?php endif; ?>
             
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">&nbsp;</label>
@@ -575,8 +611,24 @@ $(document).ready(function() {
         }
     });
     
-    // Load districts
+    // Auto-load districts and locals AFTER DataTable initialization
+    <?php if ($currentUser['role'] === 'district' || $currentUser['role'] === 'local'): ?>
+    const userDistrictCode = '<?php echo Security::escape($currentUser['district_code']); ?>';
+    console.log('User role: <?php echo $currentUser['role']; ?>, District code:', userDistrictCode);
+    
+    // Load locals for district users
+    <?php if ($currentUser['role'] === 'district'): ?>
+    if (userDistrictCode) {
+        loadDistricts().then(() => {
+            console.log('Loading locals for district:', userDistrictCode);
+            loadLocalsForDistrict(userDistrictCode);
+        });
+    }
+    <?php endif; ?>
+    <?php else: ?>
+    // Load districts for admin
     loadDistricts();
+    <?php endif; ?>
     
     // Inline editing for CFO Classification
     $('#cfoTable').on('change', '.inline-edit-classification', function() {
@@ -774,22 +826,27 @@ async function loadDistricts() {
         }
         
         const data = result.districts;
-        let html = '<option value="">All Districts</option>';
-        data.forEach(district => {
-            html += `<option value="${district.district_code}">${district.district_name}</option>`;
-        });
+        const filterDistrict = $('#filterDistrict');
         
-        $('#filterDistrict').html(html);
+        // Only populate if it's a select element (admin users)
+        if (filterDistrict.is('select')) {
+            let html = '<option value="">All Districts</option>';
+            data.forEach(district => {
+                html += `<option value="${district.district_code}">${district.district_name}</option>`;
+            });
+            filterDistrict.html(html);
+        }
     } catch (error) {
         console.error('Error loading districts:', error);
     }
 }
 
-$('#filterDistrict').on('change', async function() {
-    const districtCode = $(this).val();
-    
+async function loadLocalsForDistrict(districtCode) {
     if (!districtCode) {
-        $('#filterLocal').html('<option value="">All Locals</option>');
+        const filterLocal = $('#filterLocal');
+        if (filterLocal.is('select')) {
+            filterLocal.html('<option value="">All Locals</option>');
+        }
         return;
     }
     
@@ -797,15 +854,23 @@ $('#filterDistrict').on('change', async function() {
         const response = await fetch('api/get-locals.php?district=' + districtCode);
         const data = await response.json();
         
-        let html = '<option value="">All Locals</option>';
-        data.forEach(local => {
-            html += `<option value="${local.local_code}">${local.local_name}</option>`;
-        });
-        
-        $('#filterLocal').html(html);
+        const filterLocal = $('#filterLocal');
+        // Only populate if it's a select element
+        if (filterLocal.is('select')) {
+            let html = '<option value="">All Locals</option>';
+            data.forEach(local => {
+                html += `<option value="${local.local_code}">${local.local_name}</option>`;
+            });
+            filterLocal.html(html);
+        }
     } catch (error) {
         console.error('Error loading locals:', error);
     }
+}
+
+$('#filterDistrict').on('change', async function() {
+    const districtCode = $(this).val();
+    await loadLocalsForDistrict(districtCode);
 });
 
 async function viewDetails(id) {
