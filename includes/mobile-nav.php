@@ -1,6 +1,49 @@
 <?php
 // Mobile Navigation Menu - All menu items
 // This file is included in layout.php for mobile sidebar
+
+// Special navigation for Local CFO users (restricted access)
+if (isset($currentUser) && $currentUser['role'] === 'local_cfo'): 
+?>
+    <a href="<?php echo BASE_URL; ?>/cfo-dashboard.php" 
+       class="flex items-center px-3 py-2.5 text-sm font-medium rounded-lg <?php echo basename($_SERVER['PHP_SELF']) === 'cfo-dashboard.php' ? 'bg-purple-50 text-purple-600' : 'text-gray-700 hover:bg-gray-100'; ?>">
+        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+        </svg>
+        CFO Dashboard
+    </a>
+
+    <div class="pt-4 pb-2">
+        <p class="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">CFO Management</p>
+    </div>
+
+    <a href="<?php echo BASE_URL; ?>/cfo-registry.php" 
+       class="flex items-center px-3 py-2.5 text-sm font-medium rounded-lg <?php echo basename($_SERVER['PHP_SELF']) === 'cfo-registry.php' ? 'bg-purple-50 text-purple-600' : 'text-gray-700 hover:bg-gray-100'; ?>">
+        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+        </svg>
+        CFO Registry
+    </a>
+
+    <a href="<?php echo BASE_URL; ?>/cfo-add.php" 
+       class="flex items-center px-3 py-2.5 text-sm font-medium rounded-lg <?php echo basename($_SERVER['PHP_SELF']) === 'cfo-add.php' ? 'bg-purple-50 text-purple-600' : 'text-gray-700 hover:bg-gray-100'; ?>">
+        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+        </svg>
+        Add CFO Member
+    </a>
+
+    <a href="<?php echo BASE_URL; ?>/tarheta/list.php" 
+       class="flex items-center px-3 py-2.5 text-sm font-medium rounded-lg <?php echo strpos($_SERVER['PHP_SELF'], '/tarheta/list.php') !== false ? 'bg-purple-50 text-purple-600' : 'text-gray-700 hover:bg-gray-100'; ?>">
+        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+        </svg>
+        Tarheta Control
+    </a>
+
+<?php 
+    return; // Exit early for local_cfo users - they don't see other menu items
+endif; 
 ?>
 
 <a href="<?php echo BASE_URL; ?>/dashboard.php" 

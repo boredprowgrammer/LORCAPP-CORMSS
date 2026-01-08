@@ -5,6 +5,13 @@ require_once __DIR__ . '/includes/announcements.php';
 Security::requireLogin();
 
 $currentUser = getCurrentUser();
+
+// Redirect local_cfo users to their dedicated dashboard
+if ($currentUser['role'] === 'local_cfo') {
+    header('Location: ' . BASE_URL . '/cfo-dashboard.php');
+    exit;
+}
+
 $db = Database::getInstance()->getConnection();
 
 // Get statistics based on user role
