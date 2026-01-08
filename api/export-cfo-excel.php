@@ -180,7 +180,7 @@ try {
     fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
     
     foreach ($excelData as $row) {
-        fputcsv($output, $row);
+        fputcsv($output, $row, ',', '"', '\\');
     }
     
     fclose($output);
