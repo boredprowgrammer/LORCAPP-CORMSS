@@ -24,19 +24,32 @@ header("X-Content-Type-Options: nosniff");
 header("X-Frame-Options: DENY");
 header("Referrer-Policy: strict-origin-when-cross-origin");
 
-// Get user dark mode preference
-$userDarkMode = false;
+// Dark mode is now handled client-side via localStorage
 if (Security::isLoggedIn()) {
     $currentUserForTheme = getCurrentUser();
-    $userDarkMode = isset($currentUserForTheme['dark_mode']) && $currentUserForTheme['dark_mode'] == 1;
 }
 ?>
 <!DOCTYPE html>
-<html lang="en" class="<?php echo $userDarkMode ? 'dark' : ''; ?>">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo isset($pageTitle) ? Security::escape($pageTitle) . ' - ' : ''; ?><?php echo APP_NAME; ?></title>
+    
+    <!-- Dark Mode FOUC Prevention Script -->
+    <script nonce="<?php echo $csp_nonce; ?>">
+        // Apply dark mode immediately to prevent flash
+        (function() {
+            'use strict';
+            const theme = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            
+            // Apply dark class before page renders
+            if (theme === 'dark' || (theme === null && prefersDark)) {
+                document.documentElement.classList.add('dark');
+            }
+        })();
+    </script>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -288,7 +301,9 @@ if (Security::isLoggedIn()) {
             color-scheme: dark;
         }
         
-        /* Dark mode for form inputs - Improved contrast and colors */
+        /* ===== DARK MODE FORM SYSTEM ===== */
+        
+        /* Form inputs - Base styles */
         .dark input[type="text"],
         .dark input[type="search"],
         .dark input[type="email"],
@@ -300,11 +315,30 @@ if (Security::isLoggedIn()) {
         .dark input[type="time"],
         .dark textarea,
         .dark select {
-            background-color: #1f2937;
-            border-color: #4b5563;
-            color: #f9fafb;
+            background-color: #111827;
+            border: 1px solid #374151;
+            color: #f3f4f6;
+            border-radius: 0.5rem;
+            transition: all 0.2s ease;
         }
         
+        /* Form inputs - Hover state */
+        .dark input[type="text"]:hover:not(:focus):not(:disabled),
+        .dark input[type="search"]:hover:not(:focus):not(:disabled),
+        .dark input[type="email"]:hover:not(:focus):not(:disabled),
+        .dark input[type="tel"]:hover:not(:focus):not(:disabled),
+        .dark input[type="number"]:hover:not(:focus):not(:disabled),
+        .dark input[type="password"]:hover:not(:focus):not(:disabled),
+        .dark input[type="date"]:hover:not(:focus):not(:disabled),
+        .dark input[type="datetime-local"]:hover:not(:focus):not(:disabled),
+        .dark input[type="time"]:hover:not(:focus):not(:disabled),
+        .dark textarea:hover:not(:focus):not(:disabled),
+        .dark select:hover:not(:focus):not(:disabled) {
+            border-color: #4b5563;
+            background-color: #1f2937;
+        }
+        
+        /* Form inputs - Focus state */
         .dark input[type="text"]:focus,
         .dark input[type="search"]:focus,
         .dark input[type="email"]:focus,
@@ -317,27 +351,97 @@ if (Security::isLoggedIn()) {
         .dark textarea:focus,
         .dark select:focus {
             border-color: #3b82f6;
-            background-color: #111827;
-            ring-color: #3b82f6;
+            background-color: #1f2937;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
             outline: none;
         }
         
+        /* Placeholder text */
         .dark input::placeholder,
         .dark textarea::placeholder {
             color: #6b7280;
         }
         
+        /* Disabled state */
         .dark input:disabled,
         .dark textarea:disabled,
         .dark select:disabled {
-            background-color: #111827;
-            color: #6b7280;
+            background-color: #0f172a;
+            color: #4b5563;
+            border-color: #1f2937;
             cursor: not-allowed;
+            opacity: 0.7;
         }
         
-        /* Dark mode for cards - Better depth and hierarchy */
+        /* Select dropdown arrow */
+        .dark select {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.5rem center;
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
+            padding-right: 2.5rem;
+        }
+        
+        /* Checkbox and Radio buttons */
+        .dark input[type="checkbox"],
+        .dark input[type="radio"] {
+            background-color: #1f2937;
+            border: 2px solid #4b5563;
+            cursor: pointer;
+        }
+        
+        .dark input[type="checkbox"]:hover,
+        .dark input[type="radio"]:hover {
+            border-color: #6b7280;
+        }
+        
+        .dark input[type="checkbox"]:checked,
+        .dark input[type="radio"]:checked {
+            background-color: #3b82f6;
+            border-color: #3b82f6;
+        }
+        
+        .dark input[type="checkbox"]:focus,
+        .dark input[type="radio"]:focus {
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+            outline: none;
+        }
+        
+        /* Form labels */
+        .dark label {
+            color: #e5e7eb;
+        }
+        
+        /* Required field indicator */
+        .dark label .text-red-500,
+        .dark .required {
+            color: #f87171 !important;
+        }
+        
+        /* Form helper text */
+        .dark .text-gray-500,
+        .dark .help-text {
+            color: #9ca3af;
+        }
+        
+        /* ===== DARK MODE CARDS & CONTAINERS ===== */
+        
+        /* Card backgrounds with proper layering */
         .dark .bg-white {
             background-color: #1f2937 !important;
+        }
+        
+        .dark .bg-gray-50 {
+            background-color: #111827 !important;
+        }
+        
+        .dark .bg-gray-100 {
+            background-color: #1f2937 !important;
+        }
+        
+        /* Border colors - consistent grays */
+        .dark .border-gray-100 {
+            border-color: #1f2937 !important;
         }
         
         .dark .border-gray-200 {
@@ -348,18 +452,161 @@ if (Security::isLoggedIn()) {
             border-color: #4b5563 !important;
         }
         
-        .dark .shadow,
-        .dark .shadow-sm,
-        .dark .shadow-md,
-        .dark .shadow-lg {
-            box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.5) !important;
+        /* Shadow system - subtle depth for dark mode */
+        .dark .shadow-sm {
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.3), 
+                        0 0 0 1px rgba(255, 255, 255, 0.03) !important;
         }
         
-        /* Dark mode for buttons - Better contrast */
-        .dark button:not([class*="bg-blue"]):not([class*="bg-green"]):not([class*="bg-red"]):not([class*="bg-yellow"]):not([class*="bg-purple"]):not([class*="bg-indigo"]),
-        .dark .bg-gray-50:not(.dark\:bg-gray-700):not(.dark\:bg-blue-900) {
+        .dark .shadow {
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.4), 
+                        0 1px 2px -1px rgba(0, 0, 0, 0.3),
+                        0 0 0 1px rgba(255, 255, 255, 0.03) !important;
+        }
+        
+        .dark .shadow-md {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 
+                        0 2px 4px -2px rgba(0, 0, 0, 0.3),
+                        0 0 0 1px rgba(255, 255, 255, 0.03) !important;
+        }
+        
+        .dark .shadow-lg {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 
+                        0 4px 6px -4px rgba(0, 0, 0, 0.3),
+                        0 0 0 1px rgba(255, 255, 255, 0.03) !important;
+        }
+        
+        .dark .shadow-xl {
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 
+                        0 8px 10px -6px rgba(0, 0, 0, 0.4),
+                        0 0 0 1px rgba(255, 255, 255, 0.03) !important;
+        }
+        
+        /* Card hover lift effect */
+        .dark .bg-white:hover,
+        .dark [class*="rounded-lg"]:hover {
+            transition: box-shadow 0.2s ease, transform 0.2s ease;
+        }
+        
+        .dark .hover\:shadow-md:hover {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 
+                        0 2px 4px -2px rgba(0, 0, 0, 0.4),
+                        0 0 0 1px rgba(255, 255, 255, 0.05) !important;
+        }
+        
+        .dark .hover\:shadow-lg:hover {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 
+                        0 4px 6px -4px rgba(0, 0, 0, 0.4),
+                        0 0 0 1px rgba(255, 255, 255, 0.05) !important;
+        }
+        
+        /* Ring utilities */
+        .dark .ring-1 {
+            --tw-ring-color: rgba(75, 85, 99, 0.5);
+        }
+        
+        /* Divide colors */
+        .dark .divide-gray-200 > * + * {
+            border-color: #374151;
+        }
+        
+        .dark .divide-gray-100 > * + * {
+            border-color: #1f2937;
+        }
+
+        /* ===== DARK MODE BUTTON SYSTEM ===== */
+        
+        /* Base button reset for dark mode - preserves colored buttons */
+        .dark button:not([class*="bg-blue"]):not([class*="bg-green"]):not([class*="bg-red"]):not([class*="bg-yellow"]):not([class*="bg-purple"]):not([class*="bg-indigo"]):not([class*="bg-gray-"]),
+        .dark .btn:not([class*="bg-"]) {
+            background-color: #374151;
+            color: #f9fafb;
+            border-color: #4b5563;
+        }
+        
+        /* Primary buttons - Blue */
+        .dark .bg-blue-500,
+        .dark .bg-blue-600 {
+            background-color: #2563eb !important;
+            border-color: #1d4ed8 !important;
+        }
+        
+        .dark .bg-blue-500:hover,
+        .dark .bg-blue-600:hover,
+        .dark .hover\:bg-blue-600:hover,
+        .dark .hover\:bg-blue-700:hover {
+            background-color: #1d4ed8 !important;
+            border-color: #1e40af !important;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+        }
+        
+        .dark .bg-blue-500:active,
+        .dark .bg-blue-600:active {
+            background-color: #1e40af !important;
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(37, 99, 235, 0.3);
+        }
+        
+        /* Success buttons - Green */
+        .dark .bg-green-500,
+        .dark .bg-green-600 {
+            background-color: #16a34a !important;
+            border-color: #15803d !important;
+        }
+        
+        .dark .bg-green-500:hover,
+        .dark .bg-green-600:hover,
+        .dark .hover\:bg-green-600:hover,
+        .dark .hover\:bg-green-700:hover {
+            background-color: #15803d !important;
+            border-color: #166534 !important;
+            box-shadow: 0 4px 12px rgba(22, 163, 74, 0.4);
+        }
+        
+        /* Danger buttons - Red */
+        .dark .bg-red-500,
+        .dark .bg-red-600 {
+            background-color: #dc2626 !important;
+            border-color: #b91c1c !important;
+        }
+        
+        .dark .bg-red-500:hover,
+        .dark .bg-red-600:hover,
+        .dark .hover\:bg-red-600:hover,
+        .dark .hover\:bg-red-700:hover {
+            background-color: #b91c1c !important;
+            border-color: #991b1b !important;
+            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
+        }
+        
+        /* Warning buttons - Yellow/Amber */
+        .dark .bg-yellow-500,
+        .dark .bg-yellow-600,
+        .dark .bg-amber-500,
+        .dark .bg-amber-600 {
+            background-color: #d97706 !important;
+            border-color: #b45309 !important;
+        }
+        
+        .dark .bg-yellow-500:hover,
+        .dark .bg-yellow-600:hover,
+        .dark .hover\:bg-yellow-600:hover {
+            background-color: #b45309 !important;
+            box-shadow: 0 4px 12px rgba(217, 119, 6, 0.4);
+        }
+        
+        /* Secondary/Gray buttons */
+        .dark .bg-gray-100,
+        .dark .bg-gray-200 {
             background-color: #374151 !important;
-            color: #f9fafb !important;
+            color: #f3f4f6 !important;
+        }
+        
+        .dark .bg-gray-300,
+        .dark .bg-gray-400,
+        .dark .bg-gray-500 {
+            background-color: #4b5563 !important;
+            color: #f3f4f6 !important;
         }
         
         .dark .hover\:bg-gray-100:hover {
@@ -368,6 +615,28 @@ if (Security::isLoggedIn()) {
         
         .dark .hover\:bg-gray-50:hover {
             background-color: #374151 !important;
+        }
+        
+        /* Ghost/Outline buttons */
+        .dark .border.border-gray-300,
+        .dark .border.border-gray-200 {
+            border-color: #4b5563 !important;
+            background-color: transparent;
+            color: #e5e7eb;
+        }
+        
+        .dark .border.border-gray-300:hover,
+        .dark .border.border-gray-200:hover {
+            background-color: #374151 !important;
+            border-color: #6b7280 !important;
+        }
+        
+        /* Button groups consistent spacing */
+        .dark .space-x-2 > button,
+        .dark .space-x-3 > button,
+        .dark .gap-2 > button,
+        .dark .gap-3 > button {
+            position: relative;
         }
         
         /* Dark mode for text colors - Improved readability */
@@ -410,41 +679,71 @@ if (Security::isLoggedIn()) {
             border-color: #374151;
         }
         
-        .dark table thead {
-            background-color: #374151;
-            color: #f9fafb;
-            border-color: #4b5563;
-        }
+        /* ===== DARK MODE TABLES ===== */
         
-        .dark table tbody tr {
-            border-color: #374151;
-            background-color: #1f2937;
-        }
-        
-        .dark table tbody tr:hover {
-            background-color: #374151;
-        }
-        
-        .dark table tbody tr:nth-child(even) {
-            background-color: #111827;
-        }
-        
-        .dark table tbody tr:nth-child(even):hover {
-            background-color: #374151;
-        }
-        
-        /* Dark mode for modals and overlays */
-        .dark .modal-content,
-        .dark [role="dialog"] {
-            background-color: #1f2937;
+        .dark table {
             color: #f3f4f6;
             border-color: #374151;
         }
         
-        /* Dark mode for alerts - Better visibility */
+        .dark table thead {
+            background-color: #1f2937;
+            color: #f9fafb;
+            border-color: #374151;
+        }
+        
+        .dark table thead th {
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+            color: #9ca3af;
+            padding: 0.75rem 1rem;
+            border-bottom: 2px solid #374151;
+        }
+        
+        .dark table tbody tr {
+            border-color: #374151;
+            background-color: #111827;
+            transition: background-color 0.15s ease;
+        }
+        
+        .dark table tbody tr:nth-child(even) {
+            background-color: rgba(31, 41, 55, 0.5);
+        }
+        
+        .dark table tbody tr:hover {
+            background-color: #374151 !important;
+        }
+        
+        .dark table tbody td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #1f2937;
+        }
+        
+        /* ===== DARK MODE MODALS ===== */
+        
+        .dark .modal-content,
+        .dark [role="dialog"] {
+            background-color: #1f2937;
+            color: #f3f4f6;
+            border: 1px solid #374151;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+        
+        /* Modal backdrop */
+        .dark .bg-black.bg-opacity-50,
+        .dark .bg-gray-900.bg-opacity-50,
+        .dark [class*="bg-opacity-50"] {
+            backdrop-filter: blur(4px);
+        }
+        
+        /* ===== DARK MODE ALERTS & NOTIFICATIONS ===== */
+        
+        /* Info alerts - Blue */
         .dark .bg-blue-50:not(.dark\:bg-blue-900) {
-            background-color: rgba(37, 99, 235, 0.15) !important;
-            border-color: rgba(59, 130, 246, 0.3) !important;
+            background-color: rgba(59, 130, 246, 0.1) !important;
+            border-color: rgba(59, 130, 246, 0.25) !important;
         }
         
         .dark .text-blue-800 {
@@ -459,9 +758,10 @@ if (Security::isLoggedIn()) {
             color: #3b82f6 !important;
         }
         
+        /* Success alerts - Green */
         .dark .bg-green-50:not(.dark\:bg-green-900) {
-            background-color: rgba(34, 197, 94, 0.15) !important;
-            border-color: rgba(34, 197, 94, 0.3) !important;
+            background-color: rgba(34, 197, 94, 0.1) !important;
+            border-color: rgba(34, 197, 94, 0.25) !important;
         }
         
         .dark .text-green-800 {
@@ -476,9 +776,10 @@ if (Security::isLoggedIn()) {
             color: #22c55e !important;
         }
         
+        /* Warning alerts - Yellow */
         .dark .bg-yellow-50:not(.dark\:bg-yellow-900) {
-            background-color: rgba(234, 179, 8, 0.15) !important;
-            border-color: rgba(234, 179, 8, 0.3) !important;
+            background-color: rgba(234, 179, 8, 0.1) !important;
+            border-color: rgba(234, 179, 8, 0.25) !important;
         }
         
         .dark .text-yellow-800 {
@@ -493,9 +794,10 @@ if (Security::isLoggedIn()) {
             color: #eab308 !important;
         }
         
+        /* Error alerts - Red */
         .dark .bg-red-50:not(.dark\:bg-red-900) {
-            background-color: rgba(239, 68, 68, 0.15) !important;
-            border-color: rgba(239, 68, 68, 0.3) !important;
+            background-color: rgba(239, 68, 68, 0.1) !important;
+            border-color: rgba(239, 68, 68, 0.25) !important;
         }
         
         .dark .text-red-800 {
@@ -510,13 +812,65 @@ if (Security::isLoggedIn()) {
             color: #ef4444 !important;
         }
         
-        /* Dark mode for badges and tags */
+        /* ===== DARK MODE BADGES & STATUS INDICATORS ===== */
+        
+        /* Base badge styling */
+        .dark .badge,
+        .dark .tag,
+        .dark span[class*="px-"][class*="py-"][class*="rounded"] {
+            transition: filter 0.15s ease;
+        }
+        
+        /* Colored badges with semi-transparent backgrounds */
+        .dark .bg-blue-100.text-blue-800,
+        .dark .bg-blue-100.text-blue-700 {
+            background-color: rgba(59, 130, 246, 0.15) !important;
+            color: #93c5fd !important;
+        }
+        
+        .dark .bg-green-100.text-green-800,
+        .dark .bg-green-100.text-green-700 {
+            background-color: rgba(34, 197, 94, 0.15) !important;
+            color: #86efac !important;
+        }
+        
+        .dark .bg-yellow-100.text-yellow-800,
+        .dark .bg-yellow-100.text-yellow-700 {
+            background-color: rgba(234, 179, 8, 0.15) !important;
+            color: #fcd34d !important;
+        }
+        
+        .dark .bg-red-100.text-red-800,
+        .dark .bg-red-100.text-red-700 {
+            background-color: rgba(239, 68, 68, 0.15) !important;
+            color: #fca5a5 !important;
+        }
+        
+        .dark .bg-purple-100.text-purple-800,
+        .dark .bg-purple-100.text-purple-700 {
+            background-color: rgba(168, 85, 247, 0.15) !important;
+            color: #d8b4fe !important;
+        }
+        
+        .dark .bg-indigo-100.text-indigo-800,
+        .dark .bg-indigo-100.text-indigo-700 {
+            background-color: rgba(99, 102, 241, 0.15) !important;
+            color: #a5b4fc !important;
+        }
+        
+        .dark .bg-gray-100.text-gray-800,
+        .dark .bg-gray-100.text-gray-700 {
+            background-color: rgba(107, 114, 128, 0.2) !important;
+            color: #d1d5db !important;
+        }
+        
+        /* Default badge style */
         .dark .badge,
         .dark .tag {
             background-color: #374151;
             color: #f3f4f6;
         }
-        
+
         /* Dark mode for specific colored elements */
         .dark .bg-purple-50 {
             background-color: rgba(168, 85, 247, 0.15) !important;
@@ -963,27 +1317,137 @@ if (Security::isLoggedIn()) {
         
         /* ===== ENHANCED HOVER EFFECTS FOR DARK MODE ===== */
         
-        /* Navigation hover effects - Smoother transitions */
+        /* Navigation hover effects - Smoother transitions with natural feel */
         .dark nav a {
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+        
+        .dark nav a:hover:not(.bg-blue-50):not(.dark\:bg-blue-900\/30) {
+            transform: translateX(2px);
+            background-color: #374151 !important;
         }
         
         .dark nav a:hover {
-            transform: translateX(2px);
+            color: #f3f4f6 !important;
         }
         
-        /* Button hover effects - Better depth */
-        .dark button:hover:not(:disabled),
-        .dark a[class*="btn"]:hover {
+        /* Active/selected navigation items maintain their styling */
+        .dark nav a.bg-blue-50,
+        .dark nav a[class*="bg-blue-50"] {
+            background-color: rgba(59, 130, 246, 0.15) !important;
+        }
+        
+        /* Sidebar section headers */
+        .dark nav p.text-gray-400 {
+            color: #9ca3af !important;
+        }
+        
+        /* ===== DARK MODE INTERACTIVE STATES ===== */
+        
+        /* Button hover - subtle lift with glow */
+        .dark button:hover:not(:disabled):not([class*="bg-transparent"]) {
             transform: translateY(-1px);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
         }
         
+        /* Colored button hover glow effects */
+        .dark .bg-blue-500:hover,
+        .dark .bg-blue-600:hover {
+            box-shadow: 0 4px 14px -2px rgba(59, 130, 246, 0.5);
+        }
+        
+        .dark .bg-green-500:hover,
+        .dark .bg-green-600:hover {
+            box-shadow: 0 4px 14px -2px rgba(34, 197, 94, 0.5);
+        }
+        
+        .dark .bg-red-500:hover,
+        .dark .bg-red-600:hover {
+            box-shadow: 0 4px 14px -2px rgba(239, 68, 68, 0.5);
+        }
+        
+        .dark .bg-yellow-500:hover,
+        .dark .bg-yellow-600:hover {
+            box-shadow: 0 4px 14px -2px rgba(234, 179, 8, 0.5);
+        }
+        
+        /* Button active state - pressed effect */
         .dark button:active:not(:disabled),
         .dark a[class*="btn"]:active {
-            transform: translateY(0);
-            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.2);
+            transform: translateY(0) scale(0.98);
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
         }
+        
+        /* Gray/Secondary button hover */
+        .dark button[type="button"]:hover:not([class*="bg-"]),
+        .dark .bg-gray-100:hover,
+        .dark .bg-gray-200:hover {
+            background-color: #4b5563 !important;
+        }
+        
+        /* Mobile menu button hover */
+        .dark button[type="button"]:hover {
+            background-color: #374151 !important;
+        }
+        
+        /* User menu dropdown hover */
+        .dark [x-data] button:hover {
+            background-color: #374151 !important;
+        }
+        
+        /* ===== HOVER STATE MAPPINGS ===== */
+        
+        /* Background hover - blues */
+        .dark .hover\:bg-blue-50:hover { background-color: rgba(59, 130, 246, 0.15) !important; }
+        .dark .hover\:bg-blue-100:hover { background-color: rgba(59, 130, 246, 0.2) !important; }
+        .dark .hover\:bg-blue-600:hover { background-color: #1d4ed8 !important; }
+        .dark .hover\:bg-blue-700:hover { background-color: #1e40af !important; }
+        .dark .hover\:bg-blue-800:hover { background-color: #1e3a8a !important; }
+        
+        /* Background hover - grays */
+        .dark .hover\:bg-gray-50:hover { background-color: #374151 !important; }
+        .dark .hover\:bg-gray-100:hover { background-color: #4b5563 !important; }
+        .dark .hover\:bg-gray-200:hover { background-color: #4b5563 !important; }
+        .dark .hover\:bg-gray-300:hover { background-color: #6b7280 !important; }
+        .dark .hover\:bg-gray-400:hover { background-color: #9ca3af !important; }
+        .dark .hover\:bg-gray-500:hover { background-color: #6b7280 !important; }
+        .dark .hover\:bg-gray-600:hover { background-color: #4b5563 !important; }
+        
+        /* Background hover - greens */
+        .dark .hover\:bg-green-50:hover { background-color: rgba(34, 197, 94, 0.15) !important; }
+        .dark .hover\:bg-green-100:hover { background-color: rgba(34, 197, 94, 0.2) !important; }
+        .dark .hover\:bg-green-200:hover { background-color: rgba(34, 197, 94, 0.3) !important; }
+        .dark .hover\:bg-green-600:hover { background-color: #16a34a !important; }
+        .dark .hover\:bg-green-700:hover { background-color: #15803d !important; }
+        
+        /* Background hover - reds */
+        .dark .hover\:bg-red-50:hover { background-color: rgba(239, 68, 68, 0.15) !important; }
+        .dark .hover\:bg-red-100:hover { background-color: rgba(239, 68, 68, 0.2) !important; }
+        .dark .hover\:bg-red-600:hover { background-color: #dc2626 !important; }
+        .dark .hover\:bg-red-700:hover { background-color: #b91c1c !important; }
+        .dark .hover\:bg-red-900\/30:hover { background-color: rgba(127, 29, 29, 0.3) !important; }
+        
+        /* Background hover - yellows */
+        .dark .hover\:bg-yellow-50:hover { background-color: rgba(234, 179, 8, 0.15) !important; }
+        .dark .hover\:bg-yellow-100:hover { background-color: rgba(234, 179, 8, 0.2) !important; }
+        .dark .hover\:bg-yellow-600:hover { background-color: #ca8a04 !important; }
+        
+        /* Background hover - other colors */
+        .dark .hover\:bg-indigo-700:hover { background-color: #4338ca !important; }
+        .dark .hover\:bg-purple-100:hover { background-color: rgba(168, 85, 247, 0.2) !important; }
+        
+        /* Text hover colors */
+        .dark .hover\:text-gray-600:hover { color: #d1d5db !important; }
+        .dark .hover\:text-gray-700:hover { color: #e5e7eb !important; }
+        .dark .hover\:text-gray-800:hover { color: #f3f4f6 !important; }
+        .dark .hover\:text-gray-200:hover { color: #f9fafb !important; }
+        
+        .dark .hover\:text-blue-700:hover { color: #3b82f6 !important; }
+        .dark .hover\:text-blue-800:hover { color: #60a5fa !important; }
+        .dark .hover\:text-blue-900:hover { color: #93c5fd !important; }
+        
+        .dark .hover\:text-green-700:hover { color: #4ade80 !important; }
+        .dark .hover\:text-red-800:hover { color: #fca5a5 !important; }
         
         /* Card hover effects - Subtle lift */
         .dark .bg-white:hover,
@@ -1016,22 +1480,29 @@ if (Security::isLoggedIn()) {
             background-color: #374151;
         }
         
-        /* Badge hover effects */
+        /* Badge hover effects - subtle brightness boost */
         .dark .badge:hover,
-        .dark [class*="inline-block"]:hover {
-            filter: brightness(1.1);
+        .dark span[class*="rounded-full"]:hover {
+            filter: brightness(1.15);
+            transition: filter 0.15s ease;
         }
         
-        /* Icon hover effects */
-        .dark svg:hover {
-            transform: scale(1.05);
+        /* Icon hover effects - scale on hover */
+        .dark button svg,
+        .dark a svg {
             transition: transform 0.15s ease;
         }
         
-        /* Dropdown hover effects */
+        .dark button:hover svg,
+        .dark a:hover svg {
+            transform: scale(1.1);
+        }
+        
+        /* Dropdown/autocomplete hover effects */
         .dark .department-item:hover,
-        .dark [id*="_results"] > div:hover {
-            background-color: #4b5563 !important;
+        .dark [id*="_results"] > div:hover,
+        .dark .autocomplete-item:hover {
+            background-color: #374151 !important;
             cursor: pointer;
         }
         
@@ -1041,49 +1512,79 @@ if (Security::isLoggedIn()) {
             border-color: #4b5563;
         }
         
-        /* Toggle switch hover */
-        .dark .toggle:hover {
-            opacity: 0.9;
+        /* Toggle switch styling */
+        .dark .toggle,
+        .dark input[type="checkbox"][role="switch"] {
+            transition: background-color 0.2s ease;
         }
         
-        /* Focus-visible for better accessibility */
+        /* ===== FOCUS & ACCESSIBILITY ===== */
+        
+        /* Visible focus ring for keyboard navigation */
         .dark *:focus-visible {
             outline: 2px solid #60a5fa;
             outline-offset: 2px;
             border-radius: 4px;
         }
         
-        /* Smooth color transitions for all interactive elements */
+        /* Remove default focus outline when using mouse */
+        .dark *:focus:not(:focus-visible) {
+            outline: none;
+        }
+        
+        /* ===== GLOBAL TRANSITIONS ===== */
+        
+        /* Smooth transitions for interactive elements */
         .dark button,
         .dark a,
         .dark input,
         .dark textarea,
-        .dark select,
-        .dark [class*="hover"] {
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        .dark select {
+            transition: background-color 0.2s ease,
+                        border-color 0.2s ease,
+                        color 0.2s ease,
+                        box-shadow 0.2s ease,
+                        transform 0.15s ease,
+                        opacity 0.15s ease;
         }
         
-        /* Disabled state - clearer visual */
-        .dark button:disabled:hover,
-        .dark input:disabled:hover,
-        .dark select:disabled:hover {
+        /* Card transitions */
+        .dark .bg-white,
+        .dark [class*="rounded-lg"],
+        .dark [class*="rounded-xl"] {
+            transition: box-shadow 0.2s ease, transform 0.2s ease;
+        }
+        
+        /* Disabled states */
+        .dark button:disabled,
+        .dark input:disabled,
+        .dark select:disabled,
+        .dark textarea:disabled,
+        .dark [disabled] {
             cursor: not-allowed;
-            transform: none;
             opacity: 0.5;
         }
         
+        .dark button:disabled:hover,
+        .dark input:disabled:hover,
+        .dark select:disabled:hover {
+            transform: none !important;
+            box-shadow: none !important;
+        }
+        
         /* Active state for better feedback */
-        .dark button:active,
+        .dark button:active:not(:disabled),
         .dark a[class*="btn"]:active {
             transition: transform 0.05s ease;
         }
         
         /* ===== ADVANCED DARK MODE ENHANCEMENTS ===== */
         
-        /* Active element glow effect */
+        /* Active nav element with subtle glow */
         .dark .bg-blue-50.dark\:bg-blue-900\/30,
-        .dark nav a.bg-blue-50 {
-            box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.4), 0 0 8px rgba(59, 130, 246, 0.2);
+        .dark nav a.bg-blue-50,
+        .dark nav a[class*="active"] {
+            box-shadow: inset 3px 0 0 #3b82f6, 0 0 0 1px rgba(59, 130, 246, 0.2);
         }
         
         /* Skeleton loading animation */
@@ -1349,20 +1850,111 @@ if (Security::isLoggedIn()) {
         }
         
         .dark main {
-            animation: fadeInUp 0.4s ease-out;
+            animation: fadeInUp 0.3s ease-out;
         }
         
-        /* Will-change for performance */
+        /* ===== UTILITY CLASSES FOR DARK MODE ===== */
+        
+        /* Scrollbar styling */
+        .dark ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+        
+        .dark ::-webkit-scrollbar-track {
+            background: #1f2937;
+            border-radius: 5px;
+        }
+        
+        .dark ::-webkit-scrollbar-thumb {
+            background: #4b5563;
+            border-radius: 5px;
+            border: 2px solid #1f2937;
+        }
+        
+        .dark ::-webkit-scrollbar-thumb:hover {
+            background: #6b7280;
+        }
+        
+        /* Selection styling */
+        .dark ::selection {
+            background-color: rgba(59, 130, 246, 0.3);
+            color: #f9fafb;
+        }
+        
+        /* Highlight text */
+        .dark mark,
+        .dark .highlight {
+            background-color: rgba(234, 179, 8, 0.3);
+            color: #fcd34d;
+            padding: 0.125rem 0.25rem;
+            border-radius: 0.25rem;
+        }
+        
+        /* Link underline on hover */
+        .dark a:not([class*="btn"]):not([class*="flex"]):not([class*="inline-flex"]):not(nav a):hover {
+            text-decoration-color: currentColor;
+        }
+        
+        /* Empty state styling */
+        .dark .empty-state {
+            color: #6b7280;
+        }
+        
+        .dark .empty-state svg {
+            color: #4b5563;
+        }
+        
+        /* Pagination styling */
+        .dark .pagination a,
+        .dark .pagination span {
+            background-color: #1f2937;
+            border-color: #374151;
+            color: #d1d5db;
+        }
+        
+        .dark .pagination a:hover {
+            background-color: #374151;
+            color: #f9fafb;
+        }
+        
+        .dark .pagination .active {
+            background-color: #3b82f6;
+            border-color: #3b82f6;
+            color: #fff;
+        }
+        
+        /* Breadcrumb styling */
+        .dark .breadcrumb {
+            color: #9ca3af;
+        }
+        
+        .dark .breadcrumb a {
+            color: #d1d5db;
+        }
+        
+        .dark .breadcrumb a:hover {
+            color: #f9fafb;
+        }
+        
+        .dark .breadcrumb-separator {
+            color: #6b7280;
+        }
+        
+        /* Performance optimization */
         .dark button,
-        .dark nav a,
-        .dark [class*="hover"]:hover {
-            will-change: transform;
+        .dark nav a {
+            will-change: transform, box-shadow;
         }
         
-        /* Remove will-change after transition */
         .dark button:not(:hover),
         .dark nav a:not(:hover) {
             will-change: auto;
+        }
+        
+        /* Prevent layout shift */
+        .dark img {
+            background-color: #374151;
         }
     </style>
     
@@ -1376,7 +1968,7 @@ if (Security::isLoggedIn()) {
 }
 ?>
 </head>
-<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen antialiased">
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen antialiased transition-colors duration-300">
     
     <!-- Simple Loading Spinner Overlay -->
     <div id="loadingOverlay">
@@ -1569,6 +2161,28 @@ if (Security::isLoggedIn()) {
                         </a>
                         <?php endif; ?>
                         
+                        <?php if (hasPermission('can_view_reports')): ?>
+                        <div class="pt-4 pb-2">
+                            <p class="px-4 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">CFO (Christian Family Org.)</p>
+                        </div>
+                        
+                        <a href="<?php echo BASE_URL; ?>/cfo-registry.php" 
+                           class="flex items-center px-4 py-3 text-sm font-medium rounded-lg <?php echo strpos($_SERVER['PHP_SELF'], 'cfo-registry.php') !== false ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'; ?>">
+                            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                            </svg>
+                            CFO Registry
+                        </a>
+                        
+                        <a href="<?php echo BASE_URL; ?>/reports/cfo-reports.php" 
+                           class="flex items-center px-4 py-3 text-sm font-medium rounded-lg <?php echo strpos($_SERVER['PHP_SELF'], 'cfo-reports.php') !== false ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'; ?>">
+                            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                            </svg>
+                            CFO Reports
+                        </a>
+                        <?php endif; ?>
+                        
                         <?php if (hasPermission('can_view_requests')): ?>
                         <div class="pt-4 pb-2">
                             <p class="px-4 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Requests</p>
@@ -1583,11 +2197,21 @@ if (Security::isLoggedIn()) {
                         </a>
                         <?php endif; ?>
                         
-                        <?php if (in_array($currentUser['role'], ['local', 'district'])): ?>
+                        <?php if (in_array($currentUser['role'], ['local', 'district', 'admin'])): ?>
                         <div class="pt-4 pb-2">
-                            <p class="px-4 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Communication</p>
+                            <p class="px-4 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Contacts & Communication</p>
                         </div>
                         
+                        <a href="<?php echo BASE_URL; ?>/overseers-contacts.php" 
+                           class="flex items-center px-4 py-3 text-sm font-medium rounded-lg <?php echo strpos($_SERVER['PHP_SELF'], 'overseers-contacts') !== false ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'; ?>">
+                            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
+                            </svg>
+                            Overseers Contacts
+                        </a>
+                        <?php endif; ?>
+                        
+                        <?php if (in_array($currentUser['role'], ['local', 'district'])): ?>
                         <a href="<?php echo BASE_URL; ?>/chat.php" 
                            class="flex items-center px-4 py-3 text-sm font-medium rounded-lg <?php echo basename($_SERVER['PHP_SELF']) === 'chat.php' ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'; ?>">
                             <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">

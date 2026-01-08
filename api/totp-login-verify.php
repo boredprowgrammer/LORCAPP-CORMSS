@@ -1,0 +1,228 @@
+<?php
+/**
+ * TOTP Login Verification API
+ * Verify TOTP code during login (after password verification)
+ */
+
+require_once __DIR__ . '/../config/config.php';
+require_once __DIR__ . '/../vendor/autoload.php';
+
+use RobThree\Auth\TwoFactorAuth;
+
+header('Content-Type: application/json');
+
+// This endpoint is called during login, so user is not yet authenticated
+// If already logged in, redirect to dashboard instead of error
+if (Security::isLoggedIn()) {
+    echo json_encode([
+        'success' => true,
+        'already_logged_in' => true,
+        'redirect' => BASE_URL . '/dashboard.php',
+        'message' => 'Already logged in'
+    ]);
+    exit;
+}
+
+// Only allow POST requests
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    echo json_encode(['success' => false, 'message' => 'Method not allowed']);
+    exit;
+}
+
+// Validate CSRF token
+$csrfToken = $_POST['csrf_token'] ?? '';
+if (!Security::validateCSRFToken($csrfToken, 'login', false)) {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'message' => 'Invalid security token']);
+    exit;
+}
+
+$code = Security::sanitizeInput($_POST['code'] ?? '');
+$userId = (int)($_SESSION['totp_pending_user_id'] ?? 0);
+$isBackupCode = isset($_POST['is_backup']) && $_POST['is_backup'] === '1';
+
+if (empty($code) || empty($userId)) {
+    echo json_encode([
+        'success' => false,
+        'message' => 'Invalid request'
+    ]);
+    exit;
+}
+
+try {
+    $db = Database::getInstance()->getConnection();
+    
+    // Rate limiting check
+    $stmt = $db->prepare("
+        SELECT COUNT(*) as attempt_count 
+        FROM totp_attempts 
+        WHERE user_id = ? 
+        AND ip_address = ? 
+        AND attempted_at > DATE_SUB(NOW(), INTERVAL 15 MINUTE)
+        AND success = 0
+    ");
+    $stmt->execute([$userId, $_SERVER['REMOTE_ADDR']]);
+    $attempts = $stmt->fetch();
+    
+    if ($attempts['attempt_count'] >= 10) {
+        echo json_encode([
+            'success' => false,
+            'message' => 'Too many failed attempts. Please try again in 15 minutes.'
+        ]);
+        exit;
+    }
+    
+    // Get user data
+    $stmt = $db->prepare("
+        SELECT u.*, d.district_name, lc.local_name
+        FROM users u
+        LEFT JOIN districts d ON u.district_code = d.district_code
+        LEFT JOIN local_congregations lc ON u.local_code = lc.local_code
+        WHERE u.user_id = ? AND u.is_active = 1 AND u.totp_enabled = 1
+    ");
+    $stmt->execute([$userId]);
+    $user = $stmt->fetch();
+    
+    if (!$user) {
+        echo json_encode([
+            'success' => false,
+            'message' => 'Invalid session'
+        ]);
+        exit;
+    }
+    
+    $isValid = false;
+    
+    if ($isBackupCode) {
+        // Verify backup code
+        $backupCodesJson = Encryption::decrypt($user['totp_backup_codes_encrypted'], $user['district_code'] ?? 'SYSTEM');
+        $hashedBackupCodes = json_decode($backupCodesJson, true);
+        
+        // Check if code matches any backup code
+        foreach ($hashedBackupCodes as $index => $hashedCode) {
+            if (password_verify($code, $hashedCode)) {
+                $isValid = true;
+                
+                // Remove used backup code
+                unset($hashedBackupCodes[$index]);
+                $hashedBackupCodes = array_values($hashedBackupCodes); // Reindex
+                
+                // Update database
+                $encryptedBackupCodes = Encryption::encrypt(json_encode($hashedBackupCodes), $user['district_code'] ?? 'SYSTEM');
+                $updateStmt = $db->prepare("
+                    UPDATE users 
+                    SET totp_backup_codes_encrypted = ?
+                    WHERE user_id = ?
+                ");
+                $updateStmt->execute([$encryptedBackupCodes, $userId]);
+                
+                // Log backup code usage
+                $auditStmt = $db->prepare("
+                    INSERT INTO audit_log (user_id, action, ip_address, user_agent)
+                    VALUES (?, 'totp_backup_used', ?, ?)
+                ");
+                $auditStmt->execute([
+                    $userId,
+                    $_SERVER['REMOTE_ADDR'],
+                    $_SERVER['HTTP_USER_AGENT'] ?? ''
+                ]);
+                
+                break;
+            }
+        }
+    } else {
+        // Verify TOTP code
+        $secret = Encryption::decrypt($user['totp_secret_encrypted'], $user['district_code'] ?? 'SYSTEM');
+        // Use explicit parameters: 6 digits, 30 second period, SHA1 algorithm
+        $tfa = new TwoFactorAuth(APP_NAME, 6, 30, 'sha1');
+        $isValid = $tfa->verifyCode($secret, $code, 1);
+    }
+    
+    // Record attempt
+    $attemptStmt = $db->prepare("
+        INSERT INTO totp_attempts (user_id, ip_address, success)
+        VALUES (?, ?, ?)
+    ");
+    $attemptStmt->execute([
+        $userId,
+        $_SERVER['REMOTE_ADDR'],
+        $isValid ? 1 : 0
+    ]);
+    
+    if (!$isValid) {
+        // Log failed attempt
+        $auditStmt = $db->prepare("
+            INSERT INTO audit_log (user_id, action, ip_address, user_agent)
+            VALUES (?, 'totp_failed_attempt', ?, ?)
+        ");
+        $auditStmt->execute([
+            $userId,
+            $_SERVER['REMOTE_ADDR'],
+            $_SERVER['HTTP_USER_AGENT'] ?? ''
+        ]);
+        
+        echo json_encode([
+            'success' => false,
+            'message' => 'Invalid verification code. Please try again.'
+        ]);
+        exit;
+    }
+    
+    // Code is valid - complete login
+    session_regenerate_id(true);
+    
+    $_SESSION['user_id'] = $user['user_id'];
+    $_SESSION['username'] = $user['username'];
+    $_SESSION['user_role'] = $user['role'];
+    $_SESSION['district_code'] = $user['district_code'];
+    $_SESSION['local_code'] = $user['local_code'];
+    $_SESSION['last_activity'] = time();
+    $_SESSION['ip_address'] = $_SERVER['REMOTE_ADDR'];
+    $_SESSION['user_agent'] = $_SERVER['HTTP_USER_AGENT'] ?? '';
+    
+    // Clear pending 2FA session
+    unset($_SESSION['totp_pending_user_id']);
+    unset($_SESSION['totp_pending_remember_me']);
+    
+    // Update last login and last used
+    $updateStmt = $db->prepare("
+        UPDATE users 
+        SET last_login = NOW(), totp_last_used = NOW()
+        WHERE user_id = ?
+    ");
+    $updateStmt->execute([$user['user_id']]);
+    
+    // Handle remember me if it was requested
+    if (isset($_SESSION['totp_pending_remember_me']) && $_SESSION['totp_pending_remember_me']) {
+        Security::setRememberMeToken($user['user_id']);
+    }
+    
+    // Clear login attempts
+    Security::resetLoginAttempts($user['username']);
+    
+    // Log successful verification
+    $auditStmt = $db->prepare("
+        INSERT INTO audit_log (user_id, action, ip_address, user_agent)
+        VALUES (?, 'totp_verified', ?, ?)
+    ");
+    $auditStmt->execute([
+        $user['user_id'],
+        $_SERVER['REMOTE_ADDR'],
+        $_SERVER['HTTP_USER_AGENT'] ?? ''
+    ]);
+    
+    echo json_encode([
+        'success' => true,
+        'message' => 'Login successful',
+        'redirect' => BASE_URL . '/dashboard.php'
+    ]);
+    
+} catch (Exception $e) {
+    error_log("TOTP login verification error: " . $e->getMessage());
+    http_response_code(500);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Error verifying code. Please try again.'
+    ]);
+}

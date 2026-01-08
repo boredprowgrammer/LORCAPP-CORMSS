@@ -1,0 +1,150 @@
+<?php
+/**
+ * Update CFO Information
+ */
+
+require_once __DIR__ . '/../config/config.php';
+
+Security::requireLogin();
+requirePermission('can_add_officers'); // Requires permission to add officers
+
+header('Content-Type: application/json');
+
+$currentUser = getCurrentUser();
+$db = Database::getInstance()->getConnection();
+
+try {
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        throw new Exception('Invalid request method');
+    }
+    
+    $id = intval($_POST['id'] ?? 0);
+    $cfoClassification = isset($_POST['cfo_classification']) ? Security::sanitizeInput($_POST['cfo_classification']) : null;
+    $cfoStatus = isset($_POST['cfo_status']) ? Security::sanitizeInput($_POST['cfo_status']) : null;
+    $cfoNotes = isset($_POST['cfo_notes']) ? Security::sanitizeInput($_POST['cfo_notes']) : null;
+    
+    // Name fields
+    $firstName = isset($_POST['first_name']) ? Security::sanitizeInput($_POST['first_name']) : null;
+    $middleName = isset($_POST['middle_name']) ? Security::sanitizeInput($_POST['middle_name']) : null;
+    $lastName = isset($_POST['last_name']) ? Security::sanitizeInput($_POST['last_name']) : null;
+    $husbandsSurname = isset($_POST['husbands_surname']) ? Security::sanitizeInput($_POST['husbands_surname']) : null;
+    $birthday = isset($_POST['birthday']) ? Security::sanitizeInput($_POST['birthday']) : null;
+    
+    if ($id <= 0) {
+        throw new Exception('Invalid ID');
+    }
+    
+    // Validate classification if provided
+    if ($cfoClassification !== null) {
+        $validClassifications = ['Buklod', 'Kadiwa', 'Binhi', ''];
+        if (!in_array($cfoClassification, $validClassifications)) {
+            throw new Exception('Invalid CFO classification');
+        }
+    }
+    
+    // Validate status if provided
+    if ($cfoStatus !== null) {
+        $validStatuses = ['active', 'transferred-out'];
+        if (!in_array($cfoStatus, $validStatuses)) {
+            throw new Exception('Invalid status');
+        }
+    }
+    
+    // Get record to check access
+    $stmt = $db->prepare("SELECT district_code, local_code FROM tarheta_control WHERE id = ?");
+    $stmt->execute([$id]);
+    $record = $stmt->fetch();
+    
+    if (!$record) {
+        throw new Exception('Record not found');
+    }
+    
+    // Check access
+    if ($currentUser['role'] === 'district' && $record['district_code'] !== $currentUser['district_code']) {
+        throw new Exception('Access denied');
+    }
+    if ($currentUser['role'] === 'local' && $record['local_code'] !== $currentUser['local_code']) {
+        throw new Exception('Access denied');
+    }
+    
+    // Build dynamic UPDATE query based on provided fields
+    $updateFields = [];
+    $params = [];
+    
+    // Handle name fields with encryption
+    if ($firstName !== null) {
+        if (empty(trim($firstName))) {
+            throw new Exception('First name is required');
+        }
+        $updateFields[] = 'first_name_encrypted = ?';
+        $params[] = Encryption::encrypt($firstName, $record['district_code']);
+    }
+    
+    if ($middleName !== null) {
+        $updateFields[] = 'middle_name_encrypted = ?';
+        $params[] = empty(trim($middleName)) ? null : Encryption::encrypt($middleName, $record['district_code']);
+    }
+    
+    if ($lastName !== null) {
+        if (empty(trim($lastName))) {
+            throw new Exception('Last name is required');
+        }
+        $updateFields[] = 'last_name_encrypted = ?';
+        $params[] = Encryption::encrypt($lastName, $record['district_code']);
+    }
+    
+    if ($husbandsSurname !== null) {
+        $updateFields[] = 'husbands_surname_encrypted = ?';
+        $params[] = empty(trim($husbandsSurname)) || trim($husbandsSurname) === '-' ? null : Encryption::encrypt($husbandsSurname, $record['district_code']);
+    }
+    
+    if ($birthday !== null) {
+        $updateFields[] = 'birthday_encrypted = ?';
+        $params[] = empty(trim($birthday)) ? null : Encryption::encrypt($birthday, $record['district_code']);
+    }
+    
+    if ($cfoClassification !== null) {
+        $updateFields[] = 'cfo_classification = ?';
+        $updateFields[] = 'cfo_classification_auto = 0';
+        $params[] = empty($cfoClassification) ? null : $cfoClassification;
+    }
+    
+    if ($cfoStatus !== null) {
+        $updateFields[] = 'cfo_status = ?';
+        $params[] = $cfoStatus;
+    }
+    
+    if ($cfoNotes !== null) {
+        $updateFields[] = 'cfo_notes = ?';
+        $params[] = $cfoNotes;
+    }
+    
+    // Always update timestamp and user
+    $updateFields[] = 'cfo_updated_at = NOW()';
+    $updateFields[] = 'cfo_updated_by = ?';
+    $params[] = $currentUser['user_id'];
+    
+    // Add ID for WHERE clause
+    $params[] = $id;
+    
+    if (empty($updateFields)) {
+        throw new Exception('No fields to update');
+    }
+    
+    // Update record
+    $sql = "UPDATE tarheta_control SET " . implode(', ', $updateFields) . " WHERE id = ?";
+    $stmt = $db->prepare($sql);
+    $stmt->execute($params);
+    
+    echo json_encode([
+        'success' => true,
+        'message' => 'CFO information updated successfully'
+    ]);
+    
+} catch (Exception $e) {
+    error_log("Error in update-cfo.php: " . $e->getMessage());
+    echo json_encode([
+        'success' => false,
+        'error' => $e->getMessage()
+    ]);
+}

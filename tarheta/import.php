@@ -85,6 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csv_file']) && !isse
                     'headers' => $headers,
                     'district_code' => $districtCode,
                     'local_code' => $localCode,
+                    'import_mode' => Security::sanitizeInput($_POST['import_mode'] ?? 'new'),
                     'uploaded_at' => time()
                 ];
                 
@@ -114,6 +115,7 @@ elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['column_mapping'])
             $districtCode = $importData['district_code'];
             $localCode = $importData['local_code'];
             $file = $importData['file'];
+            $importMode = $importData['import_mode'] ?? 'new';
             
             // Get column mapping
             $mapping = $_POST['column_mapping'] ?? [];
@@ -126,6 +128,9 @@ elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['column_mapping'])
                     $missingFields[] = $field;
                 }
             }
+            
+            // Optional birthday field for CFO registry
+            $hasBirthdayMapping = !empty($mapping['birthday']) && $mapping['birthday'] !== '-1';
             
             if (!empty($missingFields)) {
                 $error = 'Please map the following required fields: ' . implode(', ', $missingFields);
@@ -149,6 +154,7 @@ elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['column_mapping'])
                     
                     $batchId = date('YmdHis') . '_' . uniqid();
                     $imported = 0;
+                    $updated = 0;
                     $skipped = 0;
                     $duplicates = 0;
                     $emptyRows = 0;
@@ -176,6 +182,49 @@ elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['column_mapping'])
                                 ? trim($row[$mapping['husbands_surname']]) : '';
                             $registryNumber = isset($row[$mapping['registry_number']]) ? trim($row[$mapping['registry_number']]) : '';
                             
+                            // Extract birthday for CFO registry (optional)
+                            $birthday = $hasBirthdayMapping && isset($row[$mapping['birthday']]) ? trim($row[$mapping['birthday']]) : '';
+                            
+                            // Smart CFO classification based on age and marital status
+                            $cfoClassification = null;
+                            $cfoClassificationAuto = false;
+                            $age = null;
+                            
+                            // Calculate age if birthday provided
+                            if (!empty($birthday)) {
+                                try {
+                                    $birthdayDate = new DateTime($birthday);
+                                    $today = new DateTime();
+                                    $age = $today->diff($birthdayDate)->y;
+                                } catch (Exception $e) {
+                                    // Invalid date, age remains null
+                                }
+                            }
+                            
+                            // Classification requires birthday to be available
+                            if (empty($birthday)) {
+                                // No birthday = unclassified
+                                $cfoClassification = null;
+                                $cfoClassificationAuto = false;
+                            } else {
+                                // Priority: Married (Buklod) > Age-based (Kadiwa/Binhi)
+                                // ONLY classify as Buklod if husband's surname is available (not empty, not "-")
+                                if (!empty($husbandsSurname) && trim($husbandsSurname) !== '' && trim($husbandsSurname) !== '-') {
+                                    // If husband surname exists, automatically classify as Buklod (married couples)
+                                    $cfoClassification = 'Buklod';
+                                    $cfoClassificationAuto = true;
+                                } elseif ($age !== null) {
+                                    // Age-based classification (only if NOT married)
+                                    if ($age >= 18) {
+                                        $cfoClassification = 'Kadiwa'; // Youth (18+)
+                                        $cfoClassificationAuto = true;
+                                    } else {
+                                        $cfoClassification = 'Binhi'; // Children (under 18)
+                                        $cfoClassificationAuto = true;
+                                    }
+                                }
+                            }
+                            
                             // Validate required fields
                             if (empty($lastName) || empty($firstName) || empty($registryNumber)) {
                                 $skipped++;
@@ -196,52 +245,102 @@ elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['column_mapping'])
                             $stmt->execute([$registryNumberHash]);
                             $existing = $stmt->fetch();
                             
-                            if ($existing) {
+                            if ($existing && $importMode === 'new') {
+                                // New mode: skip duplicates
                                 $duplicates++;
                                 $errors[] = "Row $rowNumber duplicate: Registry number '$registryNumber' already exists (ID: {$existing['id']}, District: {$existing['district_code']}, Local: {$existing['local_code']})";
                                 continue;
                             }
+                            
+                            // Determine which district code to use for encryption
+                            // In merge mode, use the existing record's district code
+                            // In new mode, use the import district code
+                            $encryptionDistrictCode = ($existing && $importMode === 'merge') ? $existing['district_code'] : $districtCode;
                             
                             // Additional check: decrypt and compare names in same district/local (removed, hash is sufficient)
                             // The registry_number_hash check above is sufficient for duplicate detection
                             
                             // Encrypt data with error handling
                             try {
-                                $lastNameEnc = Encryption::encrypt($lastName, $districtCode);
-                                $firstNameEnc = Encryption::encrypt($firstName, $districtCode);
-                                $middleNameEnc = !empty($middleName) ? Encryption::encrypt($middleName, $districtCode) : null;
-                                $husbandsSurnameEnc = !empty($husbandsSurname) ? Encryption::encrypt($husbandsSurname, $districtCode) : null;
-                                $registryNumberEnc = Encryption::encrypt($registryNumber, $districtCode);
+                                $lastNameEnc = Encryption::encrypt($lastName, $encryptionDistrictCode);
+                                $firstNameEnc = Encryption::encrypt($firstName, $encryptionDistrictCode);
+                                $middleNameEnc = !empty($middleName) ? Encryption::encrypt($middleName, $encryptionDistrictCode) : null;
+                                $husbandsSurnameEnc = !empty($husbandsSurname) ? Encryption::encrypt($husbandsSurname, $encryptionDistrictCode) : null;
+                                $registryNumberEnc = Encryption::encrypt($registryNumber, $encryptionDistrictCode);
+                                
+                                // Encrypt birthday if provided
+                                $birthdayEnc = null;
+                                if (!empty($birthday)) {
+                                    // Try to parse and validate birthday
+                                    try {
+                                        $birthdayDate = new DateTime($birthday);
+                                        $birthdayEnc = Encryption::encrypt($birthdayDate->format('Y-m-d'), $encryptionDistrictCode);
+                                    } catch (Exception $e) {
+                                        // Invalid date format, skip birthday but continue import
+                                        error_log("Row $rowNumber: Invalid birthday format '$birthday'");
+                                    }
+                                }
                             } catch (Exception $e) {
                                 $skipped++;
                                 $errors[] = "Row $rowNumber encryption error: " . $e->getMessage();
                                 continue;
                             }
                             
-                            // Insert record with error handling
+                            // Insert or Update record with error handling
                             try {
-                                $stmt = $db->prepare("
-                                    INSERT INTO tarheta_control (
-                                        last_name_encrypted, first_name_encrypted, middle_name_encrypted,
-                                        husbands_surname_encrypted, registry_number_encrypted, registry_number_hash,
-                                        district_code, local_code, import_batch, imported_by
-                                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                                ");
-                                
-                                $stmt->execute([
-                                    $lastNameEnc,
-                                    $firstNameEnc,
-                                    $middleNameEnc,
-                                    $husbandsSurnameEnc,
-                                    $registryNumberEnc,
-                                    $registryNumberHash,
-                                    $districtCode,
-                                    $localCode,
-                                    $batchId,
-                                    $currentUser['user_id']
-                                ]);
-                                
-                                $imported++;
+                                if ($existing && $importMode === 'merge') {
+                                    // Merge mode: Update existing record with birthday and CFO classification
+                                    $stmt = $db->prepare("
+                                        UPDATE tarheta_control 
+                                        SET 
+                                            birthday_encrypted = ?,
+                                            cfo_classification = ?,
+                                            cfo_classification_auto = ?,
+                                            cfo_status = 'active',
+                                            cfo_updated_at = NOW(),
+                                            cfo_updated_by = ?
+                                        WHERE id = ?
+                                    ");
+                                    
+                                    $stmt->execute([
+                                        $birthdayEnc,
+                                        $cfoClassification,
+                                        $cfoClassificationAuto ? 1 : 0,
+                                        $currentUser['user_id'],
+                                        $existing['id']
+                                    ]);
+                                    
+                                    $updated++;
+                                } else {
+                                    // Insert new record
+                                    $stmt = $db->prepare("
+                                        INSERT INTO tarheta_control (
+                                            last_name_encrypted, first_name_encrypted, middle_name_encrypted,
+                                            husbands_surname_encrypted, registry_number_encrypted, registry_number_hash,
+                                            district_code, local_code, import_batch, imported_by,
+                                            birthday_encrypted, cfo_classification, cfo_classification_auto, cfo_status
+                                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                    ");
+                                    
+                                    $stmt->execute([
+                                        $lastNameEnc,
+                                        $firstNameEnc,
+                                        $middleNameEnc,
+                                        $husbandsSurnameEnc,
+                                        $registryNumberEnc,
+                                        $registryNumberHash,
+                                        $districtCode,
+                                        $localCode,
+                                        $batchId,
+                                        $currentUser['user_id'],
+                                        $birthdayEnc,
+                                        $cfoClassification,
+                                        $cfoClassificationAuto ? 1 : 0,
+                                        'active'
+                                    ]);
+                                    
+                                    $imported++;
+                                }
                             } catch (Exception $e) {
                                 $skipped++;
                                 $errors[] = "Row $rowNumber database error: " . $e->getMessage();
@@ -260,21 +359,29 @@ elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['column_mapping'])
                     $db->commit();
                     
                     // Log summary
-                    error_log("Tarheta Import Summary - Batch: $batchId, Rows Read: $maxRows, Imported: $imported, Duplicates: $duplicates, Empty: $emptyRows, Errors: $skipped");
+                    error_log("Tarheta Import Summary - Batch: $batchId, Mode: $importMode, Rows Read: $maxRows, Imported: $imported, Updated: $updated, Duplicates: $duplicates, Empty: $emptyRows, Errors: $skipped");
                     
                     $importResults = [
                         'imported' => $imported,
+                        'updated' => $updated,
                         'skipped' => $skipped,
                         'duplicates' => $duplicates,
                         'empty_rows' => $emptyRows,
                         'errors' => $errors,
                         'batch_id' => $batchId,
                         'total_rows' => $rowNumber - 1,
-                        'max_rows_read' => $maxRows
+                        'max_rows_read' => $maxRows,
+                        'import_mode' => $importMode
                     ];
                     
-                    if ($imported > 0) {
-                        $success = "Import completed! $imported records imported";
+                    if ($imported > 0 || $updated > 0) {
+                        $success = "Import completed!";
+                        if ($imported > 0) {
+                            $success .= " $imported records imported";
+                        }
+                        if ($updated > 0) {
+                            $success .= ($imported > 0 ? "," : "") . " $updated records updated";
+                        }
                         if ($duplicates > 0) {
                             $success .= ", $duplicates duplicates skipped";
                         }
@@ -286,7 +393,7 @@ elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['column_mapping'])
                         }
                         $success .= ".";
                     } else {
-                        $error = "No records imported. All rows were skipped or duplicates.";
+                        $error = "No records imported or updated. All rows were skipped or duplicates.";
                     }
                     
                 } catch (Exception $e) {
@@ -355,16 +462,18 @@ ob_start();
         <h3 class="text-sm font-semibold text-blue-900 mb-2">CSV Format Requirements:</h3>
         <ul class="text-sm text-blue-800 space-y-1 list-disc list-inside">
             <li><strong>Required columns:</strong> last_name, first_name, registry_number</li>
-            <li><strong>Optional columns:</strong> middle_name, husbands_surname (or husband_surname)</li>
+            <li><strong>Optional columns:</strong> middle_name, husbands_surname (or husband_surname), birthday</li>
+            <li><strong>CFO Auto-Classification:</strong> Records with a valid husbands_surname (not empty, not "-") → <strong>Buklod</strong>; Otherwise → Age-based (18+ = Kadiwa, <18 = Binhi)</li>
             <li>Column names are case-insensitive</li>
             <li>First row must contain column headers</li>
             <li>UTF-8 encoding recommended for special characters (ñ, etc.)</li>
+            <li>Birthday formats: YYYY-MM-DD, MM/DD/YYYY, DD-MM-YYYY, etc.</li>
         </ul>
         <div class="mt-3 p-3 bg-white rounded border border-blue-300">
             <p class="text-xs font-mono text-gray-700">Example CSV:</p>
-            <pre class="text-xs font-mono text-gray-600 mt-1">last_name,first_name,middle_name,husbands_surname,registry_number
-Dela Cruz,Juan,Santos,,R2024-001
-Garcia,Maria,Lopez,Reyes,R2024-002</pre>
+            <pre class="text-xs font-mono text-gray-600 mt-1">last_name,first_name,middle_name,husbands_surname,registry_number,birthday
+Dela Cruz,Juan,Santos,,R2024-001,1980-05-15
+Garcia,Maria,Lopez,Reyes,R2024-002,1985-12-20</pre>
         </div>
     </div>
     
@@ -530,6 +639,24 @@ Garcia,Maria,Lopez,Reyes,R2024-002</pre>
                     </select>
                 </div>
                 
+                <!-- Birthday (for CFO Registry) -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Birthday <span class="text-gray-400">(Optional - for CFO)</span>
+                    </label>
+                    <select name="column_mapping[birthday]" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="-1">-- Skip This Field --</option>
+                        <?php foreach ($csvHeaders as $index => $header): 
+                            $selected = (stripos($header, 'birthday') !== false || stripos($header, 'birthdate') !== false || stripos($header, 'birth') !== false) ? 'selected' : '';
+                        ?>
+                            <option value="<?php echo $index; ?>" <?php echo $selected; ?>>
+                                <?php echo Security::escape($header); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                    <p class="text-xs text-gray-500 mt-1">Supports formats: YYYY-MM-DD, MM/DD/YYYY, etc.</p>
+                </div>
+                
                 <!-- Registry Number -->
                 <div class="md:col-span-2">
                     <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -605,6 +732,23 @@ Garcia,Maria,Lopez,Reyes,R2024-002</pre>
                 <p class="text-xs text-gray-500 mt-1">Upload a CSV file with registry data</p>
             </div>
 
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Import Mode
+                </label>
+                <div class="space-y-2">
+                    <label class="flex items-center">
+                        <input type="radio" name="import_mode" value="new" checked class="mr-2">
+                        <span class="text-sm text-gray-700">Import new records only (skip duplicates)</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="radio" name="import_mode" value="merge" class="mr-2">
+                        <span class="text-sm text-gray-700">Merge/Update existing records (update birthday & CFO data for matching registry numbers)</span>
+                    </label>
+                </div>
+                <p class="text-xs text-gray-500 mt-1">Merge mode: Updates existing records with birthday and re-classifies CFO based on age</p>
+            </div>
+
             <div class="flex gap-3">
                 <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
                     Upload and Preview
@@ -622,10 +766,14 @@ Garcia,Maria,Lopez,Reyes,R2024-002</pre>
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <h3 class="text-lg font-semibold text-gray-900 mb-4">Import Results</h3>
         
-        <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4">
+        <div class="grid grid-cols-2 md:grid-cols-6 gap-4 mb-4">
             <div class="bg-green-50 rounded-lg p-4">
                 <p class="text-sm text-green-700 font-medium">Successfully Imported</p>
                 <p class="text-2xl font-bold text-green-900"><?php echo $importResults['imported']; ?></p>
+            </div>
+            <div class="bg-blue-50 rounded-lg p-4">
+                <p class="text-sm text-blue-700 font-medium">Updated (Merged)</p>
+                <p class="text-2xl font-bold text-blue-900"><?php echo $importResults['updated'] ?? 0; ?></p>
             </div>
             <div class="bg-red-50 rounded-lg p-4">
                 <p class="text-sm text-red-700 font-medium">Duplicates Skipped</p>
@@ -639,9 +787,9 @@ Garcia,Maria,Lopez,Reyes,R2024-002</pre>
                 <p class="text-sm text-yellow-700 font-medium">Other Errors</p>
                 <p class="text-2xl font-bold text-yellow-900"><?php echo $importResults['skipped']; ?></p>
             </div>
-            <div class="bg-blue-50 rounded-lg p-4">
-                <p class="text-sm text-blue-700 font-medium">Total Rows</p>
-                <p class="text-2xl font-bold text-blue-900"><?php echo $importResults['total_rows'] ?? 'N/A'; ?></p>
+            <div class="bg-purple-50 rounded-lg p-4">
+                <p class="text-sm text-purple-700 font-medium">Total Rows</p>
+                <p class="text-2xl font-bold text-purple-900"><?php echo $importResults['total_rows'] ?? 'N/A'; ?></p>
             </div>
         </div>
         
