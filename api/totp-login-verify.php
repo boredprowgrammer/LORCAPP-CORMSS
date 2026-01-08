@@ -4,38 +4,57 @@
  * Verify TOTP code during login (after password verification)
  */
 
+// Suppress PHP deprecation warnings from vendor libraries
+error_reporting(E_ALL & ~E_DEPRECATED & ~E_NOTICE);
+ini_set('display_errors', '0');
+
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../vendor/autoload.php';
 
 use RobThree\Auth\TwoFactorAuth;
 
+// Discard any output that might have occurred during includes
+while (ob_get_level() > 0) {
+    ob_end_clean();
+}
+
+// Start fresh output buffer
+ob_start();
+
 header('Content-Type: application/json');
+
+/**
+ * Send JSON response and exit
+ */
+function sendJsonResponse($data, $statusCode = 200) {
+    if (ob_get_length()) {
+        ob_clean();
+    }
+    http_response_code($statusCode);
+    echo json_encode($data);
+    exit;
+}
 
 // This endpoint is called during login, so user is not yet authenticated
 // If already logged in, redirect to dashboard instead of error
 if (Security::isLoggedIn()) {
-    echo json_encode([
+    sendJsonResponse([
         'success' => true,
         'already_logged_in' => true,
         'redirect' => BASE_URL . '/dashboard.php',
         'message' => 'Already logged in'
     ]);
-    exit;
 }
 
 // Only allow POST requests
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    echo json_encode(['success' => false, 'message' => 'Method not allowed']);
-    exit;
+    sendJsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
 }
 
 // Validate CSRF token
 $csrfToken = $_POST['csrf_token'] ?? '';
 if (!Security::validateCSRFToken($csrfToken, 'login', false)) {
-    http_response_code(403);
-    echo json_encode(['success' => false, 'message' => 'Invalid security token']);
-    exit;
+    sendJsonResponse(['success' => false, 'message' => 'Invalid security token'], 403);
 }
 
 $code = Security::sanitizeInput($_POST['code'] ?? '');
@@ -43,11 +62,10 @@ $userId = (int)($_SESSION['totp_pending_user_id'] ?? 0);
 $isBackupCode = isset($_POST['is_backup']) && $_POST['is_backup'] === '1';
 
 if (empty($code) || empty($userId)) {
-    echo json_encode([
+    sendJsonResponse([
         'success' => false,
         'message' => 'Invalid request'
     ]);
-    exit;
 }
 
 try {
@@ -66,11 +84,10 @@ try {
     $attempts = $stmt->fetch();
     
     if ($attempts['attempt_count'] >= 10) {
-        echo json_encode([
+        sendJsonResponse([
             'success' => false,
             'message' => 'Too many failed attempts. Please try again in 15 minutes.'
         ]);
-        exit;
     }
     
     // Get user data
@@ -85,11 +102,10 @@ try {
     $user = $stmt->fetch();
     
     if (!$user) {
-        echo json_encode([
+        sendJsonResponse([
             'success' => false,
             'message' => 'Invalid session'
         ]);
-        exit;
     }
     
     $isValid = false;
@@ -162,11 +178,10 @@ try {
             $_SERVER['HTTP_USER_AGENT'] ?? ''
         ]);
         
-        echo json_encode([
+        sendJsonResponse([
             'success' => false,
             'message' => 'Invalid verification code. Please try again.'
         ]);
-        exit;
     }
     
     // Code is valid - complete login
@@ -212,7 +227,7 @@ try {
         $_SERVER['HTTP_USER_AGENT'] ?? ''
     ]);
     
-    echo json_encode([
+    sendJsonResponse([
         'success' => true,
         'message' => 'Login successful',
         'redirect' => BASE_URL . '/dashboard.php'
@@ -220,9 +235,10 @@ try {
     
 } catch (Exception $e) {
     error_log("TOTP login verification error: " . $e->getMessage());
-    http_response_code(500);
-    echo json_encode([
+    error_log("Stack trace: " . $e->getTraceAsString());
+    
+    sendJsonResponse([
         'success' => false,
         'message' => 'Error verifying code. Please try again.'
-    ]);
+    ], 500);
 }
