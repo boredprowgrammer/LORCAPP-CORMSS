@@ -495,6 +495,11 @@ $(document).ready(function() {
             { 
                 data: 'cfo_classification',
                 render: function(data, type, row) {
+                    // For export, return plain text
+                    if (type === 'export') {
+                        return data || 'Unclassified';
+                    }
+                    
                     let options = [
                         {value: '', label: '-- Select --', selected: !data},
                         {value: 'Buklod', label: '💑 Buklod', selected: data === 'Buklod'},
@@ -514,6 +519,12 @@ $(document).ready(function() {
             { 
                 data: 'cfo_status',
                 render: function(data, type, row) {
+                    // For export, return plain text
+                    if (type === 'export') {
+                        if (data === 'transferred-out') return 'Transferred Out';
+                        return 'Active';
+                    }
+                    
                     let options = [
                         {value: 'active', label: '✓ Active', selected: data === 'active' || !data},
                         {value: 'transferred-out', label: '→ Transferred Out', selected: data === 'transferred-out'}
@@ -551,12 +562,10 @@ $(document).ready(function() {
         dom: 'Bfrtip',
         buttons: [
             {
-                extend: 'excel',
-                text: '<svg class="w-4 h-4 mr-2 inline" fill="currentColor" viewBox="0 0 20 20"><path d="M9 2a2 2 0 00-2 2v8a2 2 0 002 2h6a2 2 0 002-2V6.414A2 2 0 0016.414 5L14 2.586A2 2 0 0012.586 2H9z"></path><path d="M3 8a2 2 0 012-2v10h8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"></path></svg> Export to Excel',
+                text: '<svg class="w-4 h-4 mr-2 inline" fill="currentColor" viewBox="0 0 20 20"><path d="M9 2a2 2 0 00-2 2v8a2 2 0 002 2h6a2 2 0 002-2V6.414A2 2 0 0016.414 5L14 2.586A2 2 0 0012.586 2H9z"></path><path d="M3 8a2 2 0 012-2v10h8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"></path></svg> Export All to Excel',
                 className: 'bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors',
-                title: 'CFO Registry Export',
-                exportOptions: {
-                    columns: [0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+                action: function(e, dt, node, config) {
+                    exportAllToExcel();
                 }
             }
         ],
@@ -976,6 +985,30 @@ $('#editModal').on('click', function(e) {
         closeEditModal();
     }
 });
+
+// Export all filtered data to Excel
+function exportAllToExcel() {
+    // Get current filter values
+    const filters = {
+        classification: $('#filterClassification').val(),
+        status: $('#filterStatus').val(),
+        district: $('#filterDistrict').val(),
+        local: $('#filterLocal').val(),
+        search: table.search()
+    };
+    
+    // Build query string
+    const params = new URLSearchParams();
+    if (filters.classification) params.append('classification', filters.classification);
+    if (filters.status) params.append('status', filters.status);
+    if (filters.district) params.append('district', filters.district);
+    if (filters.local) params.append('local', filters.local);
+    if (filters.search) params.append('search', filters.search);
+    
+    // Open export endpoint in new window
+    window.location.href = '<?php echo BASE_URL; ?>/api/export-cfo-excel.php?' + params.toString();
+}
+
 </script>
 
 <?php
