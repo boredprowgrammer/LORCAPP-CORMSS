@@ -4,22 +4,50 @@
  * Verify TOTP code during login (after password verification)
  */
 
-// Suppress PHP deprecation warnings from vendor libraries
-error_reporting(E_ALL & ~E_DEPRECATED & ~E_NOTICE);
-ini_set('display_errors', '0');
+// Register shutdown function to catch fatal errors
+register_shutdown_function(function() {
+    $error = error_get_last();
+    if ($error !== null && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+        header('Content-Type: application/json', true, 500);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Server error occurred'
+        ]);
+        error_log("TOTP Fatal Error: " . $error['message'] . " in " . $error['file'] . " on line " . $error['line']);
+    }
+});
 
-require_once __DIR__ . '/../config/config.php';
-require_once __DIR__ . '/../vendor/autoload.php';
+// Start output buffering FIRST before any includes
+ob_start();
+
+// Suppress ALL PHP errors and warnings from being displayed
+error_reporting(0);
+ini_set('display_errors', '0');
+ini_set('log_errors', '1');
+
+try {
+    require_once __DIR__ . '/../config/config.php';
+    require_once __DIR__ . '/../vendor/autoload.php';
+} catch (Exception $e) {
+    ob_end_clean();
+    header('Content-Type: application/json', true, 500);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Failed to load dependencies'
+    ]);
+    error_log("TOTP Include Error: " . $e->getMessage());
+    exit;
+}
 
 use RobThree\Auth\TwoFactorAuth;
 
-// Discard any output that might have occurred during includes
-while (ob_get_level() > 0) {
-    ob_end_clean();
+// Clear any accumulated output from includes
+if (ob_get_length()) {
+    ob_clean();
 }
-
-// Start fresh output buffer
-ob_start();
 
 header('Content-Type: application/json');
 
