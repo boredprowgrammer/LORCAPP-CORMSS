@@ -370,6 +370,7 @@ ob_start();
                         $firstName = Encryption::decrypt($member['first_name_encrypted'], $member['district_code']);
                         $lastName = Encryption::decrypt($member['last_name_encrypted'], $member['district_code']);
                         $fullName = trim($firstName . ' ' . $lastName);
+                        $displayName = obfuscateName($lastName . ', ' . $firstName); // Obfuscated for privacy
                     ?>
                         <div class="flex items-center justify-between p-3 bg-red-50 rounded-lg border border-red-100 hover:bg-red-100 transition-colors">
                             <div class="flex items-center flex-1 min-w-0">
@@ -377,7 +378,7 @@ ob_start();
                                     <?php echo strtoupper(substr($fullName, 0, 1)); ?>
                                 </div>
                                 <div class="ml-3 flex-1 min-w-0">
-                                    <p class="font-semibold text-gray-900 truncate"><?php echo Security::escape($fullName); ?></p>
+                                    <p class="font-semibold text-gray-900 truncate cursor-help" title="<?php echo Security::escape($fullName); ?>"><?php echo Security::escape($displayName); ?></p>
                                     <p class="text-sm text-gray-600 truncate"><?php echo Security::escape($member['cfo_classification'] ?? 'Unclassified'); ?> • <?php echo Security::escape($member['local_name'] ?? 'Unknown Local'); ?></p>
                                 </div>
                             </div>
@@ -421,6 +422,7 @@ ob_start();
                         $firstName = Encryption::decrypt($member['first_name_encrypted'], $member['district_code']);
                         $lastName = Encryption::decrypt($member['last_name_encrypted'], $member['district_code']);
                         $fullName = trim($firstName . ' ' . $lastName);
+                        $displayName = obfuscateName($lastName . ', ' . $firstName); // Obfuscated for privacy
                         $from = $member['cfo_classification_auto'] ?? 'Unknown';
                         $to = $member['cfo_classification'] ?? 'Unclassified';
                     ?>
@@ -430,7 +432,7 @@ ob_start();
                                     <?php echo strtoupper(substr($fullName, 0, 1)); ?>
                                 </div>
                                 <div class="ml-3 flex-1 min-w-0">
-                                    <p class="font-semibold text-gray-900 truncate"><?php echo Security::escape($fullName); ?></p>
+                                    <p class="font-semibold text-gray-900 truncate cursor-help" title="<?php echo Security::escape($fullName); ?>"><?php echo Security::escape($displayName); ?></p>
                                     <div class="flex items-center gap-2 text-sm">
                                         <span class="text-gray-600"><?php echo Security::escape($from); ?></span>
                                         <i class="fa-solid fa-arrow-right text-purple-500"></i>
@@ -580,10 +582,12 @@ ob_start();
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
-                            <?php foreach ($turningEighteen as $member): ?>
+                            <?php foreach ($turningEighteen as $member): 
+                                $displayName = obfuscateName($member['name']); // Obfuscated for privacy
+                            ?>
                                 <tr class="hover:bg-gray-50">
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm font-medium text-gray-900"><?php echo Security::escape($member['name']); ?></div>
+                                        <div class="text-sm font-medium text-gray-900 cursor-help" title="<?php echo Security::escape($member['name']); ?>"><?php echo Security::escape($displayName); ?></div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <span class="text-sm text-gray-900"><?php echo $member['age']; ?> years old</span>

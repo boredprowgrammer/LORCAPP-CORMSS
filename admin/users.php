@@ -48,8 +48,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             $error = 'Invalid email address.';
         } elseif (strlen($password) < 8) {
             $error = 'Password must be at least 8 characters long.';
-        } elseif ($role === 'local_limited' && empty($seniorApproverId)) {
-            $error = 'Senior approver is required for Local (Limited) accounts.';
+        } elseif (($role === 'local_limited' || $role === 'local_cfo') && empty($seniorApproverId)) {
+            $error = 'Senior approver is required for Local (Limited) and Local CFO accounts.';
         } else {
             try {
                 $passwordHash = Security::hashPassword($password);
@@ -67,7 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                     $role,
                     $role !== 'admin' ? $districtCode : null,
                     ($role === 'local' || $role === 'local_limited' || $role === 'local_cfo') ? $localCode : null,
-                    $role === 'local_limited' ? $seniorApproverId : null
+                    ($role === 'local_limited' || $role === 'local_cfo') ? $seniorApproverId : null
                 ]);
                 
                 // Get the newly created user ID
@@ -140,8 +140,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             $error = 'All fields are required.';
         } elseif (!Security::validateEmail($email)) {
             $error = 'Invalid email address.';
-        } elseif ($role === 'local_limited' && empty($seniorApproverId)) {
-            $error = 'Senior approver is required for Local (Limited) accounts.';
+        } elseif (($role === 'local_limited' || $role === 'local_cfo') && empty($seniorApproverId)) {
+            $error = 'Senior approver is required for Local (Limited) and Local CFO accounts.';
         } else {
             try {
                 $stmt = $db->prepare("
@@ -158,7 +158,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                     $role,
                     $role !== 'admin' ? $districtCode : null,
                     ($role === 'local' || $role === 'local_limited' || $role === 'local_cfo') ? $localCode : null,
-                    $role === 'local_limited' ? $seniorApproverId : null,
+                    ($role === 'local_limited' || $role === 'local_cfo') ? $seniorApproverId : null,
                     $userId
                 ]);
                 
@@ -315,6 +315,7 @@ try {
             u.role,
             u.district_code,
             u.local_code,
+            u.senior_approver_id,
             u.is_active,
             u.last_login,
             u.created_at,
@@ -761,7 +762,26 @@ function toggleUserFields() {
             // If local is already selected manually, load senior approvers
             loadSeniorApprovers(localValue);
         }
-    } else { // local or local_cfo
+    } else if (role === 'local_cfo') {
+        districtField.style.display = 'block';
+        localField.style.display = 'block';
+        seniorApproverField.style.display = 'block';
+        seniorApproverSelect.setAttribute('required', 'required');
+        
+        // Re-enable fields for manual selection
+        districtDisplay.onclick = () => openDistrictModal();
+        districtDisplay.classList.remove('bg-gray-100', 'cursor-not-allowed');
+        districtDisplay.classList.add('cursor-pointer', 'bg-white');
+        
+        localDisplay.onclick = () => openLocalModal();
+        localDisplay.classList.remove('bg-gray-100', 'cursor-not-allowed');
+        localDisplay.classList.add('cursor-pointer', 'bg-white');
+        
+        // Load senior approvers if local already selected
+        if (localValue) {
+            loadSeniorApprovers(localValue);
+        }
+    } else { // local
         districtField.style.display = 'block';
         localField.style.display = 'block';
         seniorApproverField.style.display = 'none';
@@ -1009,6 +1029,13 @@ function openEditUserModal(user) {
         document.getElementById('edit-local-display').value = user.local_name || '';
     }
     
+    // Store senior approver ID for later use
+    if (user.senior_approver_id) {
+        window.editUserSeniorApproverId = user.senior_approver_id;
+    } else {
+        window.editUserSeniorApproverId = null;
+    }
+    
     // Toggle fields based on role
     toggleEditUserFields();
     
@@ -1053,7 +1080,17 @@ function toggleEditUserFields() {
         if (localValue) {
             loadSeniorApproversForEdit(localValue);
         }
-    } else { // local or local_cfo
+    } else if (role === 'local_cfo') {
+        districtField.style.display = 'block';
+        localField.style.display = 'block';
+        seniorApproverField.style.display = 'block';
+        seniorApproverSelect.setAttribute('required', 'required');
+        
+        const localValue = document.getElementById('edit-local-value').value;
+        if (localValue) {
+            loadSeniorApproversForEdit(localValue);
+        }
+    } else { // local
         districtField.style.display = 'block';
         localField.style.display = 'block';
         seniorApproverField.style.display = 'none';
@@ -1140,6 +1177,11 @@ function loadSeniorApproversForEdit(localCode) {
                 option.textContent = user.full_name + ' (' + user.username + ')';
                 select.appendChild(option);
             });
+            
+            // Set the selected value if we have one stored
+            if (window.editUserSeniorApproverId) {
+                select.value = window.editUserSeniorApproverId;
+            }
             
             if (data.length === 0) {
                 select.innerHTML = '<option value="">No local users available</option>';

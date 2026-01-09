@@ -269,11 +269,14 @@ try {
                 $birthday = '-';
             }
             
-            // Full name
+            // Full name (unobfuscated for internal use)
             $fullName = trim($firstName . ' ' . $middleName . ' ' . $lastName);
             if ($husbandsSurname) {
                 $fullName .= ' (' . $husbandsSurname . ')';
             }
+            
+            // Obfuscated name for display (privacy protection)
+            $displayName = obfuscateName(trim($lastName . ', ' . $firstName . ' ' . $middleName));
             
             // Format purok-grupo
             $purokGrupo = '-';
@@ -287,12 +290,17 @@ try {
             
             $data[] = [
                 'id' => $record['id'],
-                'name' => $fullName,
-                'last_name' => $lastName,
-                'first_name' => $firstName,
-                'middle_name' => $middleName ?: '-',
+                'name' => $displayName, // Obfuscated for privacy
+                'name_real' => $fullName, // Real name for tooltip
+                'last_name' => obfuscateWord($lastName), // Obfuscated
+                'last_name_real' => $lastName, // Real for tooltip
+                'first_name' => obfuscateWord($firstName), // Obfuscated
+                'first_name_real' => $firstName, // Real for tooltip
+                'middle_name' => $middleName ? obfuscateWord($middleName) : '-', // Obfuscated
+                'middle_name_real' => $middleName ?: '-', // Real for tooltip
                 'registry_number' => $registryNumber,
-                'husbands_surname' => $husbandsSurname ?: '-',
+                'husbands_surname' => $husbandsSurname ? obfuscateWord($husbandsSurname) : '-', // Obfuscated
+                'husbands_surname_real' => $husbandsSurname ?: '-', // Real for tooltip
                 'birthday' => $birthday,
                 'cfo_classification' => $record['cfo_classification'],
                 'cfo_classification_auto' => $record['cfo_classification_auto'],

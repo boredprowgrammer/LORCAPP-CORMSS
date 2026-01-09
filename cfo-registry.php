@@ -12,6 +12,38 @@ requirePermission('can_view_reports'); // Anyone who can view reports can see th
 $currentUser = getCurrentUser();
 $db = Database::getInstance()->getConnection();
 
+// Check if local_cfo needs to request access
+$needsAccessRequest = ($currentUser['role'] === 'local_cfo');
+$hasApprovedAccess = false;
+$approvedRequests = [];
+$pendingRequests = [];
+
+if ($needsAccessRequest) {
+    // Check for approved access requests
+    $stmt = $db->prepare("
+        SELECT * FROM cfo_access_requests 
+        WHERE requester_user_id = ? 
+        AND status = 'approved'
+        AND deleted_at IS NULL
+        AND is_locked = FALSE
+        ORDER BY approval_date DESC
+    ");
+    $stmt->execute([$currentUser['user_id']]);
+    $approvedRequests = $stmt->fetchAll();
+    $hasApprovedAccess = count($approvedRequests) > 0;
+    
+    // Check for pending access requests
+    $stmt = $db->prepare("
+        SELECT * FROM cfo_access_requests 
+        WHERE requester_user_id = ? 
+        AND status = 'pending'
+        AND deleted_at IS NULL
+        ORDER BY request_date DESC
+    ");
+    $stmt->execute([$currentUser['user_id']]);
+    $pendingRequests = $stmt->fetchAll();
+}
+
 $error = '';
 $success = '';
 
@@ -19,15 +51,36 @@ $pageTitle = 'CFO Registry';
 ob_start();
 ?>
 
+<script>
+// Define modal functions early for inline onclick handlers
+function openAccessRequestModal() {
+    document.getElementById('accessRequestModal').classList.remove('hidden');
+    document.getElementById('accessRequestPassword').value = '';
+    document.getElementById('accessRequestCfoType').value = 'Buklod';
+}
+
+function closeAccessRequestModal() {
+    document.getElementById('accessRequestModal').classList.add('hidden');
+}
+</script>
+
 <div class="space-y-6">
     <!-- Header -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <div class="flex items-center justify-between">
             <div>
-                <h1 class="text-2xl font-semibold text-gray-900">CFO Registry</h1>
-                <p class="text-sm text-gray-500 mt-1">Christian Family Organization - Buklod, Kadiwa, Binhi</p>
+                <h1 class="text-2xl font-semibold text-gray-900">CFO Registry <?php echo $needsAccessRequest ? '(Access Required)' : '(View)'; ?></h1>
+                <p class="text-sm text-gray-500 mt-1">Christian Family Organization - Privacy-protected view</p>
             </div>
+            <?php if ($currentUser['role'] === 'admin' || $currentUser['role'] === 'local'): ?>
+            <!-- Edit buttons: Only admin and local accounts can edit CFO registry -->
             <div class="flex gap-2">
+                <a href="cfo-checker.php" class="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                    </svg>
+                    Edit Mode (CFO Checker)
+                </a>
                 <a href="cfo-import.php" class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
@@ -47,6 +100,7 @@ ob_start();
                     Tarheta Control
                 </a>
             </div>
+            <?php endif; ?>
         </div>
     </div>
 
@@ -62,6 +116,159 @@ ob_start();
         </div>
     <?php endif; ?>
     
+    <?php if ($needsAccessRequest && !$hasApprovedAccess): ?>
+    <!-- Access Request Required -->
+    <div class="bg-yellow-50 border-l-4 border-yellow-500 p-6 rounded-r-lg">
+        <div class="flex items-start">
+            <svg class="w-6 h-6 text-yellow-500 mr-3 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path>
+            </svg>
+            <div class="flex-1">
+                <h3 class="text-lg font-semibold text-yellow-800">Access Required</h3>
+                <p class="text-sm text-yellow-700 mt-2">You need approval from a senior account to access the CFO Registry. Click the button below to request access.</p>
+                <button onclick="openAccessRequestModal()" class="mt-4 inline-flex items-center px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
+                    </svg>
+                    Request Access
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <?php if (count($pendingRequests) > 0): ?>
+    <!-- Pending Requests -->
+    <div class="bg-blue-50 border-l-4 border-blue-500 p-6 rounded-r-lg mt-4">
+        <div class="flex items-start">
+            <svg class="w-6 h-6 text-blue-500 mr-3 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
+            </svg>
+            <div class="flex-1">
+                <h3 class="text-lg font-semibold text-blue-800">Pending Requests</h3>
+                <p class="text-sm text-blue-700 mt-2">Your access requests are awaiting approval:</p>
+                <div class="mt-4 space-y-2">
+                    <?php foreach ($pendingRequests as $request): ?>
+                    <div class="bg-white p-4 rounded-lg shadow-sm border border-blue-200">
+                        <div class="flex items-center justify-between">
+                            <div class="flex-1">
+                                <h4 class="font-semibold text-gray-900"><?php echo Security::escape($request['cfo_type']); ?> CFO Registry</h4>
+                                <p class="text-xs text-gray-600 mt-1">
+                                    Requested: <?php echo date('M j, Y g:i A', strtotime($request['request_date'])); ?>
+                                </p>
+                            </div>
+                            <span class="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
+                                <svg class="w-3 h-3 mr-1 animate-pulse" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
+                                </svg>
+                                Pending Review
+                            </span>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
+    <?php elseif ($needsAccessRequest && $hasApprovedAccess): ?>
+    <!-- Display approved PDFs -->
+    <div class="bg-green-50 border-l-4 border-green-500 p-6 rounded-r-lg">
+        <div class="flex items-start">
+            <svg class="w-6 h-6 text-green-500 mr-3 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+            </svg>
+            <div class="flex-1">
+                <h3 class="text-lg font-semibold text-green-800">Approved Access</h3>
+                <p class="text-sm text-green-700 mt-2">You have approved access to the following CFO registry documents:</p>
+                <div class="mt-4 space-y-2">
+                    <?php foreach ($approvedRequests as $request): 
+                        $daysUntilLock = null;
+                        $daysUntilDelete = null;
+                        if ($request['first_opened_at']) {
+                            $lockDate = date('Y-m-d H:i:s', strtotime($request['first_opened_at'] . ' +7 days'));
+                            $daysUntilLock = max(0, floor((strtotime($lockDate) - time()) / 86400));
+                        }
+                        if ($request['will_delete_at']) {
+                            $daysUntilDelete = max(0, floor((strtotime($request['will_delete_at']) - time()) / 86400));
+                        }
+                    ?>
+                    <div class="bg-white p-4 rounded-lg shadow-sm border border-green-200">
+                        <div class="flex items-center justify-between">
+                            <div class="flex-1">
+                                <h4 class="font-semibold text-gray-900"><?php echo Security::escape($request['cfo_type']); ?> CFO Registry</h4>
+                                <p class="text-xs text-gray-600 mt-1">
+                                    Approved: <?php echo date('M j, Y g:i A', strtotime($request['approval_date'])); ?>
+                                    <?php if ($daysUntilLock !== null): ?>
+                                        <br>
+                                        <?php if ($daysUntilLock > 0): ?>
+                                            <span class="text-blue-600">🔓 Locks in <?php echo $daysUntilLock; ?> day(s)</span>
+                                        <?php else: ?>
+                                            <span class="text-red-600">🔒 Locked</span>
+                                        <?php endif; ?>
+                                    <?php endif; ?>
+                                    <?php if ($daysUntilDelete !== null): ?>
+                                        • <span class="text-orange-600">Deletes in <?php echo $daysUntilDelete; ?> day(s)</span>
+                                    <?php endif; ?>
+                                </p>
+                            </div>
+                            <a href="api/view-cfo-pdf.php?id=<?php echo $request['id']; ?>" 
+                               target="_blank"
+                               class="inline-flex items-center px-3 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                </svg>
+                                View PDF
+                            </a>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+                <button onclick="openAccessRequestModal()" class="mt-4 inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    Request Additional Access
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <?php if (count($pendingRequests) > 0): ?>
+    <!-- Pending Requests (with approved access) -->
+    <div class="bg-blue-50 border-l-4 border-blue-500 p-6 rounded-r-lg mt-4">
+        <div class="flex items-start">
+            <svg class="w-6 h-6 text-blue-500 mr-3 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
+            </svg>
+            <div class="flex-1">
+                <h3 class="text-lg font-semibold text-blue-800">Pending Requests</h3>
+                <p class="text-sm text-blue-700 mt-2">Additional access requests awaiting approval:</p>
+                <div class="mt-4 space-y-2">
+                    <?php foreach ($pendingRequests as $request): ?>
+                    <div class="bg-white p-4 rounded-lg shadow-sm border border-blue-200">
+                        <div class="flex items-center justify-between">
+                            <div class="flex-1">
+                                <h4 class="font-semibold text-gray-900"><?php echo Security::escape($request['cfo_type']); ?> CFO Registry</h4>
+                                <p class="text-xs text-gray-600 mt-1">
+                                    Requested: <?php echo date('M j, Y g:i A', strtotime($request['request_date'])); ?>
+                                </p>
+                            </div>
+                            <span class="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
+                                <svg class="w-3 h-3 mr-1 animate-pulse" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
+                                </svg>
+                                Pending Review
+                            </span>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
+    <?php else: ?>
     <!-- Info Banner -->
     <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6 rounded-r-lg">
         <div class="flex items-start">
@@ -69,12 +276,15 @@ ob_start();
                 <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
             </svg>
             <div class="flex-1">
-                <h3 class="text-sm font-semibold text-blue-800">Quick Inline Editing</h3>
-                <p class="text-xs text-blue-700 mt-1">Click on the <strong>Classification</strong> or <strong>Status</strong> dropdowns in the table below to update records instantly. Changes are saved automatically in real-time.</p>
+                <h3 class="text-sm font-semibold text-blue-800">Privacy-Protected View</h3>
+                <p class="text-xs text-blue-700 mt-1">Names are <strong>obfuscated for privacy</strong>. Hover over names to see full details. To edit member information with full names displayed, use <a href="cfo-checker.php" class="underline font-semibold">CFO Checker</a>.</p>
             </div>
         </div>
     </div>
+    <?php endif; ?>
 
+    <?php if (!$needsAccessRequest): ?>
+    <!-- Only show statistics and DataTable to non-local_cfo users -->
     <!-- Statistics -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
         <?php
@@ -325,6 +535,7 @@ ob_start();
             </div>
         </div>
     </div>
+    <?php endif; ?>
 </div>
 
 <!-- Edit CFO Modal -->
@@ -340,8 +551,8 @@ ob_start();
                         </svg>
                     </div>
                     <div>
-                        <h3 class="text-xl font-bold text-white">Edit CFO Information</h3>
-                        <p class="text-blue-100 text-sm">Update member classification and status</p>
+                        <h3 class="text-xl font-bold text-white">View CFO Information</h3>
+                        <p class="text-blue-100 text-sm">Member details (read-only)</p>
                     </div>
                 </div>
                 <button onclick="closeEditModal()" class="text-white hover:bg-white hover:bg-opacity-20 rounded-lg p-2 transition-all duration-200">
@@ -352,8 +563,8 @@ ob_start();
             </div>
         </div>
         
-        <form id="editForm" class="p-6 space-y-6 relative" data-no-loader>
-            <input type="hidden" id="edit_id" name="id">
+        <div class="p-6 space-y-6 relative">
+            <input type="hidden" id="edit_id">
             
             <!-- Member Info -->
             <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
@@ -366,16 +577,16 @@ ob_start();
                 <div class="space-y-3">
                     <div class="grid grid-cols-3 gap-3">
                         <div>
-                            <label class="block text-xs font-medium text-gray-700 mb-1">First Name <span class="text-red-600">*</span></label>
-                            <input type="text" id="edit_first_name" name="first_name" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <label class="block text-xs font-medium text-gray-700 mb-1">First Name</label>
+                            <input type="text" id="edit_first_name" readonly class="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-700">
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-gray-700 mb-1">Middle Name</label>
-                            <input type="text" id="edit_middle_name" name="middle_name" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <input type="text" id="edit_middle_name" readonly class="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-700">
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-gray-700 mb-1">Last Name <span class="text-red-600">*</span></label>
-                            <input type="text" id="edit_last_name" name="last_name" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <label class="block text-xs font-medium text-gray-700 mb-1">Last Name</label>
+                            <input type="text" id="edit_last_name" readonly class="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-700">
                         </div>
                     </div>
                     <div class="grid grid-cols-3 gap-3">
@@ -385,11 +596,11 @@ ob_start();
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-gray-700 mb-1">Birthday</label>
-                            <input type="date" id="edit_birthday" name="birthday" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                            <input type="text" id="edit_birthday" readonly class="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-700 text-sm">
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-gray-700 mb-1">Husband's Surname</label>
-                            <input type="text" id="edit_husbands_surname" name="husbands_surname" placeholder="For married women" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                            <input type="text" id="edit_husbands_surname" readonly class="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-700 text-sm">
                         </div>
                     </div>
                     <div class="grid grid-cols-2 gap-3">
@@ -398,20 +609,20 @@ ob_start();
                                 <i class="fa-solid fa-map-location-dot mr-1 text-blue-600"></i>
                                 Purok
                             </label>
-                            <input type="text" id="edit_purok" name="purok" placeholder="e.g., 1, 2, 3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                            <input type="text" id="edit_purok" readonly class="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-700 text-sm">
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-gray-700 mb-1">
                                 <i class="fa-solid fa-users mr-1 text-green-600"></i>
                                 Grupo
                             </label>
-                            <input type="text" id="edit_grupo" name="grupo" placeholder="e.g., 7, 8, 9" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                            <input type="text" id="edit_grupo" readonly class="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-700 text-sm">
                         </div>
                     </div>
                 </div>
             </div>
             
-            <!-- Editable Fields -->
+            <!-- View-Only Fields -->
             <div class="space-y-4">
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
@@ -419,20 +630,8 @@ ob_start();
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
                         </svg>
                         CFO Classification
-                        <span class="text-red-600 ml-1">*</span>
                     </label>
-                    <select id="edit_classification" name="cfo_classification" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
-                        <option value="">-- Select Classification --</option>
-                        <option value="Buklod">� Buklod (Married Couples)</option>
-                        <option value="Kadiwa">👥 Kadiwa (Youth 18+)</option>
-                        <option value="Binhi">🌱 Binhi (Children under 18)</option>
-                    </select>
-                    <p class="text-xs text-gray-500 mt-1 flex items-center" id="classification_hint">
-                        <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
-                        </svg>
-                        Select the appropriate classification for this member
-                    </p>
+                    <input type="text" id="edit_classification" readonly class="w-full px-4 py-3 border border-gray-200 rounded-lg bg-gray-50 text-gray-700">
                 </div>
                 
                 <div>
@@ -441,12 +640,8 @@ ob_start();
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>
                         Status
-                        <span class="text-red-600 ml-1">*</span>
                     </label>
-                    <select id="edit_status" name="cfo_status" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
-                        <option value="active">✓ Active</option>
-                        <option value="transferred-out">→ Transferred Out</option>
-                    </select>
+                    <input type="text" id="edit_status" readonly class="w-full px-4 py-3 border border-gray-200 rounded-lg bg-gray-50 text-gray-700">
                 </div>
                 
                 <div>
@@ -455,35 +650,24 @@ ob_start();
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path>
                         </svg>
                         Notes
-                        <span class="text-gray-400 text-xs ml-2">(Optional)</span>
                     </label>
-                    <textarea id="edit_notes" name="cfo_notes" rows="3" placeholder="Add any additional notes or remarks..." class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 resize-none"></textarea>
+                    <textarea id="edit_notes" readonly rows="3" class="w-full px-4 py-3 border border-gray-200 rounded-lg bg-gray-50 text-gray-700 resize-none"></textarea>
                 </div>
             </div>
             
             <!-- Action Buttons -->
             <div class="flex gap-3 pt-4 border-t border-gray-200">
-                <button type="button" id="editModeBtn" class="hidden flex-1 px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-all duration-200 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center" onclick="enableEditMode()">
+                <a href="cfo-checker.php" class="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-lg hover:from-purple-700 hover:to-purple-800 transition-all duration-200 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                     </svg>
-                    Edit Information
-                </button>
-                <button type="submit" id="saveBtn" class="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center">
-                    <svg class="w-5 h-5 mr-2" id="saveIcon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                    </svg>
-                    <span id="saveBtnText">Save Changes</span>
-                    <svg class="animate-spin h-5 w-5 mr-2 hidden" id="saveSpinner" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                </button>
+                    Edit in CFO Checker
+                </a>
                 <button type="button" onclick="closeEditModal()" class="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all duration-200 font-semibold">
-                    Cancel
+                    Close
                 </button>
             </div>
-        </form>
+        </div>
     </div>
 </div>
 
@@ -568,6 +752,12 @@ function applyFilters() {
 }
 
 $(document).ready(function() {
+    // Only initialize DataTable if the table exists (user has access)
+    const tableElement = $('#cfoTable');
+    if (tableElement.length === 0) {
+        return; // No table found, user probably needs access request
+    }
+    
     // Initialize DataTable
     table = $('#cfoTable').DataTable({
         processing: true,
@@ -591,7 +781,17 @@ $(document).ready(function() {
         },
         columns: [
             { data: 'id' },
-            { data: 'name' },
+            { 
+                data: 'name',
+                render: function(data, type, row) {
+                    // For export, return real name
+                    if (type === 'export') {
+                        return row.name_real || data;
+                    }
+                    // For display, show obfuscated with tooltip
+                    return '<span class="cursor-help" title="' + (row.name_real || '').replace(/"/g, '&quot;') + '">' + data + '</span>';
+                }
+            },
             { data: 'last_name', visible: false },
             { data: 'first_name', visible: false },
             { data: 'middle_name', visible: false },
@@ -601,48 +801,35 @@ $(document).ready(function() {
             { 
                 data: 'cfo_classification',
                 render: function(data, type, row) {
-                    // For export, return plain text
                     if (type === 'export') {
                         return data || 'Unclassified';
                     }
                     
-                    let options = [
-                        {value: '', label: '-- Select --', selected: !data},
-                        {value: 'Buklod', label: '💑 Buklod', selected: data === 'Buklod'},
-                        {value: 'Kadiwa', label: '👥 Kadiwa', selected: data === 'Kadiwa'},
-                        {value: 'Binhi', label: '👶 Binhi', selected: data === 'Binhi'}
-                    ];
+                    if (!data) {
+                        return '<span class="px-2 py-1 bg-gray-100 text-gray-500 rounded text-xs">Unclassified</span>';
+                    }
                     
-                    let selectHtml = '<select class="inline-edit-classification w-full px-3 py-1.5 text-xs border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer hover:border-blue-400 transition-colors" data-id="' + row.id + '" data-original="' + (data || '') + '">';
-                    options.forEach(opt => {
-                        selectHtml += '<option value="' + opt.value + '"' + (opt.selected ? ' selected' : '') + '>' + opt.label + '</option>';
-                    });
-                    selectHtml += '</select>';
+                    const badges = {
+                        'Buklod': '<span class="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs font-medium">💑 Buklod</span>',
+                        'Kadiwa': '<span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium">👥 Kadiwa</span>',
+                        'Binhi': '<span class="px-2 py-1 bg-orange-100 text-orange-700 rounded text-xs font-medium">👶 Binhi</span>'
+                    };
                     
-                    return selectHtml;
+                    return badges[data] || data;
                 }
             },
             { 
                 data: 'cfo_status',
                 render: function(data, type, row) {
-                    // For export, return plain text
                     if (type === 'export') {
                         if (data === 'transferred-out') return 'Transferred Out';
                         return 'Active';
                     }
                     
-                    let options = [
-                        {value: 'active', label: '✓ Active', selected: data === 'active' || !data},
-                        {value: 'transferred-out', label: '→ Transferred Out', selected: data === 'transferred-out'}
-                    ];
-                    
-                    let selectHtml = '<select class="inline-edit-status w-full px-3 py-1.5 text-xs border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 cursor-pointer hover:border-green-400 transition-colors" data-id="' + row.id + '" data-original="' + (data || 'active') + '">';
-                    options.forEach(opt => {
-                        selectHtml += '<option value="' + opt.value + '"' + (opt.selected ? ' selected' : '') + '>' + opt.label + '</option>';
-                    });
-                    selectHtml += '</select>';
-                    
-                    return selectHtml;
+                    if (data === 'transferred-out') {
+                        return '<span class="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-medium">→ Transferred Out</span>';
+                    }
+                    return '<span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium">✓ Active</span>';
                 }
             },
             { 
@@ -663,10 +850,11 @@ $(document).ready(function() {
                 render: function(data, type, row) {
                     return `
                         <button onclick="viewDetails(${row.id})" class="inline-flex items-center px-3 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-all duration-200 text-sm font-medium" title="View Details">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
                             </svg>
+                            View
                         </button>
                     `;
                 }
@@ -710,139 +898,7 @@ $(document).ready(function() {
     loadDistricts();
     <?php endif; ?>
     
-    // Inline editing for CFO Classification
-    $('#cfoTable').on('change', '.inline-edit-classification', function() {
-        const $select = $(this);
-        const id = $select.data('id');
-        const newValue = $select.val();
-        const originalValue = $select.data('original');
-        
-        if (newValue === originalValue) {
-            return; // No change
-        }
-        
-        if (!newValue) {
-            $select.val(originalValue);
-            showError('Please select a classification');
-            return;
-        }
-        
-        // Show loading state
-        $select.prop('disabled', true);
-        $select.addClass('opacity-50 cursor-wait');
-        
-        // Update via AJAX
-        $.ajax({
-            url: '<?php echo BASE_URL; ?>/api/update-cfo.php',
-            method: 'POST',
-            data: {
-                id: id,
-                cfo_classification: newValue,
-                csrf_token: $('meta[name=\"csrf-token\"]').attr('content')
-            },
-            success: function(response) {
-                if (response.success) {
-                    $select.data('original', newValue);
-                    $select.removeClass('opacity-50 cursor-wait').addClass('border-green-400 bg-green-50');
-                    showSuccess('Classification updated successfully');
-                    
-                    // Reset styling after animation
-                    setTimeout(() => {
-                        $select.removeClass('border-green-400 bg-green-50');
-                    }, 2000);
-                    
-                    // Reload DataTable and stats in background without page refresh
-                    table.ajax.reload(null, false); // false = stay on current page
-                    
-                    // Reload statistics
-                    $.ajax({
-                        url: window.location.href,
-                        success: function(html) {
-                            // Extract and update statistics cards
-                            const $newStats = $(html).find('.grid.grid-cols-1.md\\:grid-cols-4 > div');
-                            $('.grid.grid-cols-1.md\\:grid-cols-4 > div').each(function(index) {
-                                $(this).html($newStats.eq(index).html());
-                            });
-                        }
-                    });
-                } else {
-                    $select.val(originalValue);
-                    showError(response.error || 'Failed to update classification');
-                }
-                $select.prop('disabled', false);
-            },
-            error: function() {
-                $select.val(originalValue);
-                $select.prop('disabled', false);
-                $select.removeClass('opacity-50 cursor-wait');
-                showError('Network error. Please try again.');
-            }
-        });
-    });
-    
-    // Inline editing for CFO Status
-    $('#cfoTable').on('change', '.inline-edit-status', function() {
-        const $select = $(this);
-        const id = $select.data('id');
-        const newValue = $select.val();
-        const originalValue = $select.data('original');
-        
-        if (newValue === originalValue) {
-            return; // No change
-        }
-        
-        // Show loading state
-        $select.prop('disabled', true);
-        $select.addClass('opacity-50 cursor-wait');
-        
-        // Update via AJAX
-        $.ajax({
-            url: '<?php echo BASE_URL; ?>/api/update-cfo.php',
-            method: 'POST',
-            data: {
-                id: id,
-                cfo_status: newValue,
-                csrf_token: $('meta[name=\"csrf-token\"]').attr('content')
-            },
-            success: function(response) {
-                if (response.success) {
-                    $select.data('original', newValue);
-                    $select.removeClass('opacity-50 cursor-wait').addClass('border-green-400 bg-green-50');
-                    showSuccess('Status updated successfully');
-                    
-                    // Reset styling after animation
-                    setTimeout(() => {
-                        $select.removeClass('border-green-400 bg-green-50');
-                    }, 2000);
-                    
-                    // Reload DataTable and stats in background without page refresh
-                    table.ajax.reload(null, false); // false = stay on current page
-                    
-                    // Reload statistics
-                    $.ajax({
-                        url: window.location.href,
-                        success: function(html) {
-                            // Extract and update statistics cards
-                            const $newStats = $(html).find('.grid.grid-cols-1.md\\:grid-cols-4 > div');
-                            $('.grid.grid-cols-1.md\\:grid-cols-4 > div').each(function(index) {
-                                $(this).html($newStats.eq(index).html());
-                            });
-                        }
-                    });
-                } else {
-                    $select.val(originalValue);
-                    showError(response.error || 'Failed to update status');
-                }
-                $select.prop('disabled', false);
-            },
-            error: function() {
-                $select.val(originalValue);
-                $select.prop('disabled', false);
-                $select.removeClass('opacity-50 cursor-wait');
-                showError('Network error. Please try again.');
-            }
-        });
-    });
+    // Inline editing removed - use CFO Checker for editing
     
     // Trigger filter on checkbox change
     $('#filterMissingBirthday').on('change', function() {
@@ -852,28 +908,6 @@ $(document).ready(function() {
     // Update stats on page load to match default filter
     updateStats();
 });
-
-function enableEditMode() {
-    // Enable all form fields
-    $('#edit_first_name, #edit_middle_name, #edit_last_name, #edit_husbands_surname, #edit_birthday, #edit_classification, #edit_status, #edit_notes').prop('disabled', false);
-    
-    // Remove readonly styling
-    $('#edit_first_name, #edit_middle_name, #edit_last_name, #edit_husbands_surname, #edit_birthday, #edit_classification, #edit_status, #edit_notes').removeClass('bg-gray-100 cursor-not-allowed');
-    
-    // Hide edit button, show save button
-    $('#editModeBtn').addClass('hidden');
-    $('#saveBtn').show();
-    
-    // Update modal title
-    $('#modalContent h3').text('Edit CFO Information');
-    
-    // Add visual feedback
-    const fields = $('#edit_first_name, #edit_middle_name, #edit_last_name, #edit_husbands_surname, #edit_birthday, #edit_classification, #edit_status, #edit_notes');
-    fields.addClass('ring-2 ring-blue-200');
-    setTimeout(() => {
-        fields.removeClass('ring-2 ring-blue-200');
-    }, 1000);
-}
 
 function showLoading() {
     $('#loadingOverlay').removeClass('hidden');
@@ -982,22 +1016,30 @@ async function viewDetails(id) {
             return;
         }
         
-        // Show details in modal
+        // Show details in modal (all readonly)
         $('#edit_id').val(data.id);
-        $('#edit_first_name').val(data.first_name || '').prop('disabled', true);
-        $('#edit_middle_name').val(data.middle_name || '').prop('disabled', true);
-        $('#edit_last_name').val(data.last_name || '').prop('disabled', true);
-        $('#edit_husbands_surname').val(data.husbands_surname || '').prop('disabled', true);
+        $('#edit_first_name').val(data.first_name || '');
+        $('#edit_middle_name').val(data.middle_name || '');
+        $('#edit_last_name').val(data.last_name || '');
+        $('#edit_husbands_surname').val(data.husbands_surname || '');
         $('#edit_registry').val(data.registry_number);
-        $('#edit_birthday').val(data.birthday_raw || '').prop('disabled', true);
-        $('#edit_classification').val(data.cfo_classification || '').prop('disabled', true);
-        $('#edit_status').val(data.cfo_status || 'active').prop('disabled', true);
-        $('#edit_notes').val(data.cfo_notes || '').prop('disabled', true);
+        $('#edit_birthday').val(data.birthday || '');
+        $('#edit_purok').val(data.purok || '');
+        $('#edit_grupo').val(data.grupo || '');
         
-        // Hide save button, show edit button
-        $('#saveBtn').hide();
-        $('#editModeBtn').removeClass('hidden');
-        $('#modalContent h3').text('View CFO Information');
+        // Format classification with emoji
+        const classifications = {
+            'Buklod': '💑 Buklod (Married Couples)',
+            'Kadiwa': '👥 Kadiwa (Youth 18+)',
+            'Binhi': '🌱 Binhi (Children under 18)'
+        };
+        $('#edit_classification').val(classifications[data.cfo_classification] || data.cfo_classification || 'Unclassified');
+        
+        // Format status
+        const status = data.cfo_status === 'transferred-out' ? '→ Transferred Out' : '✓ Active';
+        $('#edit_status').val(status);
+        
+        $('#edit_notes').val(data.cfo_notes || '');
         
     } catch (error) {
         showError('Failed to load details');
@@ -1005,49 +1047,7 @@ async function viewDetails(id) {
     }
 }
 
-async function editCFO(id) {
-    // Show modal
-    const modal = $('#editModal');
-    const content = $('#modalContent');
-    
-    modal.removeClass('hidden');
-    setTimeout(() => {
-        modal.removeClass('opacity-0');
-        content.removeClass('scale-95').addClass('scale-100');
-    }, 10);
-    
-    try {
-        const response = await fetch('api/get-cfo-details.php?id=' + id);
-        const data = await response.json();
-        
-        if (data.error) {
-            showError(data.error);
-            closeEditModal();
-            return;
-        }
-        
-        // Populate form
-        $('#edit_id').val(data.id);
-        $('#edit_first_name').val(data.first_name || '');
-        $('#edit_middle_name').val(data.middle_name || '');
-        $('#edit_last_name').val(data.last_name || '');
-        $('#edit_husbands_surname').val(data.husbands_surname || '');
-        $('#edit_registry').val(data.registry_number);
-        $('#edit_birthday').val(data.birthday_raw || '');
-        $('#edit_purok').val(data.purok || '');
-        $('#edit_grupo').val(data.grupo || '');
-        $('#edit_classification').val(data.cfo_classification || '');
-        $('#edit_status').val(data.cfo_status || 'active');
-        $('#edit_notes').val(data.cfo_notes || '');
-        
-        // Update hint text
-        updateClassificationHint();
-    } catch (error) {
-        console.error('Error loading CFO details:', error);
-        showError('Error loading CFO details');
-        closeEditModal();
-    }
-}
+// editCFO function removed - editing moved to CFO Checker page
 
 function closeEditModal() {
     const modal = $('#editModal');
@@ -1058,74 +1058,12 @@ function closeEditModal() {
     
     setTimeout(() => {
         modal.addClass('hidden');
-        $('#editForm')[0].reset();
-        // Re-enable all fields
-        $('#edit_first_name, #edit_middle_name, #edit_last_name, #edit_husbands_surname, #edit_birthday, #edit_purok, #edit_grupo, #edit_classification, #edit_status, #edit_notes').prop('disabled', false);
-        // Show save button, hide edit button
-        $('#saveBtn').show();
-        $('#editModeBtn').addClass('hidden');
-        $('#modalContent h3').text('Edit CFO Information');
+        // Clear all fields
+        $('#edit_id, #edit_first_name, #edit_middle_name, #edit_last_name, #edit_husbands_surname, #edit_registry, #edit_birthday, #edit_purok, #edit_grupo, #edit_classification, #edit_status, #edit_notes').val('');
     }, 300);
 }
 
-function updateClassificationHint() {
-    const classification = $('#edit_classification').val();
-    const hint = $('#classification_hint');
-    
-    const hints = {
-        'Buklod': '💑 For married couples and families',
-        'Kadiwa': '👥 For youth members 18 years and above',
-        'Binhi': '👶 For children under 18 years old',
-        '': 'Select the appropriate classification for this member'
-    };
-    
-    hint.html(`<svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>${hints[classification] || hints['']}`);
-}
-
-$('#edit_classification').on('change', updateClassificationHint);
-
-$('#editForm').on('submit', async function(e) {
-    e.preventDefault();
-    
-    const saveBtn = $('#saveBtn');
-    const saveBtnText = $('#saveBtnText');
-    const saveIcon = $('#saveIcon');
-    const saveSpinner = $('#saveSpinner');
-    
-    // Disable button and show loading
-    saveBtn.prop('disabled', true).removeClass('hover:scale-105');
-    saveBtnText.text('Saving...');
-    saveIcon.addClass('hidden');
-    saveSpinner.removeClass('hidden');
-    
-    const formData = new FormData(this);
-    
-    try {
-        const response = await fetch('api/update-cfo.php', {
-            method: 'POST',
-            body: formData
-        });
-        
-        const result = await response.json();
-        
-        if (result.success) {
-            showSuccess('CFO information updated successfully');
-            closeEditModal();
-            table.ajax.reload(null, false); // Reload without resetting pagination
-        } else {
-            showError(result.error || 'Error updating CFO information');
-        }
-    } catch (error) {
-        console.error('Error updating CFO:', error);
-        showError('Error updating CFO information');
-    } finally {
-        // Re-enable button
-        saveBtn.prop('disabled', false).addClass('hover:scale-105');
-        saveBtnText.text('Save Changes');
-        saveIcon.removeClass('hidden');
-        saveSpinner.addClass('hidden');
-    }
-});
+// Form submission removed - editing moved to CFO Checker page
 
 // Close modal on ESC key
 document.addEventListener('keydown', function(e) {
@@ -1164,7 +1102,115 @@ function exportAllToExcel() {
     window.location.href = '<?php echo BASE_URL; ?>/api/export-cfo-excel.php?' + params.toString();
 }
 
+// submitAccessRequest function
+async function submitAccessRequest() {
+    const password = document.getElementById('accessRequestPassword').value;
+    const cfoType = document.getElementById('accessRequestCfoType').value;
+    const submitBtn = document.getElementById('submitAccessRequestBtn');
+    
+    if (!password) {
+        alert('Please enter your password to verify your identity.');
+        return;
+    }
+    
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<svg class="animate-spin h-4 w-4 mr-2 inline-block" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Submitting...';
+    
+    try {
+        const response = await fetch('<?php echo BASE_URL; ?>/api/request-cfo-access.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                password: password,
+                cfo_type: cfoType
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('✅ Access request submitted successfully! You will be notified when approved.');
+            closeAccessRequestModal();
+            location.reload();
+        } else {
+            alert('❌ ' + (data.error || 'Failed to submit access request'));
+        }
+    } catch (error) {
+        alert('❌ Network error: ' + error.message);
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>Submit Request';
+    }
+}
+
 </script>
+
+<!-- Access Request Modal -->
+<?php if ($needsAccessRequest): ?>
+<div id="accessRequestModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-full max-w-lg shadow-lg rounded-lg bg-white">
+        <div class="flex items-center justify-between pb-3 border-b">
+            <h3 class="text-lg font-semibold text-gray-900">Request CFO Registry Access</h3>
+            <button onclick="closeAccessRequestModal()" class="text-gray-400 hover:text-gray-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        
+        <div class="mt-4 space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">CFO Type</label>
+                <select id="accessRequestCfoType" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option value="Buklod">Buklod</option>
+                    <option value="Kadiwa">Kadiwa</option>
+                    <option value="Binhi">Binhi</option>
+                </select>
+                <p class="text-xs text-gray-500 mt-1">Select which CFO registry you need access to.</p>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Verify Your Password</label>
+                <input type="password" 
+                       id="accessRequestPassword" 
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                       placeholder="Enter your account password">
+                <p class="text-xs text-gray-500 mt-1">For security, we need to verify your identity.</p>
+            </div>
+            
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <p class="text-xs text-blue-800">
+                    <strong>📋 What happens next:</strong>
+                </p>
+                <ul class="text-xs text-blue-700 mt-2 space-y-1 list-disc list-inside">
+                    <li>Your request will be sent to senior accounts for approval</li>
+                    <li>Once approved, you'll receive a PDF document of the registry</li>
+                    <li>The PDF will be accessible for 30 days</li>
+                    <li>After 7 days from first viewing, the document will lock</li>
+                    <li>All PDFs are watermarked for security</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="mt-6 flex gap-3 justify-end border-t pt-4">
+            <button onclick="closeAccessRequestModal()" 
+                    class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+                Cancel
+            </button>
+            <button id="submitAccessRequestBtn"
+                    onclick="submitAccessRequest()" 
+                    class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                Submit Request
+            </button>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
 
 <?php
 $content = ob_get_clean();

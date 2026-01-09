@@ -2024,6 +2024,16 @@ if (Security::isLoggedIn()) {
                                 CFO Registry
                             </a>
                             
+                            <?php if ($currentUser['role'] === 'admin' || $currentUser['role'] === 'local'): ?>
+                            <a href="<?php echo BASE_URL; ?>/cfo-checker.php" 
+                               class="flex items-center px-4 py-3 text-sm font-medium rounded-lg <?php echo basename($_SERVER['PHP_SELF']) === 'cfo-checker.php' ? 'bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'; ?>">
+                                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                </svg>
+                                CFO Checker
+                            </a>
+                            <?php endif; ?>
+            
                             <a href="<?php echo BASE_URL; ?>/cfo-add.php" 
                                class="flex items-center px-4 py-3 text-sm font-medium rounded-lg <?php echo basename($_SERVER['PHP_SELF']) === 'cfo-add.php' ? 'bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'; ?>">
                                 <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2039,6 +2049,28 @@ if (Security::isLoggedIn()) {
                                 </svg>
                                 CFO Reports
                             </a>
+                            
+                            <!-- CFO Access Requests (for approvers) -->
+                            <?php if (hasPermission('can_approve_officer_requests')): ?>
+                            <a href="<?php echo BASE_URL; ?>/cfo-access-requests.php" 
+                               class="flex items-center px-4 py-3 text-sm font-medium rounded-lg <?php echo basename($_SERVER['PHP_SELF']) === 'cfo-access-requests.php' ? 'bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'; ?>">
+                                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
+                                </svg>
+                                CFO Access Requests
+                                <?php
+                                // Show pending count badge
+                                $stmt = $db->prepare("SELECT COUNT(*) as count FROM cfo_access_requests WHERE status = 'pending' AND deleted_at IS NULL" . 
+                                    ($currentUser['role'] === 'local' ? " AND requester_local_code = ?" : ""));
+                                $params = $currentUser['role'] === 'local' ? [$currentUser['local_code']] : [];
+                                $stmt->execute($params);
+                                $pendingCount = $stmt->fetchColumn();
+                                if ($pendingCount > 0):
+                                ?>
+                                <span class="ml-auto inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-500 rounded-full"><?php echo $pendingCount; ?></span>
+                                <?php endif; ?>
+                            </a>
+                            <?php endif; ?>
                         <?php else: ?>
                             <!-- Regular navigation for other users -->
                         <a href="<?php echo BASE_URL; ?>/dashboard.php" 
@@ -2148,6 +2180,27 @@ if (Security::isLoggedIn()) {
                         </a>
                         <?php endif; ?>
                         
+                        <?php
+                        // Show CFO Access Requests for local (senior) accounts
+                        if ($currentUser['role'] === 'local'):
+                            $stmt = $db->prepare("SELECT COUNT(*) as count FROM cfo_access_requests WHERE status = 'pending'");
+                            $stmt->execute();
+                            $cfoRequestsCount = (int)($stmt->fetch()['count'] ?? 0);
+                        ?>
+                        <a href="<?php echo BASE_URL; ?>/pending-cfo-access.php" 
+                           class="flex items-center px-4 py-3 text-sm font-medium rounded-lg <?php echo strpos($_SERVER['PHP_SELF'], 'pending-cfo-access.php') !== false ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'; ?>">
+                            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            <span class="flex-1">CFO Access Requests</span>
+                            <?php if ($cfoRequestsCount > 0): ?>
+                                <span class="inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-orange-600 rounded-full">
+                                    <?php echo $cfoRequestsCount; ?>
+                                </span>
+                            <?php endif; ?>
+                        </a>
+                        <?php endif; ?>
+                        
                         <div class="pt-4 pb-2">
                             <p class="px-4 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Call-Up Slips</p>
                         </div>
@@ -2200,27 +2253,7 @@ if (Security::isLoggedIn()) {
                         </a>
                         <?php endif; ?>
                         
-                        <?php if (hasPermission('can_view_reports')): ?>
-                        <div class="pt-4 pb-2">
-                            <p class="px-4 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">CFO (Christian Family Org.)</p>
-                        </div>
-                        
-                        <a href="<?php echo BASE_URL; ?>/cfo-registry.php" 
-                           class="flex items-center px-4 py-3 text-sm font-medium rounded-lg <?php echo strpos($_SERVER['PHP_SELF'], 'cfo-registry.php') !== false ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'; ?>">
-                            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
-                            </svg>
-                            CFO Registry
-                        </a>
-                        
-                        <a href="<?php echo BASE_URL; ?>/reports/cfo-reports.php" 
-                           class="flex items-center px-4 py-3 text-sm font-medium rounded-lg <?php echo strpos($_SERVER['PHP_SELF'], 'reports/cfo-reports.php') !== false ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'; ?>">
-                            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                            </svg>
-                            CFO Reports
-                        </a>
-                        <?php endif; ?>
+
                         
                         <?php if (hasPermission('can_view_requests')): ?>
                         <div class="pt-4 pb-2">
@@ -2363,8 +2396,28 @@ if (Security::isLoggedIn()) {
                             </svg>
                             Audit Log
                         </a>
+                        
+                        <?php
+                        // Get CFO access requests count for senior accounts
+                        $stmt = $db->prepare("SELECT COUNT(*) as count FROM cfo_access_requests WHERE status = 'pending'");
+                        $stmt->execute();
+                        $cfoRequestsCount = (int)($stmt->fetch()['count'] ?? 0);
+                        ?>
+                        
+                        <a href="<?php echo BASE_URL; ?>/pending-cfo-access.php" 
+                           class="flex items-center px-4 py-3 text-sm font-medium rounded-lg <?php echo strpos($_SERVER['PHP_SELF'], 'pending-cfo-access.php') !== false ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'; ?>">
+                            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            <span class="flex-1">CFO Access Requests</span>
+                            <?php if ($cfoRequestsCount > 0): ?>
+                                <span class="inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-orange-600 rounded-full">
+                                    <?php echo $cfoRequestsCount; ?>
+                                </span>
+                            <?php endif; ?>
+                        </a>
                         <?php endif; ?>
-                        <?php endif; // End of local_cfo check ?>
+                    <?php endif; ?>
                     </nav>
                     
                     <!-- User Info Card -->
