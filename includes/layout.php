@@ -2002,8 +2002,8 @@ if (Security::isLoggedIn()) {
                     
                     <!-- Navigation Menu -->
                     <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
-                        <?php if (isset($currentUser) && $currentUser['role'] === 'local_cfo'): ?>
-                            <!-- Special navigation for Local CFO users -->
+                        <?php if (isset($currentUser) && ($currentUser['role'] === 'local_cfo' || $currentUser['role'] === 'local')): ?>
+                            <!-- Special navigation for Local CFO and Local users -->
                             <a href="<?php echo BASE_URL; ?>/cfo-dashboard.php" 
                                class="flex items-center px-4 py-3 text-sm font-medium rounded-lg <?php echo basename($_SERVER['PHP_SELF']) === 'cfo-dashboard.php' ? 'bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'; ?>">
                                 <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
