@@ -2002,8 +2002,8 @@ if (Security::isLoggedIn()) {
                     
                     <!-- Navigation Menu -->
                     <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
-                        <?php if (isset($currentUser) && ($currentUser['role'] === 'local_cfo' || $currentUser['role'] === 'local')): ?>
-                            <!-- Special navigation for Local CFO and Local users -->
+                        <?php if (isset($currentUser) && $currentUser['role'] === 'local_cfo'): ?>
+                            <!-- Special navigation for Local CFO users -->
                             <a href="<?php echo BASE_URL; ?>/cfo-dashboard.php" 
                                class="flex items-center px-4 py-3 text-sm font-medium rounded-lg <?php echo basename($_SERVER['PHP_SELF']) === 'cfo-dashboard.php' ? 'bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'; ?>">
                                 <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2253,7 +2253,35 @@ if (Security::isLoggedIn()) {
                         </a>
                         <?php endif; ?>
                         
-
+                        <?php if ($currentUser['role'] === 'admin' || $currentUser['role'] === 'local'): ?>
+                        <div class="pt-4 pb-2">
+                            <p class="px-4 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">CFO (Christian Family Org.)</p>
+                        </div>
+                        
+                        <a href="<?php echo BASE_URL; ?>/cfo-registry.php" 
+                           class="flex items-center px-4 py-3 text-sm font-medium rounded-lg <?php echo strpos($_SERVER['PHP_SELF'], 'cfo-registry.php') !== false ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'; ?>">
+                            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                            </svg>
+                            CFO Registry
+                        </a>
+                        
+                        <a href="<?php echo BASE_URL; ?>/cfo-checker.php" 
+                           class="flex items-center px-4 py-3 text-sm font-medium rounded-lg <?php echo strpos($_SERVER['PHP_SELF'], 'cfo-checker.php') !== false ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'; ?>">
+                            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                            </svg>
+                            CFO Checker
+                        </a>
+                        
+                        <a href="<?php echo BASE_URL; ?>/reports/cfo-reports.php" 
+                           class="flex items-center px-4 py-3 text-sm font-medium rounded-lg <?php echo strpos($_SERVER['PHP_SELF'], 'reports/cfo-reports.php') !== false ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'; ?>">
+                            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            CFO Reports
+                        </a>
+                        <?php endif; ?>
                         
                         <?php if (hasPermission('can_view_requests')): ?>
                         <div class="pt-4 pb-2">
