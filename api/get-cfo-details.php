@@ -71,6 +71,8 @@ try {
         'registry_number' => $registryNumber,
         'birthday' => $birthday ? date('M d, Y', strtotime($birthday)) : '',
         'birthday_raw' => $birthday,
+        'purok' => $record['purok'],
+        'grupo' => $record['grupo'],
         'cfo_classification' => $record['cfo_classification'],
         'cfo_classification_auto' => $record['cfo_classification_auto'],
         'cfo_status' => $record['cfo_status'],

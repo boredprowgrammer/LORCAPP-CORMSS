@@ -28,6 +28,12 @@ ob_start();
                 <p class="text-sm text-gray-500 mt-1">Christian Family Organization - Buklod, Kadiwa, Binhi</p>
             </div>
             <div class="flex gap-2">
+                <a href="cfo-import.php" class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                    </svg>
+                    Import CSV
+                </a>
                 <a href="cfo-add.php" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
@@ -86,15 +92,19 @@ ob_start();
             $whereConditions = [];
             $params = [];
             
+            // Default filter: active status
+            $whereConditions[] = 'cfo_status = ?';
+            $params[] = 'active';
+            
             if ($currentUser['role'] === 'district') {
                 $whereConditions[] = 'district_code = ?';
                 $params[] = $currentUser['district_code'];
-            } elseif ($currentUser['role'] === 'local') {
+            } elseif ($currentUser['role'] === 'local' || $currentUser['role'] === 'local_cfo') {
                 $whereConditions[] = 'local_code = ?';
                 $params[] = $currentUser['local_code'];
             }
             
-            $whereClause = !empty($whereConditions) ? 'WHERE ' . implode(' AND ', $whereConditions) : '';
+            $whereClause = 'WHERE ' . implode(' AND ', $whereConditions);
             
             // Total CFO members
             $stmt = $db->prepare("SELECT COUNT(*) as total FROM tarheta_control $whereClause");
@@ -143,7 +153,7 @@ ob_start();
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm text-blue-700 font-medium">Total Members</p>
-                    <p class="text-3xl font-bold text-blue-900"><?php echo number_format($stats['total']); ?></p>
+                    <p class="text-3xl font-bold text-blue-900" id="stat-total"><?php echo number_format($stats['total']); ?></p>
                 </div>
                 <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
                     <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -157,7 +167,7 @@ ob_start();
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm text-purple-700 font-medium">Buklod</p>
-                    <p class="text-3xl font-bold text-purple-900"><?php echo number_format($stats['buklod']); ?></p>
+                    <p class="text-3xl font-bold text-purple-900" id="stat-buklod"><?php echo number_format($stats['buklod']); ?></p>
                     <p class="text-xs text-purple-600 mt-1">Married Couples</p>
                 </div>
                 <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
@@ -170,7 +180,7 @@ ob_start();
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm text-green-700 font-medium">Kadiwa</p>
-                    <p class="text-3xl font-bold text-green-900"><?php echo number_format($stats['kadiwa']); ?></p>
+                    <p class="text-3xl font-bold text-green-900" id="stat-kadiwa"><?php echo number_format($stats['kadiwa']); ?></p>
                     <p class="text-xs text-green-600 mt-1">Youth</p>
                 </div>
                 <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
@@ -183,13 +193,11 @@ ob_start();
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm text-orange-700 font-medium">Binhi</p>
-                    <p class="text-3xl font-bold text-orange-900"><?php echo number_format($stats['binhi']); ?></p>
+                    <p class="text-3xl font-bold text-orange-900" id="stat-binhi"><?php echo number_format($stats['binhi']); ?></p>
                     <p class="text-xs text-orange-600 mt-1">Children</p>
                 </div>
                 <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
                     <i class="fa-solid fa-seedling text-xl text-orange-600"></i>
-                </div>
-                    </svg>
                 </div>
             </div>
         </div>
@@ -199,12 +207,12 @@ ob_start();
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
         <form id="filterForm" class="grid grid-cols-1 md:grid-cols-<?php 
             // Adjust grid based on role
-            if ($currentUser['role'] === 'local') {
-                echo '3'; // Classification, Status, Apply button
+            if ($currentUser['role'] === 'local' || $currentUser['role'] === 'local_cfo') {
+                echo '4'; // Classification, Status, Missing Birthday, Apply button
             } elseif ($currentUser['role'] === 'district') {
-                echo '4'; // Classification, Status, Local, Apply button
+                echo '5'; // Classification, Status, Missing Birthday, Local, Apply button
             } else {
-                echo '5'; // All filters
+                echo '6'; // All filters
             }
         ?> gap-4">
             <div>
@@ -225,6 +233,16 @@ ob_start();
                     <option value="active" selected>Active</option>
                     <option value="transferred-out">Transferred Out</option>
                 </select>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Missing Data</label>
+                <div class="flex items-center h-10">
+                    <label class="inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="filterMissingBirthday" class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 focus:ring-2">
+                        <span class="ml-2 text-sm text-gray-700">Missing Birthday</span>
+                    </label>
+                </div>
             </div>
             
             <?php if ($currentUser['role'] === 'admin'): ?>
@@ -263,14 +281,14 @@ ob_start();
                     <option value="">All Locals</option>
                 </select>
             </div>
-            <?php elseif ($currentUser['role'] === 'local'): ?>
+            <?php elseif ($currentUser['role'] === 'local' || $currentUser['role'] === 'local_cfo'): ?>
             <input type="hidden" id="filterDistrict" value="<?php echo Security::escape($currentUser['district_code']); ?>">
             <input type="hidden" id="filterLocal" value="<?php echo Security::escape($currentUser['local_code']); ?>">
             <?php endif; ?>
             
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">&nbsp;</label>
-                <button type="button" onclick="table.ajax.reload();" class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                <button type="button" onclick="applyFilters();" class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
                     Apply Filters
                 </button>
             </div>
@@ -297,6 +315,7 @@ ob_start();
                             <th>Birthday</th>
                             <th>CFO Classification</th>
                             <th>Status</th>
+                            <th>Purok-Grupo</th>
                             <th>District</th>
                             <th>Local</th>
                             <th>Actions</th>
@@ -371,6 +390,22 @@ ob_start();
                         <div>
                             <label class="block text-xs font-medium text-gray-700 mb-1">Husband's Surname</label>
                             <input type="text" id="edit_husbands_surname" name="husbands_surname" placeholder="For married women" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">
+                                <i class="fa-solid fa-map-location-dot mr-1 text-blue-600"></i>
+                                Purok
+                            </label>
+                            <input type="text" id="edit_purok" name="purok" placeholder="e.g., 1, 2, 3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">
+                                <i class="fa-solid fa-users mr-1 text-green-600"></i>
+                                Grupo
+                            </label>
+                            <input type="text" id="edit_grupo" name="grupo" placeholder="e.g., 7, 8, 9" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
                         </div>
                     </div>
                 </div>
@@ -498,6 +533,40 @@ ob_start();
 <script>
 let table;
 
+// Function to update statistics based on current filters
+function updateStats() {
+    const filters = {
+        classification: $('#filterClassification').val(),
+        status: $('#filterStatus').val(),
+        district: $('#filterDistrict').val(),
+        local: $('#filterLocal').val(),
+        missing_birthday: $('#filterMissingBirthday').is(':checked') ? '1' : ''
+    };
+    
+    fetch('api/get-cfo-data.php?' + new URLSearchParams({
+        action: 'stats',
+        ...filters
+    }))
+    .then(response => response.json())
+    .then(data => {
+        if (data.stats) {
+            $('#stat-total').text(data.stats.total.toLocaleString());
+            $('#stat-buklod').text(data.stats.buklod.toLocaleString());
+            $('#stat-kadiwa').text(data.stats.kadiwa.toLocaleString());
+            $('#stat-binhi').text(data.stats.binhi.toLocaleString());
+        }
+    })
+    .catch(error => {
+        console.error('Error updating stats:', error);
+    });
+}
+
+// Function to apply filters
+function applyFilters() {
+    table.ajax.reload();
+    updateStats();
+}
+
 $(document).ready(function() {
     // Initialize DataTable
     table = $('#cfoTable').DataTable({
@@ -511,6 +580,7 @@ $(document).ready(function() {
                 d.status = $('#filterStatus').val();
                 d.district = $('#filterDistrict').val();
                 d.local = $('#filterLocal').val();
+                d.missing_birthday = $('#filterMissingBirthday').is(':checked') ? '1' : '';
             },
             dataSrc: function(json) {
                 return json.data;
@@ -575,6 +645,16 @@ $(document).ready(function() {
                     return selectHtml;
                 }
             },
+            { 
+                data: 'purok_grupo',
+                render: function(data, type, row) {
+                    if (type === 'export') return data;
+                    if (!data || data === '-') {
+                        return '<span class="text-gray-400 text-xs">-</span>';
+                    }
+                    return '<span class="px-2 py-1 bg-indigo-50 text-indigo-700 rounded text-xs font-medium">' + data + '</span>';
+                }
+            },
             { data: 'district_name' },
             { data: 'local_name' },
             { 
@@ -612,7 +692,7 @@ $(document).ready(function() {
     });
     
     // Auto-load districts and locals AFTER DataTable initialization
-    <?php if ($currentUser['role'] === 'district' || $currentUser['role'] === 'local'): ?>
+    <?php if ($currentUser['role'] === 'district' || $currentUser['role'] === 'local' || $currentUser['role'] === 'local_cfo'): ?>
     const userDistrictCode = '<?php echo Security::escape($currentUser['district_code']); ?>';
     console.log('User role: <?php echo $currentUser['role']; ?>, District code:', userDistrictCode);
     
@@ -763,6 +843,14 @@ $(document).ready(function() {
             }
         });
     });
+    
+    // Trigger filter on checkbox change
+    $('#filterMissingBirthday').on('change', function() {
+        applyFilters();
+    });
+    
+    // Update stats on page load to match default filter
+    updateStats();
 });
 
 function enableEditMode() {
@@ -946,6 +1034,8 @@ async function editCFO(id) {
         $('#edit_husbands_surname').val(data.husbands_surname || '');
         $('#edit_registry').val(data.registry_number);
         $('#edit_birthday').val(data.birthday_raw || '');
+        $('#edit_purok').val(data.purok || '');
+        $('#edit_grupo').val(data.grupo || '');
         $('#edit_classification').val(data.cfo_classification || '');
         $('#edit_status').val(data.cfo_status || 'active');
         $('#edit_notes').val(data.cfo_notes || '');
@@ -970,7 +1060,7 @@ function closeEditModal() {
         modal.addClass('hidden');
         $('#editForm')[0].reset();
         // Re-enable all fields
-        $('#edit_first_name, #edit_middle_name, #edit_last_name, #edit_husbands_surname, #edit_birthday, #edit_classification, #edit_status, #edit_notes').prop('disabled', false);
+        $('#edit_first_name, #edit_middle_name, #edit_last_name, #edit_husbands_surname, #edit_birthday, #edit_purok, #edit_grupo, #edit_classification, #edit_status, #edit_notes').prop('disabled', false);
         // Show save button, hide edit button
         $('#saveBtn').show();
         $('#editModeBtn').addClass('hidden');

@@ -118,6 +118,53 @@ function hasAllPermissions($permissions, $userId = null) {
 }
 
 /**
+ * Update existing user permissions based on their role
+ * 
+ * @param int $userId The user ID
+ * @param string $role The user role
+ * @return bool True on success, false on failure
+ */
+function updateUserPermissionsByRole($userId, $role) {
+    $db = Database::getInstance()->getConnection();
+    
+    try {
+        // Define permission values based on role
+        $permissions = [];
+        
+        if ($role === 'admin') {
+            $permissions = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
+        } elseif ($role === 'district' || $role === 'district_user') {
+            $permissions = [1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0];
+        } elseif ($role === 'local' || $role === 'local_limited') {
+            $permissions = [1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0];
+        } elseif ($role === 'local_cfo') {
+            // Local CFO: Only CFO reports and viewing
+            $permissions = [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0];
+        } else {
+            $permissions = [1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0];
+        }
+        
+        $stmt = $db->prepare("
+            UPDATE user_permissions SET
+                can_view_officers = ?, can_add_officers = ?, can_edit_officers = ?, can_delete_officers = ?,
+                can_transfer_in = ?, can_transfer_out = ?, can_remove_officers = ?,
+                can_view_requests = ?, can_manage_requests = ?,
+                can_view_reports = ?, can_view_headcount = ?, can_view_departments = ?, can_export_reports = ?,
+                can_view_calendar = ?, can_view_announcements = ?,
+                can_manage_users = ?, can_manage_announcements = ?, can_manage_districts = ?, can_view_audit_log = ?
+            WHERE user_id = ?
+        ");
+        
+        $permissions[] = $userId; // Add user_id at the end
+        $stmt->execute($permissions);
+        return true;
+    } catch (PDOException $e) {
+        error_log("Error updating permissions by role: " . $e->getMessage());
+        return false;
+    }
+}
+
+/**
  * Create default permissions for a new user based on their role
  * 
  * @param int $userId The user ID
@@ -128,6 +175,16 @@ function createDefaultPermissions($userId, $role) {
     $db = Database::getInstance()->getConnection();
     
     try {
+        // Check if permissions already exist
+        $stmt = $db->prepare("SELECT user_id FROM user_permissions WHERE user_id = ?");
+        $stmt->execute([$userId]);
+        $exists = $stmt->fetch();
+        
+        // If permissions already exist, update them instead
+        if ($exists) {
+            return updateUserPermissionsByRole($userId, $role);
+        }
+        
         // Set default permissions based on role
         if ($role === 'admin') {
             // Admin gets all permissions
@@ -188,6 +245,21 @@ function createDefaultPermissions($userId, $role) {
                     can_manage_users, can_manage_announcements, can_manage_districts, can_view_audit_log
                 ) VALUES (
                     ?, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0
+                )
+            ");
+        } elseif ($role === 'local_cfo') {
+            // Local CFO users - restricted to CFO registry only
+            $stmt = $db->prepare("
+                INSERT INTO user_permissions (
+                    user_id,
+                    can_view_officers, can_add_officers, can_edit_officers, can_delete_officers,
+                    can_transfer_in, can_transfer_out, can_remove_officers,
+                    can_view_requests, can_manage_requests,
+                    can_view_reports, can_view_headcount, can_view_departments, can_export_reports,
+                    can_view_calendar, can_view_announcements,
+                    can_manage_users, can_manage_announcements, can_manage_districts, can_view_audit_log
+                ) VALUES (
+                    ?, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0
                 )
             ");
         } else {

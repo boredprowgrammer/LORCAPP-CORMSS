@@ -226,7 +226,7 @@ ob_start();
                         <label class="block text-sm font-medium text-gray-700 mb-2">
                             District <span class="text-red-600">*</span>
                         </label>
-                        <?php if ($currentUser['role'] === 'district' || $currentUser['role'] === 'local'): ?>
+                        <?php if ($currentUser['role'] === 'district' || $currentUser['role'] === 'local' || $currentUser['role'] === 'local_cfo'): ?>
                             <!-- District/Local users: show readonly field -->
                             <input type="text" value="<?php 
                                 foreach ($districts as $d) {
@@ -255,7 +255,7 @@ ob_start();
                         <label class="block text-sm font-medium text-gray-700 mb-2">
                             Local Congregation <span class="text-red-600">*</span>
                         </label>
-                        <?php if ($currentUser['role'] === 'local'): ?>
+                        <?php if ($currentUser['role'] === 'local' || $currentUser['role'] === 'local_cfo'): ?>
                             <!-- Local users: show readonly field -->
                             <?php
                             $localName = '';

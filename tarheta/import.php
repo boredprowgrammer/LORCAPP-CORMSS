@@ -7,6 +7,14 @@
 require_once __DIR__ . '/../config/config.php';
 
 Security::requireLogin();
+
+// Block access for local_cfo role
+if (getCurrentUser()['role'] === 'local_cfo') {
+    setFlashMessage('error', 'Access denied for this feature.');
+    header('Location: ' . BASE_URL . '/cfo-dashboard.php');
+    exit;
+}
+
 requirePermission('can_add_officers'); // Only users who can add officers can import
 
 $currentUser = getCurrentUser();

@@ -29,6 +29,9 @@ try {
     $lastName = isset($_POST['last_name']) ? Security::sanitizeInput($_POST['last_name']) : null;
     $husbandsSurname = isset($_POST['husbands_surname']) ? Security::sanitizeInput($_POST['husbands_surname']) : null;
     $birthday = isset($_POST['birthday']) ? Security::sanitizeInput($_POST['birthday']) : null;
+    $registryNumber = isset($_POST['registry_number']) ? Security::sanitizeInput($_POST['registry_number']) : null;
+    $purok = isset($_POST['purok']) ? Security::sanitizeInput($_POST['purok']) : null;
+    $grupo = isset($_POST['grupo']) ? Security::sanitizeInput($_POST['grupo']) : null;
     
     if ($id <= 0) {
         throw new Exception('Invalid ID');
@@ -63,7 +66,7 @@ try {
     if ($currentUser['role'] === 'district' && $record['district_code'] !== $currentUser['district_code']) {
         throw new Exception('Access denied');
     }
-    if ($currentUser['role'] === 'local' && $record['local_code'] !== $currentUser['local_code']) {
+    if (($currentUser['role'] === 'local' || $currentUser['role'] === 'local_cfo') && $record['local_code'] !== $currentUser['local_code']) {
         throw new Exception('Access denied');
     }
     
@@ -109,6 +112,34 @@ try {
         $params[] = empty(trim($birthday)) ? null : Encryption::encrypt($birthday, $record['district_code']);
     }
     
+    // Handle registry number with encryption and uniqueness check
+    if ($registryNumber !== null) {
+        $registryNumber = trim($registryNumber);
+        
+        if (empty($registryNumber)) {
+            throw new Exception('Registry number cannot be empty');
+        }
+        
+        // Normalize registry number for comparison
+        $normalizedRegNum = strtoupper(str_replace(' ', '', $registryNumber));
+        $registryNumberHash = hash('sha256', strtolower($normalizedRegNum));
+        
+        // Check if registry number already exists (excluding current record)
+        $stmtCheck = $db->prepare("SELECT id FROM tarheta_control WHERE registry_number_hash = ? AND id != ?");
+        $stmtCheck->execute([$registryNumberHash, $id]);
+        
+        if ($stmtCheck->fetch()) {
+            throw new Exception('Registry number already exists');
+        }
+        
+        $updateFields[] = 'registry_number_encrypted = ?';
+        $updateFields[] = 'registry_number_hash = ?';
+        $updateFields[] = 'search_registry = ?';
+        $params[] = Encryption::encrypt($registryNumber, $record['district_code']);
+        $params[] = $registryNumberHash;
+        $params[] = $normalizedRegNum;
+    }
+    
     // Update search_name if any name fields were updated
     if ($nameFieldsUpdated) {
         // Get current values if not all provided
@@ -147,6 +178,17 @@ try {
     if ($cfoNotes !== null) {
         $updateFields[] = 'cfo_notes = ?';
         $params[] = $cfoNotes;
+    }
+    
+    // Handle purok and grupo
+    if ($purok !== null) {
+        $updateFields[] = 'purok = ?';
+        $params[] = empty(trim($purok)) ? null : trim($purok);
+    }
+    
+    if ($grupo !== null) {
+        $updateFields[] = 'grupo = ?';
+        $params[] = empty(trim($grupo)) ? null : trim($grupo);
     }
     
     // Always update timestamp and user

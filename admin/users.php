@@ -66,7 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                     $fullName,
                     $role,
                     $role !== 'admin' ? $districtCode : null,
-                    ($role === 'local' || $role === 'local_limited') ? $localCode : null,
+                    ($role === 'local' || $role === 'local_limited' || $role === 'local_cfo') ? $localCode : null,
                     $role === 'local_limited' ? $seniorApproverId : null
                 ]);
                 
@@ -157,7 +157,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                     $fullName,
                     $role,
                     $role !== 'admin' ? $districtCode : null,
-                    ($role === 'local' || $role === 'local_limited') ? $localCode : null,
+                    ($role === 'local' || $role === 'local_limited' || $role === 'local_cfo') ? $localCode : null,
                     $role === 'local_limited' ? $seniorApproverId : null,
                     $userId
                 ]);
@@ -429,7 +429,7 @@ ob_start();
                             <td class="px-6 py-4">
                                 <div class="flex items-center gap-3">
                                     <div class="w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center font-semibold">
-                                        <span><?php echo strtoupper(substr($user['full_name'], 0, 1)); ?></span>
+                                        <span><?php echo substr($user['full_name'], 0, 1); ?></span>
                                     </div>
                                     <div>
                                         <div class="font-semibold text-gray-900"><?php echo Security::escape($user['full_name']); ?></div>
@@ -546,7 +546,7 @@ ob_start();
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Username *</label>
-                    <input type="text" name="username" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" required>
+                    <input type="text" name="username" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" autocapitalize="off" autocorrect="off" required>
                 </div>
                 
                 <div>
@@ -562,7 +562,7 @@ ob_start();
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Password *</label>
                     <div class="relative">
-                        <input type="password" id="create-password" name="password" class="w-full px-4 py-2 pr-24 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" minlength="8" autocomplete="off" autocapitalize="off" required>
+                        <input type="password" id="create-password" name="password" class="w-full px-4 py-2 pr-24 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" minlength="8" autocomplete="off" autocapitalize="off" autocorrect="off" required>
                         <button type="button" onclick="generatePassword('create-password')" class="absolute right-2 top-1/2 transform -translate-y-1/2 px-3 py-1 text-xs bg-blue-100 text-blue-700 hover:bg-blue-200 rounded transition-colors">
                             Generate
                         </button>
@@ -575,6 +575,7 @@ ob_start();
                     <select name="role" id="userRole" onchange="toggleUserFields()" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" required>
                         <option value="local">Local User</option>
                         <option value="local_limited">Local (Limited) - Requires Approval</option>
+                        <option value="local_cfo">Local CFO - CFO Registry Only</option>
                         <option value="district">District User</option>
                         <option value="admin">Administrator</option>
                     </select>
@@ -760,7 +761,7 @@ function toggleUserFields() {
             // If local is already selected manually, load senior approvers
             loadSeniorApprovers(localValue);
         }
-    } else { // local
+    } else { // local or local_cfo
         districtField.style.display = 'block';
         localField.style.display = 'block';
         seniorApproverField.style.display = 'none';
@@ -1052,7 +1053,7 @@ function toggleEditUserFields() {
         if (localValue) {
             loadSeniorApproversForEdit(localValue);
         }
-    } else { // local
+    } else { // local or local_cfo
         districtField.style.display = 'block';
         localField.style.display = 'block';
         seniorApproverField.style.display = 'none';
@@ -1242,7 +1243,7 @@ function closeResetPasswordModal() {
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Username *</label>
-                    <input type="text" name="username" id="edit-username" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" required>
+                    <input type="text" name="username" id="edit-username" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" autocapitalize="off" autocorrect="off" required>
                 </div>
                 
                 <div>
@@ -1260,6 +1261,7 @@ function closeResetPasswordModal() {
                     <select name="role" id="edit-userRole" onchange="toggleEditUserFields()" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" required>
                         <option value="local">Local User</option>
                         <option value="local_limited">Local (Limited) - Requires Approval</option>
+                        <option value="local_cfo">Local CFO - CFO Registry Only</option>
                         <option value="district">District User</option>
                         <option value="admin">Administrator</option>
                     </select>

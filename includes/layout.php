@@ -2032,12 +2032,12 @@ if (Security::isLoggedIn()) {
                                 Add CFO Member
                             </a>
                             
-                            <a href="<?php echo BASE_URL; ?>/tarheta/list.php" 
-                               class="flex items-center px-4 py-3 text-sm font-medium rounded-lg <?php echo strpos($_SERVER['PHP_SELF'], '/tarheta/list.php') !== false ? 'bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'; ?>">
+                            <a href="<?php echo BASE_URL; ?>/reports/cfo-reports.php" 
+                               class="flex items-center px-4 py-3 text-sm font-medium rounded-lg <?php echo strpos($_SERVER['PHP_SELF'], '/reports/cfo-reports.php') !== false ? 'bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'; ?>">
                                 <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                                 </svg>
-                                Tarheta Control
+                                CFO Reports
                             </a>
                         <?php else: ?>
                             <!-- Regular navigation for other users -->
@@ -2214,9 +2214,9 @@ if (Security::isLoggedIn()) {
                         </a>
                         
                         <a href="<?php echo BASE_URL; ?>/reports/cfo-reports.php" 
-                           class="flex items-center px-4 py-3 text-sm font-medium rounded-lg <?php echo strpos($_SERVER['PHP_SELF'], 'cfo-reports.php') !== false ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'; ?>">
+                           class="flex items-center px-4 py-3 text-sm font-medium rounded-lg <?php echo strpos($_SERVER['PHP_SELF'], 'reports/cfo-reports.php') !== false ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'; ?>">
                             <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                             </svg>
                             CFO Reports
                         </a>
@@ -2767,9 +2767,12 @@ if (Security::isLoggedIn()) {
                         const elements = form.querySelectorAll('input, textarea, select');
                         elements.forEach(function(el) {
                             const type = (el.getAttribute('type') || '').toLowerCase();
+                            const name = (el.getAttribute('name') || '').toLowerCase();
                             // Skip elements that should not be uppercased
                             if (['hidden','password','file','checkbox','radio','submit','button','image'].includes(type)) return;
                             if (el.hasAttribute('data-preserve-case')) return;
+                            // Skip username and password-related fields
+                            if (['username','password','current_password','new_password','confirm_password'].includes(name)) return;
 
                             if (el.tagName !== 'SELECT' && typeof el.value === 'string' && el.value.length > 0) {
                                 el.value = el.value.toUpperCase();

@@ -247,6 +247,8 @@ ob_start();
                     type="password" 
                     name="current_password"
                     class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    autocapitalize="off"
+                    autocorrect="off"
                     required
                 >
             </div>
@@ -260,6 +262,8 @@ ob_start();
                         type="password" 
                         name="new_password"
                         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        autocapitalize="off"
+                        autocorrect="off"
                         minlength="8"
                         required
                     >
@@ -274,6 +278,8 @@ ob_start();
                         type="password" 
                         name="confirm_password"
                         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        autocapitalize="off"
+                        autocorrect="off"
                         minlength="8"
                         required
                     >

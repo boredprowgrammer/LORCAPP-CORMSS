@@ -247,6 +247,8 @@ ob_start();
                         placeholder="Enter username" 
                         class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base transition-shadow" 
                         value="<?php echo Security::escape($_POST['username'] ?? ''); ?>"
+                        autocapitalize="off"
+                        autocorrect="off"
                         required 
                         autofocus
                     >
@@ -260,6 +262,8 @@ ob_start();
                         name="password" 
                         placeholder="Enter password" 
                         class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base transition-shadow" 
+                        autocapitalize="off"
+                        autocorrect="off"
                         required
                     >
                 </div>
@@ -346,7 +350,7 @@ ob_start();
                             id="backup-code"
                             placeholder="XXXXXXXX" 
                             maxlength="8"
-                            class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-base transition-shadow text-center font-mono uppercase" 
+                            class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-base transition-shadow text-center font-mono" 
                         >
                     </div>
                     <button 
@@ -428,9 +432,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Verify backup code
     if (verifyBackupBtn) {
         verifyBackupBtn.addEventListener('click', function() {
-            const code = backupCodeInput.value.trim().toUpperCase();
+            const code = backupCodeInput.value.trim();
             
-            if (code.length !== 8 || !/^[A-Z0-9]+$/.test(code)) {
+            if (code.length !== 8 || !/^[A-Za-z0-9]+$/.test(code)) {
                 showError('Please enter a valid 8-character backup code');
                 return;
             }
@@ -439,10 +443,10 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Convert backup code input to uppercase
+    // Sanitize backup code input
     if (backupCodeInput) {
         backupCodeInput.addEventListener('input', function(e) {
-            this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+            this.value = this.value.replace(/[^A-Za-z0-9]/g, '');
         });
     }
     

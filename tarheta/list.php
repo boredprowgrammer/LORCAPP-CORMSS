@@ -7,6 +7,14 @@
 require_once __DIR__ . '/../config/config.php';
 
 Security::requireLogin();
+
+// Block access for local_cfo role
+if (getCurrentUser()['role'] === 'local_cfo') {
+    setFlashMessage('error', 'Access denied for this feature.');
+    header('Location: ' . BASE_URL . '/cfo-dashboard.php');
+    exit;
+}
+
 requirePermission('can_view_reports'); // Anyone who can view reports can see this
 
 $currentUser = getCurrentUser();
