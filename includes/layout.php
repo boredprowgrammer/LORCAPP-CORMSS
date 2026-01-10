@@ -43,10 +43,9 @@ if (Security::isLoggedIn()) {
         (function() {
             'use strict';
             const theme = localStorage.getItem('theme');
-            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
             
-            // Apply dark class before page renders
-            if (theme === 'dark' || (theme === null && prefersDark)) {
+            // Apply dark class only if explicitly set (disabled by default)
+            if (theme === 'dark') {
                 document.documentElement.classList.add('dark');
             }
         })();
@@ -3222,11 +3221,11 @@ if (Security::isLoggedIn()) {
             fetch('<?php echo BASE_URL; ?>/api/update-user-location.php', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(locationData)
-                    })
-                    .then(response => {
+            })
+            .then(response => {
                         // Check if response is ok
                         if (!response.ok) {
                             throw new Error('HTTP error ' + response.status);
