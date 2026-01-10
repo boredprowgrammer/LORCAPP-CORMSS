@@ -225,6 +225,10 @@ try {
             t.cfo_notes,
             t.purok,
             t.grupo,
+            t.registration_type,
+            t.registration_date,
+            t.registration_others_specify,
+            t.transfer_out_date,
             t.district_code,
             t.local_code,
             d.district_name,
@@ -306,6 +310,10 @@ try {
                 'cfo_classification_auto' => $record['cfo_classification_auto'],
                 'cfo_status' => $record['cfo_status'],
                 'purok_grupo' => $purokGrupo,
+                'registration_type' => $record['registration_type'],
+                'registration_date' => $record['registration_date'],
+                'registration_others_specify' => $record['registration_others_specify'],
+                'transfer_out_date' => $record['transfer_out_date'],
                 'district_name' => $record['district_name'],
                 'local_name' => $record['local_name']
             ];

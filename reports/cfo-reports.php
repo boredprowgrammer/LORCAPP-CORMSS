@@ -7,6 +7,17 @@ requirePermission('can_view_reports');
 $currentUser = getCurrentUser();
 $db = Database::getInstance()->getConnection();
 
+// Get transaction filter from URL (default to 'all')
+$transactionFilter = Security::sanitizeInput($_GET['filter'] ?? 'all');
+
+// Calculate date ranges for filters
+$today = new DateTime();
+$dateFilters = [
+    'week' => (clone $today)->modify('-7 days')->format('Y-m-d'),
+    'month' => (clone $today)->modify('-1 month')->format('Y-m-d'),
+    'year' => (clone $today)->modify('-1 year')->format('Y-m-d')
+];
+
 // Build WHERE clause based on user role (for statistics, include all statuses)
 $whereConditions = [];
 $params = [];
@@ -52,6 +63,153 @@ try {
     }
 } catch (Exception $e) {
     error_log("Error loading CFO stats: " . $e->getMessage());
+}
+
+// Get officer counts by CFO classification
+$officerStats = ['Buklod' => 0, 'Kadiwa' => 0, 'Binhi' => 0];
+try {
+    // Build WHERE clause for officers
+    $officerWhereConditions = ['o.is_active = 1'];
+    $officerParams = [];
+    
+    if ($currentUser['role'] === 'district') {
+        $officerWhereConditions[] = 'o.district_code = ?';
+        $officerParams[] = $currentUser['district_code'];
+    } elseif ($currentUser['role'] === 'local' || $currentUser['role'] === 'local_cfo') {
+        $officerWhereConditions[] = 'o.local_code = ?';
+        $officerParams[] = $currentUser['local_code'];
+    }
+    
+    $officerWhereClause = 'WHERE ' . implode(' AND ', $officerWhereConditions);
+    
+    $stmt = $db->prepare("
+        SELECT 
+            tc.cfo_classification,
+            COUNT(DISTINCT o.officer_id) as officer_count
+        FROM officers o
+        INNER JOIN tarheta_control tc ON o.registry_number_encrypted = tc.registry_number_encrypted 
+            AND o.district_code = tc.district_code
+        $officerWhereClause
+            AND tc.cfo_classification IS NOT NULL
+            AND tc.cfo_status = 'active'
+        GROUP BY tc.cfo_classification
+    ");
+    $stmt->execute($officerParams);
+    $results = $stmt->fetchAll();
+    
+    foreach ($results as $row) {
+        if (isset($officerStats[$row['cfo_classification']])) {
+            $officerStats[$row['cfo_classification']] = $row['officer_count'];
+        }
+    }
+} catch (Exception $e) {
+    error_log("Error loading officer CFO stats: " . $e->getMessage());
+}
+
+// Get weekly and monthly changes (dagdag/bawas) by CFO classification
+// First, get the last reset timestamps for this local
+$resetTimestamps = ['week' => [], 'month' => []];
+if ($currentUser['role'] === 'local' || $currentUser['role'] === 'local_cfo') {
+    try {
+        $stmt = $db->prepare("
+            SELECT classification, period, MAX(reset_at) as last_reset
+            FROM cfo_report_resets
+            WHERE local_code = ?
+            GROUP BY classification, period
+        ");
+        $stmt->execute([$currentUser['local_code']]);
+        $resets = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        foreach ($resets as $reset) {
+            $resetTimestamps[$reset['period']][$reset['classification']] = $reset['last_reset'];
+        }
+    } catch (Exception $e) {
+        error_log("Error loading reset timestamps: " . $e->getMessage());
+    }
+}
+
+$weeklyChanges = ['Buklod' => 0, 'Kadiwa' => 0, 'Binhi' => 0];
+$monthlyChanges = ['Buklod' => 0, 'Kadiwa' => 0, 'Binhi' => 0];
+try {
+    $weekAgo = (clone $today)->modify('-7 days')->format('Y-m-d');
+    $monthAgo = (clone $today)->modify('-1 month')->format('Y-m-d');
+    
+    // Weekly changes (newly added - newly transferred out)
+    $changeWhere = $whereConditions;
+    $changeParams = $params;
+    
+    // Process each classification separately to apply individual reset timestamps
+    foreach (['Buklod', 'Kadiwa', 'Binhi'] as $classification) {
+        // Determine baseline date for weekly calculation
+        $weekBaseline = $weekAgo;
+        if (isset($resetTimestamps['week'][$classification])) {
+            $weekBaseline = $resetTimestamps['week'][$classification];
+        } elseif (isset($resetTimestamps['week']['all'])) {
+            $weekBaseline = $resetTimestamps['week']['all'];
+        }
+        
+        // Count newly added this week for this classification
+        $stmt = $db->prepare("
+            SELECT COUNT(*) as added_count
+            FROM tarheta_control t
+            " . ($changeWhere ? 'WHERE ' . implode(' AND ', $changeWhere) . ' AND ' : 'WHERE ') . "
+                t.cfo_status = 'active'
+                AND t.created_at >= ?
+                AND t.cfo_classification = ?
+        ");
+        $stmt->execute(array_merge($changeParams, [$weekBaseline, $classification]));
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        $weeklyChanges[$classification] += $result['added_count'];
+        
+        // Count transferred out this week for this classification
+        $stmt = $db->prepare("
+            SELECT COUNT(*) as removed_count
+            FROM tarheta_control t
+            " . ($changeWhere ? 'WHERE ' . implode(' AND ', $changeWhere) . ' AND ' : 'WHERE ') . "
+                t.cfo_status = 'transferred-out'
+                AND COALESCE(t.transfer_out_date, t.updated_at) >= ?
+                AND t.cfo_classification = ?
+        ");
+        $stmt->execute(array_merge($changeParams, [$weekBaseline, $classification]));
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        $weeklyChanges[$classification] -= $result['removed_count'];
+        
+        // Determine baseline date for monthly calculation
+        $monthBaseline = $monthAgo;
+        if (isset($resetTimestamps['month'][$classification])) {
+            $monthBaseline = $resetTimestamps['month'][$classification];
+        } elseif (isset($resetTimestamps['month']['all'])) {
+            $monthBaseline = $resetTimestamps['month']['all'];
+        }
+        
+        // Count newly added this month for this classification
+        $stmt = $db->prepare("
+            SELECT COUNT(*) as added_count
+            FROM tarheta_control t
+            " . ($changeWhere ? 'WHERE ' . implode(' AND ', $changeWhere) . ' AND ' : 'WHERE ') . "
+                t.cfo_status = 'active'
+                AND t.created_at >= ?
+                AND t.cfo_classification = ?
+        ");
+        $stmt->execute(array_merge($changeParams, [$monthBaseline, $classification]));
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        $monthlyChanges[$classification] += $result['added_count'];
+        
+        // Count transferred out this month for this classification
+        $stmt = $db->prepare("
+            SELECT COUNT(*) as removed_count
+            FROM tarheta_control t
+            " . ($changeWhere ? 'WHERE ' . implode(' AND ', $changeWhere) . ' AND ' : 'WHERE ') . "
+                t.cfo_status = 'transferred-out'
+                AND COALESCE(t.transfer_out_date, t.updated_at) >= ?
+                AND t.cfo_classification = ?
+        ");
+        $stmt->execute(array_merge($changeParams, [$monthBaseline, $classification]));
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        $monthlyChanges[$classification] -= $result['removed_count'];
+    }
+} catch (Exception $e) {
+    error_log("Error loading CFO changes: " . $e->getMessage());
 }
 
 // Build WHERE clause for turning 18 query (needs birthday and active status)
@@ -155,6 +313,20 @@ try {
     $transferOutWhere = array_filter($whereConditions, fn($c) => !str_contains($c, 'cfo_status'));
     $transferOutWhere[] = "t.cfo_status = 'transferred-out'";
     $transferOutWhere[] = "(t.transfer_history_cleared_at IS NULL OR t.transfer_history_cleared_at < t.cfo_updated_at)";
+    
+    // Add date filter - using transfer_out_date or updated_at
+    $transferOutParams = $params;
+    if ($transactionFilter === 'week') {
+        $transferOutWhere[] = "COALESCE(t.transfer_out_date, t.updated_at) >= ?";
+        $transferOutParams[] = $dateFilters['week'];
+    } elseif ($transactionFilter === 'month') {
+        $transferOutWhere[] = "COALESCE(t.transfer_out_date, t.updated_at) >= ?";
+        $transferOutParams[] = $dateFilters['month'];
+    } elseif ($transactionFilter === 'year') {
+        $transferOutWhere[] = "COALESCE(t.transfer_out_date, t.updated_at) >= ?";
+        $transferOutParams[] = $dateFilters['year'];
+    }
+    
     $transferOutClause = 'WHERE ' . implode(' AND ', $transferOutWhere);
     
     $stmt = $db->prepare("
@@ -164,15 +336,16 @@ try {
             t.last_name_encrypted,
             t.district_code,
             t.cfo_classification,
+            t.transfer_out_date,
             t.updated_at,
             lc.local_name
         FROM tarheta_control t
         LEFT JOIN local_congregations lc ON t.local_code = lc.local_code
         $transferOutClause
-        ORDER BY t.updated_at DESC
-        LIMIT 10
+        ORDER BY COALESCE(t.transfer_out_date, t.updated_at) DESC
+        LIMIT 50
     ");
-    $stmt->execute($params);
+    $stmt->execute($transferOutParams);
     $recentTransferOuts = $stmt->fetchAll();
 } catch (Exception $e) {
     error_log("Error loading transfer outs: " . $e->getMessage());
@@ -196,14 +369,144 @@ try {
         $whereClause
         AND t.cfo_classification != t.cfo_classification_auto
         AND t.cfo_classification IS NOT NULL
+        AND (
+            (t.cfo_classification_auto = 'Binhi' AND t.cfo_classification = 'Kadiwa')
+            OR (t.cfo_classification_auto = 'Kadiwa' AND t.cfo_classification = 'Buklod')
+        )
         AND (t.classification_history_cleared_at IS NULL OR t.classification_history_cleared_at < t.cfo_updated_at)
         ORDER BY t.updated_at DESC
-        LIMIT 10
+        LIMIT 50
     ");
     $stmt->execute($params);
     $classificationChanges = $stmt->fetchAll();
 } catch (Exception $e) {
     error_log("Error loading classification changes: " . $e->getMessage());
+}
+
+// Newly Baptized Members
+$newlyBaptized = [];
+try {
+    $baptizedWhere = array_filter($whereConditions, fn($c) => !str_contains($c, 'cfo_status'));
+    $baptizedWhere[] = "t.registration_type = 'newly-baptized'";
+    $baptizedWhere[] = "t.cfo_status = 'active'";
+    
+    // Add date filter
+    $baptizedParams = $params;
+    if ($transactionFilter === 'week') {
+        $baptizedWhere[] = "COALESCE(t.registration_date, t.created_at) >= ?";
+        $baptizedParams[] = $dateFilters['week'];
+    } elseif ($transactionFilter === 'month') {
+        $baptizedWhere[] = "COALESCE(t.registration_date, t.created_at) >= ?";
+        $baptizedParams[] = $dateFilters['month'];
+    } elseif ($transactionFilter === 'year') {
+        $baptizedWhere[] = "COALESCE(t.registration_date, t.created_at) >= ?";
+        $baptizedParams[] = $dateFilters['year'];
+    }
+    
+    $baptizedClause = 'WHERE ' . implode(' AND ', $baptizedWhere);
+    
+    $stmt = $db->prepare("
+        SELECT 
+            t.id,
+            t.first_name_encrypted,
+            t.last_name_encrypted,
+            t.middle_name_encrypted,
+            t.district_code,
+            t.cfo_classification,
+            t.registration_date,
+            t.created_at,
+            lc.local_name,
+            d.district_name
+        FROM tarheta_control t
+        LEFT JOIN local_congregations lc ON t.local_code = lc.local_code
+        LEFT JOIN districts d ON t.district_code = d.district_code
+        $baptizedClause
+        ORDER BY COALESCE(t.registration_date, t.created_at) DESC
+        LIMIT 50
+    ");
+    $stmt->execute($baptizedParams);
+    $records = $stmt->fetchAll();
+    
+    foreach ($records as $record) {
+        $lastName = Encryption::decrypt($record['last_name_encrypted'], $record['district_code']);
+        $firstName = Encryption::decrypt($record['first_name_encrypted'], $record['district_code']);
+        $middleName = $record['middle_name_encrypted'] ? Encryption::decrypt($record['middle_name_encrypted'], $record['district_code']) : '';
+        $fullName = trim("$firstName $middleName $lastName");
+        
+        $newlyBaptized[] = [
+            'id' => $record['id'],
+            'name' => $fullName,
+            'classification' => $record['cfo_classification'],
+            'registration_date' => $record['registration_date'] ? date('M d, Y', strtotime($record['registration_date'])) : date('M d, Y', strtotime($record['created_at'])),
+            'local' => $record['local_name'],
+            'district' => $record['district_name']
+        ];
+    }
+} catch (Exception $e) {
+    error_log("Error loading newly baptized: " . $e->getMessage());
+}
+
+// Transfer-In Members
+$transferIns = [];
+try {
+    $transferInWhere = array_filter($whereConditions, fn($c) => !str_contains($c, 'cfo_status'));
+    $transferInWhere[] = "t.registration_type = 'transfer-in'";
+    $transferInWhere[] = "t.cfo_status = 'active'";
+    
+    // Add date filter
+    $transferInParams = $params;
+    if ($transactionFilter === 'week') {
+        $transferInWhere[] = "COALESCE(t.registration_date, t.created_at) >= ?";
+        $transferInParams[] = $dateFilters['week'];
+    } elseif ($transactionFilter === 'month') {
+        $transferInWhere[] = "COALESCE(t.registration_date, t.created_at) >= ?";
+        $transferInParams[] = $dateFilters['month'];
+    } elseif ($transactionFilter === 'year') {
+        $transferInWhere[] = "COALESCE(t.registration_date, t.created_at) >= ?";
+        $transferInParams[] = $dateFilters['year'];
+    }
+    
+    $transferInClause = 'WHERE ' . implode(' AND ', $transferInWhere);
+    
+    $stmt = $db->prepare("
+        SELECT 
+            t.id,
+            t.first_name_encrypted,
+            t.last_name_encrypted,
+            t.middle_name_encrypted,
+            t.district_code,
+            t.cfo_classification,
+            t.registration_date,
+            t.created_at,
+            lc.local_name,
+            d.district_name
+        FROM tarheta_control t
+        LEFT JOIN local_congregations lc ON t.local_code = lc.local_code
+        LEFT JOIN districts d ON t.district_code = d.district_code
+        $transferInClause
+        ORDER BY COALESCE(t.registration_date, t.created_at) DESC
+        LIMIT 50
+    ");
+    $stmt->execute($transferInParams);
+    $records = $stmt->fetchAll();
+    
+    foreach ($records as $record) {
+        $lastName = Encryption::decrypt($record['last_name_encrypted'], $record['district_code']);
+        $firstName = Encryption::decrypt($record['first_name_encrypted'], $record['district_code']);
+        $middleName = $record['middle_name_encrypted'] ? Encryption::decrypt($record['middle_name_encrypted'], $record['district_code']) : '';
+        $fullName = trim("$firstName $middleName $lastName");
+        
+        $transferIns[] = [
+            'id' => $record['id'],
+            'name' => $fullName,
+            'classification' => $record['cfo_classification'],
+            'registration_date' => $record['registration_date'] ? date('M d, Y', strtotime($record['registration_date'])) : date('M d, Y', strtotime($record['created_at'])),
+            'local' => $record['local_name'],
+            'district' => $record['district_name']
+        ];
+    }
+} catch (Exception $e) {
+    error_log("Error loading transfer-ins: " . $e->getMessage());
 }
 
 // Purok Statistics
@@ -253,6 +556,32 @@ ob_start();
         <p class="text-sm text-gray-500 mt-1">Christian Family Organization Statistics and Analysis</p>
     </div>
     
+    <!-- Tabs Navigation -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+        <div class="border-b border-gray-200">
+            <nav class="flex -mb-px" role="tablist">
+                <button onclick="switchTab('overview')" id="tab-overview" class="tab-button active px-6 py-4 text-sm font-medium border-b-2 border-blue-600 text-blue-600">
+                    <i class="fa-solid fa-chart-column mr-2"></i>
+                    Overview
+                </button>
+                <button onclick="switchTab('transactions')" id="tab-transactions" class="tab-button px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                    <i class="fa-solid fa-arrow-right-arrow-left mr-2"></i>
+                    Transactions
+                </button>
+                <button onclick="switchTab('lipat-kapisanan')" id="tab-lipat-kapisanan" class="tab-button px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                    <i class="fa-solid fa-people-arrows mr-2"></i>
+                    Lipat-Kapisanan
+                </button>
+                <button onclick="switchTab('purok')" id="tab-purok" class="tab-button px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                    <i class="fa-solid fa-map-location-dot mr-2"></i>
+                    By Purok
+                </button>
+            </nav>
+        </div>
+    </div>
+    
+    <!-- Tab Content: Overview -->
+    <div id="content-overview" class="tab-content">
     <!-- Organization Count Statistics -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
         <div class="px-6 py-4 border-b border-gray-200">
@@ -264,86 +593,381 @@ ob_start();
         <div class="p-6">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <!-- Buklod -->
-                <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-6 border border-purple-200">
+                <div class="bg-gradient-to-br from-red-50 to-red-100 rounded-lg p-6 border border-red-200">
                     <div class="flex items-center justify-between mb-4">
-                        <div class="w-12 h-12 bg-purple-200 rounded-full flex items-center justify-center">
-                            <i class="fa-solid fa-rings-wedding text-2xl text-purple-600"></i>
+                        <div class="w-12 h-12 bg-red-200 rounded-full flex items-center justify-center">
+                            <i class="fa-solid fa-rings-wedding text-2xl text-red-600"></i>
                         </div>
                         <div class="text-right">
-                            <p class="text-sm font-medium text-purple-700">Buklod</p>
-                            <p class="text-xs text-purple-600">Married Couples</p>
+                            <p class="text-sm font-medium text-red-700">Buklod</p>
+                            <p class="text-xs text-red-600">Married Couples</p>
                         </div>
                     </div>
                     <div class="space-y-2">
                         <div class="flex justify-between items-center">
-                            <span class="text-sm text-purple-700">Total:</span>
-                            <span class="text-2xl font-bold text-purple-900"><?php echo number_format($stats['Buklod']['total'] ?? 0); ?></span>
+                            <span class="text-sm text-red-700">Total:</span>
+                            <span class="text-2xl font-bold text-red-900"><?php echo number_format($stats['Buklod']['total'] ?? 0); ?></span>
                         </div>
                         <div class="flex justify-between items-center text-xs">
-                            <span class="text-purple-600">Active:</span>
-                            <span class="font-semibold text-purple-800"><?php echo number_format($stats['Buklod']['active'] ?? 0); ?></span>
+                            <span class="text-red-600">Active:</span>
+                            <span class="font-semibold text-red-800"><?php echo number_format($stats['Buklod']['active'] ?? 0); ?></span>
                         </div>
                         <div class="flex justify-between items-center text-xs">
-                            <span class="text-purple-600">Transferred:</span>
-                            <span class="font-semibold text-purple-700"><?php echo number_format($stats['Buklod']['transferred'] ?? 0); ?></span>
+                            <span class="text-red-600">Transferred:</span>
+                            <span class="font-semibold text-red-700"><?php echo number_format($stats['Buklod']['transferred'] ?? 0); ?></span>
+                        </div>
+                        <div class="border-t border-red-200 mt-3 pt-3">
+                            <div class="flex justify-between items-center text-xs mb-1">
+                                <span class="text-red-600">This Week:</span>
+                                <span class="font-semibold <?php echo $weeklyChanges['Buklod'] >= 0 ? 'text-green-600' : 'text-red-600'; ?>">
+                                    <?php echo $weeklyChanges['Buklod'] >= 0 ? '+' : ''; ?><?php echo number_format($weeklyChanges['Buklod']); ?>
+                                </span>
+                            </div>
+                            <div class="flex justify-between items-center text-xs">
+                                <span class="text-red-600">This Month:</span>
+                                <span class="font-semibold <?php echo $monthlyChanges['Buklod'] >= 0 ? 'text-green-600' : 'text-red-600'; ?>">
+                                    <?php echo $monthlyChanges['Buklod'] >= 0 ? '+' : ''; ?><?php echo number_format($monthlyChanges['Buklod']); ?>
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
                 
                 <!-- Kadiwa -->
-                <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-6 border border-green-200">
+                <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-6 border border-blue-200">
                     <div class="flex items-center justify-between mb-4">
-                        <div class="w-12 h-12 bg-green-200 rounded-full flex items-center justify-center">
-                            <i class="fa-solid fa-user-group text-2xl text-green-600"></i>
+                        <div class="w-12 h-12 bg-blue-200 rounded-full flex items-center justify-center">
+                            <i class="fa-solid fa-user-group text-2xl text-blue-700"></i>
                         </div>
                         <div class="text-right">
-                            <p class="text-sm font-medium text-green-700">Kadiwa</p>
-                            <p class="text-xs text-green-600">Youth (18+)</p>
+                            <p class="text-sm font-medium text-blue-800">Kadiwa</p>
+                            <p class="text-xs text-blue-700">Youth (18+)</p>
                         </div>
                     </div>
                     <div class="space-y-2">
                         <div class="flex justify-between items-center">
-                            <span class="text-sm text-green-700">Total:</span>
-                            <span class="text-2xl font-bold text-green-900"><?php echo number_format($stats['Kadiwa']['total'] ?? 0); ?></span>
+                            <span class="text-sm text-blue-800">Total:</span>
+                            <span class="text-2xl font-bold text-blue-900"><?php echo number_format($stats['Kadiwa']['total'] ?? 0); ?></span>
                         </div>
                         <div class="flex justify-between items-center text-xs">
-                            <span class="text-green-600">Active:</span>
-                            <span class="font-semibold text-green-800"><?php echo number_format($stats['Kadiwa']['active'] ?? 0); ?></span>
+                            <span class="text-blue-700">Active:</span>
+                            <span class="font-semibold text-blue-800"><?php echo number_format($stats['Kadiwa']['active'] ?? 0); ?></span>
                         </div>
                         <div class="flex justify-between items-center text-xs">
-                            <span class="text-green-600">Transferred:</span>
-                            <span class="font-semibold text-green-700"><?php echo number_format($stats['Kadiwa']['transferred'] ?? 0); ?></span>
+                            <span class="text-blue-700">Transferred:</span>
+                            <span class="font-semibold text-blue-800"><?php echo number_format($stats['Kadiwa']['transferred'] ?? 0); ?></span>
+                        </div>
+                        <div class="border-t border-blue-200 mt-3 pt-3">
+                            <div class="flex justify-between items-center text-xs mb-1">
+                                <span class="text-blue-700">This Week:</span>
+                                <span class="font-semibold <?php echo $weeklyChanges['Kadiwa'] >= 0 ? 'text-green-600' : 'text-red-600'; ?>">
+                                    <?php echo $weeklyChanges['Kadiwa'] >= 0 ? '+' : ''; ?><?php echo number_format($weeklyChanges['Kadiwa']); ?>
+                                </span>
+                            </div>
+                            <div class="flex justify-between items-center text-xs">
+                                <span class="text-blue-700">This Month:</span>
+                                <span class="font-semibold <?php echo $monthlyChanges['Kadiwa'] >= 0 ? 'text-green-600' : 'text-red-600'; ?>">
+                                    <?php echo $monthlyChanges['Kadiwa'] >= 0 ? '+' : ''; ?><?php echo number_format($monthlyChanges['Kadiwa']); ?>
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
                 
                 <!-- Binhi -->
-                <div class="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-6 border border-orange-200">
+                <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-6 border border-green-200">
                     <div class="flex items-center justify-between mb-4">
-                        <div class="w-12 h-12 bg-orange-200 rounded-full flex items-center justify-center">
-                            <i class="fa-solid fa-seedling text-2xl text-orange-600"></i>
+                        <div class="w-12 h-12 bg-green-200 rounded-full flex items-center justify-center">
+                            <i class="fa-solid fa-seedling text-2xl text-green-600"></i>
                         </div>
                         <div class="text-right">
-                            <p class="text-sm font-medium text-orange-700">Binhi</p>
-                            <p class="text-xs text-orange-600">Children (<18)</p>
+                            <p class="text-sm font-medium text-green-700">Binhi</p>
+                            <p class="text-xs text-green-600">Children (<18)</p>
                         </div>
                     </div>
                     <div class="space-y-2">
                         <div class="flex justify-between items-center">
-                            <span class="text-sm text-orange-700">Total:</span>
-                            <span class="text-2xl font-bold text-orange-900"><?php echo number_format($stats['Binhi']['total'] ?? 0); ?></span>
+                            <span class="text-sm text-green-700">Total:</span>
+                            <span class="text-2xl font-bold text-green-900"><?php echo number_format($stats['Binhi']['total'] ?? 0); ?></span>
                         </div>
                         <div class="flex justify-between items-center text-xs">
-                            <span class="text-orange-600">Active:</span>
-                            <span class="font-semibold text-orange-800"><?php echo number_format($stats['Binhi']['active'] ?? 0); ?></span>
+                            <span class="text-green-600">Active:</span>
+                            <span class="font-semibold text-green-800"><?php echo number_format($stats['Binhi']['active'] ?? 0); ?></span>
                         </div>
                         <div class="flex justify-between items-center text-xs">
-                            <span class="text-orange-600">Transferred:</span>
-                            <span class="font-semibold text-orange-700"><?php echo number_format($stats['Binhi']['transferred'] ?? 0); ?></span>
+                            <span class="text-green-600">Transferred:</span>
+                            <span class="font-semibold text-green-700"><?php echo number_format($stats['Binhi']['transferred'] ?? 0); ?></span>
+                        </div>
+                        <div class="border-t border-green-200 mt-3 pt-3">
+                            <div class="flex justify-between items-center text-xs mb-1">
+                                <span class="text-green-600">This Week:</span>
+                                <span class="font-semibold <?php echo $weeklyChanges['Binhi'] >= 0 ? 'text-green-600' : 'text-red-600'; ?>">
+                                    <?php echo $weeklyChanges['Binhi'] >= 0 ? '+' : ''; ?><?php echo number_format($weeklyChanges['Binhi']); ?>
+                                </span>
+                            </div>
+                            <div class="flex justify-between items-center text-xs">
+                                <span class="text-green-600">This Month:</span>
+                                <span class="font-semibold <?php echo $monthlyChanges['Binhi'] >= 0 ? 'text-green-600' : 'text-red-600'; ?>">
+                                    <?php echo $monthlyChanges['Binhi'] >= 0 ? '+' : ''; ?><?php echo number_format($monthlyChanges['Binhi']); ?>
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+    
+    <?php if ($currentUser['role'] === 'local'): ?>
+    <!-- Reset Statistics Section -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900 flex items-center">
+                <i class="fa-solid fa-rotate-right mr-2 text-gray-600"></i>
+                Reset Statistics Baseline
+            </h2>
+            <p class="text-sm text-gray-600 mt-1">Reset the baseline for dagdag/bawas calculations without deleting any data</p>
+        </div>
+        <div class="p-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <!-- Buklod Reset -->
+                <div class="bg-gradient-to-br from-red-50 to-red-100 rounded-lg p-4 border border-red-200">
+                    <h3 class="text-sm font-semibold text-red-800 mb-3">Buklod</h3>
+                    <div class="space-y-2">
+                        <button onclick="resetCfoStats('Buklod', 'week')" class="w-full bg-red-600 hover:bg-red-700 text-white text-xs font-medium py-2 px-3 rounded transition">
+                            <i class="fa-solid fa-calendar-week mr-1"></i> Reset Week
+                        </button>
+                        <button onclick="resetCfoStats('Buklod', 'month')" class="w-full bg-red-600 hover:bg-red-700 text-white text-xs font-medium py-2 px-3 rounded transition">
+                            <i class="fa-solid fa-calendar-days mr-1"></i> Reset Month
+                        </button>
+                        <button onclick="resetCfoStats('Buklod', 'both')" class="w-full bg-red-700 hover:bg-red-800 text-white text-xs font-medium py-2 px-3 rounded transition">
+                            <i class="fa-solid fa-calendar mr-1"></i> Reset Both
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Kadiwa Reset -->
+                <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 border border-blue-200">
+                    <h3 class="text-sm font-semibold text-blue-800 mb-3">Kadiwa</h3>
+                    <div class="space-y-2">
+                        <button onclick="resetCfoStats('Kadiwa', 'week')" class="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium py-2 px-3 rounded transition">
+                            <i class="fa-solid fa-calendar-week mr-1"></i> Reset Week
+                        </button>
+                        <button onclick="resetCfoStats('Kadiwa', 'month')" class="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium py-2 px-3 rounded transition">
+                            <i class="fa-solid fa-calendar-days mr-1"></i> Reset Month
+                        </button>
+                        <button onclick="resetCfoStats('Kadiwa', 'both')" class="w-full bg-blue-700 hover:bg-blue-800 text-white text-xs font-medium py-2 px-3 rounded transition">
+                            <i class="fa-solid fa-calendar mr-1"></i> Reset Both
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Binhi Reset -->
+                <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 border border-green-200">
+                    <h3 class="text-sm font-semibold text-green-800 mb-3">Binhi</h3>
+                    <div class="space-y-2">
+                        <button onclick="resetCfoStats('Binhi', 'week')" class="w-full bg-green-600 hover:bg-green-700 text-white text-xs font-medium py-2 px-3 rounded transition">
+                            <i class="fa-solid fa-calendar-week mr-1"></i> Reset Week
+                        </button>
+                        <button onclick="resetCfoStats('Binhi', 'month')" class="w-full bg-green-600 hover:bg-green-700 text-white text-xs font-medium py-2 px-3 rounded transition">
+                            <i class="fa-solid fa-calendar-days mr-1"></i> Reset Month
+                        </button>
+                        <button onclick="resetCfoStats('Binhi', 'both')" class="w-full bg-green-700 hover:bg-green-800 text-white text-xs font-medium py-2 px-3 rounded transition">
+                            <i class="fa-solid fa-calendar mr-1"></i> Reset Both
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Reset All -->
+                <div class="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-4 border border-gray-300">
+                    <h3 class="text-sm font-semibold text-gray-800 mb-3">All Classifications</h3>
+                    <div class="space-y-2">
+                        <button onclick="resetCfoStats('all', 'week')" class="w-full bg-gray-600 hover:bg-gray-700 text-white text-xs font-medium py-2 px-3 rounded transition">
+                            <i class="fa-solid fa-calendar-week mr-1"></i> Reset Week
+                        </button>
+                        <button onclick="resetCfoStats('all', 'month')" class="w-full bg-gray-600 hover:bg-gray-700 text-white text-xs font-medium py-2 px-3 rounded transition">
+                            <i class="fa-solid fa-calendar-days mr-1"></i> Reset Month
+                        </button>
+                        <button onclick="resetCfoStats('all', 'both')" class="w-full bg-gray-700 hover:bg-gray-800 text-white text-xs font-medium py-2 px-3 rounded transition">
+                            <i class="fa-solid fa-calendar mr-1"></i> Reset Both
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <div class="flex items-start">
+                    <i class="fa-solid fa-circle-info text-blue-600 mt-0.5 mr-3"></i>
+                    <div class="text-sm text-blue-800">
+                        <p class="font-medium mb-1">How Reset Works:</p>
+                        <ul class="list-disc list-inside space-y-1 text-xs">
+                            <li>Resetting sets the current time as the new baseline for calculating dagdag/bawas</li>
+                            <li>No data is deleted - only the reporting display is affected</li>
+                            <li>After reset, statistics will show changes from the reset time forward</li>
+                            <li>Reset history is tracked in the database for consistency across sessions</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
+    
+    <!-- Officers Count by CFO Classification -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900 flex items-center">
+                <i class="fa-solid fa-user-tie mr-2 text-indigo-600"></i>
+                Church Officers by CFO Classification
+            </h2>
+            <p class="text-sm text-gray-600 mt-1">Active officers who are also CFO members</p>
+        </div>
+        <div class="p-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Buklod Officers -->
+                <div class="bg-gradient-to-br from-red-50 to-red-100 rounded-lg p-6 border border-red-200">
+                    <div class="flex items-center justify-between">
+                        <div class="w-12 h-12 bg-red-200 rounded-full flex items-center justify-center">
+                            <i class="fa-solid fa-user-tie text-2xl text-red-600"></i>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-xs font-medium text-red-700 mb-1">Buklod Officers</p>
+                            <p class="text-3xl font-bold text-red-900"><?php echo number_format($officerStats['Buklod']); ?></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Kadiwa Officers -->
+                <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-6 border border-blue-200">
+                    <div class="flex items-center justify-between">
+                        <div class="w-12 h-12 bg-blue-200 rounded-full flex items-center justify-center">
+                            <i class="fa-solid fa-user-tie text-2xl text-blue-700"></i>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-xs font-medium text-blue-800 mb-1">Kadiwa Officers</p>
+                            <p class="text-3xl font-bold text-blue-900"><?php echo number_format($officerStats['Kadiwa']); ?></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Binhi Officers -->
+                <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-6 border border-green-200">
+                    <div class="flex items-center justify-between">
+                        <div class="w-12 h-12 bg-green-200 rounded-full flex items-center justify-center">
+                            <i class="fa-solid fa-user-tie text-2xl text-green-600"></i>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-xs font-medium text-green-700 mb-1">Binhi Officers</p>
+                            <p class="text-3xl font-bold text-green-900"><?php echo number_format($officerStats['Binhi']); ?></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div><!-- End Overview Tab -->
+    
+    <!-- Tab Content: Transactions -->
+    <div id="content-transactions" class="tab-content hidden">
+    
+    <!-- Transaction Filters -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+        <div class="p-4">
+            <div class="flex items-center justify-between flex-wrap gap-3">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-filter text-gray-600"></i>
+                    <span class="text-sm font-medium text-gray-700">Time Period:</span>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="filterTransactions('all')" 
+                            class="transaction-filter-btn <?php echo $transactionFilter === 'all' ? 'active' : ''; ?> px-4 py-2 text-sm font-medium rounded-lg transition-colors"
+                            data-filter="all">
+                        <i class="fa-solid fa-infinity mr-2"></i>All Time
+                    </button>
+                    <button onclick="filterTransactions('week')" 
+                            class="transaction-filter-btn <?php echo $transactionFilter === 'week' ? 'active' : ''; ?> px-4 py-2 text-sm font-medium rounded-lg transition-colors"
+                            data-filter="week">
+                        <i class="fa-solid fa-calendar-week mr-2"></i>This Week
+                    </button>
+                    <button onclick="filterTransactions('month')" 
+                            class="transaction-filter-btn <?php echo $transactionFilter === 'month' ? 'active' : ''; ?> px-4 py-2 text-sm font-medium rounded-lg transition-colors"
+                            data-filter="month">
+                        <i class="fa-solid fa-calendar-days mr-2"></i>This Month
+                    </button>
+                    <button onclick="filterTransactions('year')" 
+                            class="transaction-filter-btn <?php echo $transactionFilter === 'year' ? 'active' : ''; ?> px-4 py-2 text-sm font-medium rounded-lg transition-colors"
+                            data-filter="year">
+                        <i class="fa-solid fa-calendar mr-2"></i>This Year
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Newly Baptized Members -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900 flex items-center">
+                <i class="fa-solid fa-water mr-2 text-blue-600"></i>
+                Recently Baptized Members
+            </h2>
+        </div>
+        <div class="p-6">
+            <?php if (count($newlyBaptized) > 0): ?>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <?php foreach ($newlyBaptized as $member): ?>
+                        <div class="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-100">
+                            <div class="flex items-center flex-1">
+                                <div class="w-10 h-10 bg-blue-200 rounded-full flex items-center justify-center mr-3">
+                                    <i class="fa-solid fa-user-plus text-blue-600"></i>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <p class="font-medium text-gray-900 truncate"><?php echo Security::escape($member['name']); ?></p>
+                                    <p class="text-xs text-gray-600"><?php echo Security::escape($member['local']); ?> • <?php echo Security::escape($member['classification'] ?: 'Unclassified'); ?></p>
+                                </div>
+                            </div>
+                            <div class="text-right ml-3">
+                                <p class="text-xs font-medium text-blue-600"><?php echo $member['registration_date']; ?></p>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php else: ?>
+                <p class="text-center text-gray-500 py-8">No newly baptized members found.</p>
+            <?php endif; ?>
+        </div>
+    </div>
+    
+    <!-- Transfer-In Members -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900 flex items-center">
+                <i class="fa-solid fa-arrow-right-to-bracket mr-2 text-green-600"></i>
+                Transfer-In Members
+            </h2>
+        </div>
+        <div class="p-6">
+            <?php if (count($transferIns) > 0): ?>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <?php foreach ($transferIns as $member): ?>
+                        <div class="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-100">
+                            <div class="flex items-center flex-1">
+                                <div class="w-10 h-10 bg-green-200 rounded-full flex items-center justify-center mr-3">
+                                    <i class="fa-solid fa-arrow-right text-green-600"></i>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <p class="font-medium text-gray-900 truncate"><?php echo Security::escape($member['name']); ?></p>
+                                    <p class="text-xs text-gray-600"><?php echo Security::escape($member['local']); ?> • <?php echo Security::escape($member['classification'] ?: 'Unclassified'); ?></p>
+                                </div>
+                            </div>
+                            <div class="text-right ml-3">
+                                <p class="text-xs font-medium text-green-600"><?php echo $member['registration_date']; ?></p>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php else: ?>
+                <p class="text-center text-gray-500 py-8">No transfer-in members found.</p>
+            <?php endif; ?>
         </div>
     </div>
     
@@ -398,17 +1022,21 @@ ob_start();
             <?php endif; ?>
         </div>
     </div>
+    </div><!-- End Transactions Tab -->
+    
+    <!-- Tab Content: Lipat-Kapisanan -->
+    <div id="content-lipat-kapisanan" class="tab-content hidden">
 
     <!-- Classification Changes (Lipat Kapisanan) -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
         <div class="px-6 py-4 border-b border-gray-200">
             <div class="flex items-center justify-between">
                 <h2 class="text-lg font-semibold text-gray-900 flex items-center">
-                    <i class="fa-solid fa-arrow-right-arrow-left mr-2 text-purple-600"></i>
+                    <i class="fa-solid fa-arrow-right-arrow-left mr-2 text-red-600"></i>
                     Classification Changes (Lipat Kapisanan)
                 </h2>
                 <?php if ($currentUser['role'] === 'local' && count($classificationChanges) > 0): ?>
-                <button onclick="clearClassificationHistory()" class="px-3 py-1.5 text-xs font-medium text-purple-600 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100 transition-colors">
+                <button onclick="clearClassificationHistory()" class="px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors">
                     <i class="fa-solid fa-trash-can mr-1"></i>
                     Clear History
                 </button>
@@ -426,17 +1054,17 @@ ob_start();
                         $from = $member['cfo_classification_auto'] ?? 'Unknown';
                         $to = $member['cfo_classification'] ?? 'Unclassified';
                     ?>
-                        <div class="flex items-center justify-between p-3 bg-purple-50 rounded-lg border border-purple-100 hover:bg-purple-100 transition-colors">
+                        <div class="flex items-center justify-between p-3 bg-red-50 rounded-lg border border-red-100 hover:bg-red-100 transition-colors">
                             <div class="flex items-center flex-1 min-w-0">
-                                <div class="w-10 h-10 bg-purple-200 rounded-full flex items-center justify-center text-purple-700 font-bold flex-shrink-0">
+                                <div class="w-10 h-10 bg-red-200 rounded-full flex items-center justify-center text-red-700 font-bold flex-shrink-0">
                                     <?php echo strtoupper(substr($fullName, 0, 1)); ?>
                                 </div>
                                 <div class="ml-3 flex-1 min-w-0">
                                     <p class="font-semibold text-gray-900 truncate cursor-help" title="<?php echo Security::escape($fullName); ?>"><?php echo Security::escape($displayName); ?></p>
                                     <div class="flex items-center gap-2 text-sm">
                                         <span class="text-gray-600"><?php echo Security::escape($from); ?></span>
-                                        <i class="fa-solid fa-arrow-right text-purple-500"></i>
-                                        <span class="font-medium text-purple-700"><?php echo Security::escape($to); ?></span>
+                                        <i class="fa-solid fa-arrow-right text-red-500"></i>
+                                        <span class="font-medium text-red-700"><?php echo Security::escape($to); ?></span>
                                         <span class="text-xs text-gray-500">• <?php echo Security::escape($member['local_name'] ?? 'Unknown Local'); ?></span>
                                     </div>
                                 </div>
@@ -455,7 +1083,11 @@ ob_start();
             <?php endif; ?>
         </div>
     </div>
+    </div>
+    <!-- End Lipat-Kapisanan Tab -->
 
+    <!-- Purok Tab -->
+    <div id="content-purok" class="tab-content hidden">
     <!-- Purok Statistics -->
     <?php if (!empty($purokStats)): ?>
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
@@ -479,17 +1111,18 @@ ob_start();
                     <tbody class="bg-white divide-y divide-gray-200">
                         <?php foreach ($purokStats as $stat): ?>
                             <!-- Buklod Row -->
-                            <tr class="hover:bg-purple-50 transition-colors">
+                            <tr class="hover:bg-red-50 transition-colors">
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-indigo-900" rowspan="4">
+                                    <i class="fa-solid fa-map-pin mr-2 text-indigo-600"></i>
                                     Purok <?php echo Security::escape($stat['purok']); ?>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                     <span class="inline-flex items-center">
-                                        <span class="mr-2">💑</span>
-                                        <span class="font-medium text-purple-700">Buklod</span>
+                                        <i class="fa-solid fa-rings-wedding mr-2 text-red-600"></i>
+                                        <span class="font-medium text-red-700">Buklod</span>
                                     </span>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-semibold text-purple-900">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-semibold text-red-900">
                                     <?php echo number_format($stat['buklod']); ?>
                                 </td>
                             </tr>
@@ -497,8 +1130,8 @@ ob_start();
                             <tr class="hover:bg-blue-50 transition-colors">
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                     <span class="inline-flex items-center">
-                                        <span class="mr-2">👥</span>
-                                        <span class="font-medium text-blue-700">Kadiwa</span>
+                                        <i class="fa-solid fa-user-group mr-2 text-blue-700"></i>
+                                        <span class="font-medium text-blue-800">Kadiwa</span>
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-semibold text-blue-900">
@@ -506,20 +1139,21 @@ ob_start();
                                 </td>
                             </tr>
                             <!-- Binhi Row -->
-                            <tr class="hover:bg-pink-50 transition-colors">
+                            <tr class="hover:bg-green-50 transition-colors">
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                     <span class="inline-flex items-center">
-                                        <span class="mr-2">👶</span>
-                                        <span class="font-medium text-pink-700">Binhi</span>
+                                        <i class="fa-solid fa-seedling mr-2 text-green-600"></i>
+                                        <span class="font-medium text-green-700">Binhi</span>
                                     </span>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-semibold text-pink-900">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-semibold text-green-900">
                                     <?php echo number_format($stat['binhi']); ?>
                                 </td>
                             </tr>
                             <!-- Total Row -->
                             <tr class="bg-gray-50 hover:bg-gray-100 transition-colors">
                                 <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                    <i class="fa-solid fa-calculator mr-2 text-gray-600"></i>
                                     <span class="font-bold text-gray-900">Total</span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-bold text-gray-900">
@@ -537,7 +1171,11 @@ ob_start();
         </div>
     </div>
     <?php endif; ?>
+    </div>
+    <!-- End Purok Tab -->
 
+    <!-- Back to Lipat-Kapisanan Tab for Turning 18 Section -->
+    <div id="content-lipat-kapisanan-continued" class="tab-content hidden">
     <!-- Lipat-Kapisanan: Turning 18 Soon -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-200">
         <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
@@ -624,7 +1262,10 @@ ob_start();
             <?php endif; ?>
         </div>
     </div>
+    </div>
+    <!-- End Lipat-Kapisanan Tab -->
 </div>
+<!-- End Main Container -->
 
 <script>
 $(document).ready(function() {
@@ -712,7 +1353,123 @@ function clearClassificationHistory() {
         alert('Network error. Please try again.');
     });
 }
+
+// Tab switching functionality
+function switchTab(tabName) {
+    // Hide all tab contents
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.add('hidden');
+    });
+    
+    // Remove active class from all tab buttons
+    document.querySelectorAll('.tab-button').forEach(button => {
+        button.classList.remove('active', 'border-blue-600', 'text-blue-600');
+        button.classList.add('border-transparent', 'text-gray-500');
+    });
+    
+    // Show selected tab content
+    const selectedContent = document.getElementById('content-' + tabName);
+    if (selectedContent) {
+        selectedContent.classList.remove('hidden');
+    }
+    
+    // Special handling for Lipat-Kapisanan tab (shows both sections)
+    if (tabName === 'lipat-kapisanan') {
+        const continuedContent = document.getElementById('content-lipat-kapisanan-continued');
+        if (continuedContent) {
+            continuedContent.classList.remove('hidden');
+        }
+    }
+    
+    // Add active class to selected tab button
+    const selectedButton = document.getElementById('tab-' + tabName);
+    if (selectedButton) {
+        selectedButton.classList.add('active', 'border-blue-600', 'text-blue-600');
+        selectedButton.classList.remove('border-transparent', 'text-gray-500');
+    }
+}
+
+// Transaction filter functionality
+function filterTransactions(filter) {
+    const url = new URL(window.location.href);
+    url.searchParams.set('filter', filter);
+    window.location.href = url.toString();
+}
+
+// Initialize tabs on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Show overview tab by default
+    switchTab('overview');
+});
+
+// Reset CFO statistics baseline
+function resetCfoStats(classification, period) {
+    const classificationLabel = classification === 'all' ? 'all classifications' : classification;
+    const periodLabel = period === 'both' ? 'week and month' : (period === 'week' ? 'weekly' : 'monthly');
+    
+    if (!confirm(`Reset ${periodLabel} statistics for ${classificationLabel}?\n\nThis will set the current time as the new baseline for calculating dagdag/bawas. No data will be deleted.`)) {
+        return;
+    }
+    
+    fetch('<?php echo BASE_URL; ?>/api/reset-cfo-stats.php', {
+        method: 'POST',
+        headers: { 
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': '<?php echo Security::generateCSRFToken(); ?>'
+        },
+        body: JSON.stringify({ 
+            classification: classification,
+            period: period
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(`Successfully reset ${periodLabel} statistics for ${classificationLabel}.\n\nStatistics will now be calculated from ${data.reset_at}.`);
+            location.reload();
+        } else {
+            alert('Error: ' + (data.error || 'Failed to reset statistics'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Network error. Please try again.');
+    });
+}
 </script>
+
+<style>
+.tab-content {
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.tab-button.active {
+    transition: all 0.2s ease;
+}
+
+.transaction-filter-btn {
+    border: 2px solid #e5e7eb;
+    background-color: white;
+    color: #6b7280;
+}
+
+.transaction-filter-btn:hover {
+    border-color: #3b82f6;
+    color: #3b82f6;
+    background-color: #eff6ff;
+}
+
+.transaction-filter-btn.active {
+    border-color: #3b82f6;
+    background-color: #3b82f6;
+    color: white;
+}
+</style>
 
 <?php
 $content = ob_get_clean();

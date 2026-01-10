@@ -191,10 +191,18 @@ function getCurrentUser() {
     
     $db = Database::getInstance()->getConnection();
     $stmt = $db->prepare("
-        SELECT u.*, d.district_name, lc.local_name 
+        SELECT u.*, d.district_name, lc.local_name,
+               up.can_view_officers, up.can_add_officers, up.can_edit_officers, up.can_delete_officers,
+               up.can_transfer_in, up.can_transfer_out, up.can_remove_officers,
+               up.can_view_requests, up.can_manage_requests,
+               up.can_view_reports, up.can_view_headcount, up.can_view_departments, up.can_export_reports,
+               up.can_view_calendar, up.can_view_announcements,
+               up.can_manage_users, up.can_manage_announcements, up.can_manage_districts, up.can_view_audit_log,
+               up.can_view_legacy_registry, up.can_track_users
         FROM users u
         LEFT JOIN districts d ON u.district_code = d.district_code
         LEFT JOIN local_congregations lc ON u.local_code = lc.local_code
+        LEFT JOIN user_permissions up ON u.user_id = up.user_id
         WHERE u.user_id = ?
     ");
     $stmt->execute([$_SESSION['user_id']]);

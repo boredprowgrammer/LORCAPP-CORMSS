@@ -7,12 +7,12 @@ $csp_nonce = base64_encode(random_bytes(16));
 // Nonce is not used in script-src to allow 'unsafe-inline' to work
 // All CDN sources are explicitly whitelisted for maximum security
 $cspPolicy = "default-src 'self'; " .
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.cdnfonts.com https://code.jquery.com https://cdn.datatables.net; " .
-    "script-src-elem 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.cdnfonts.com https://code.jquery.com https://cdn.datatables.net; " .
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.tailwindcss.com https://fonts.cdnfonts.com https://cdn.datatables.net https://site-assets.fontawesome.com; " .
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.cdnfonts.com https://code.jquery.com https://cdn.datatables.net https://unpkg.com; " .
+    "script-src-elem 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.cdnfonts.com https://code.jquery.com https://cdn.datatables.net https://unpkg.com; " .
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.tailwindcss.com https://fonts.cdnfonts.com https://cdn.datatables.net https://site-assets.fontawesome.com https://unpkg.com; " .
     "font-src 'self' https://fonts.gstatic.com https://fonts.cdnfonts.com https://site-assets.fontawesome.com; " .
-    "img-src 'self' data:; " .
-    "connect-src 'self' https://cdnjs.cloudflare.com; " .
+    "img-src 'self' data: https://*.tile.openstreetmap.org; " .
+    "connect-src 'self' https://cdnjs.cloudflare.com http://ip-api.com https://nominatim.openstreetmap.org; " .
     "frame-ancestors 'none'; " .
     "base-uri 'self'; " .
     "form-action 'self'; " .
@@ -23,6 +23,7 @@ header("Content-Security-Policy: " . $cspPolicy);
 header("X-Content-Type-Options: nosniff");
 header("X-Frame-Options: DENY");
 header("Referrer-Policy: strict-origin-when-cross-origin");
+header("Permissions-Policy: geolocation=(self)");
 
 // Dark mode is now handled client-side via localStorage
 if (Security::isLoggedIn()) {
@@ -2424,7 +2425,20 @@ if (Security::isLoggedIn()) {
                             </svg>
                             Audit Log
                         </a>
+                        <?php endif; ?>
                         
+                        <?php if ($currentUser['role'] === 'admin' || !empty($currentUser['can_track_users'])): ?>
+                        <a href="<?php echo BASE_URL; ?>/admin/user-locations.php" 
+                           class="flex items-center px-4 py-3 text-sm font-medium rounded-lg <?php echo strpos($_SERVER['PHP_SELF'], '/admin/user-locations.php') !== false ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'; ?>">
+                            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
+                            User Locations
+                        </a>
+                        <?php endif; ?>
+                        
+                        <?php if ($currentUser['role'] === 'admin'): ?>
                         <?php
                         // Get CFO access requests count for senior accounts
                         $stmt = $db->prepare("SELECT COUNT(*) as count FROM cfo_access_requests WHERE status = 'pending'");
@@ -3001,6 +3015,320 @@ if (Security::isLoggedIn()) {
                 alert('Error verifying PIN');
             });
         }
+    </script>
+    
+    <!-- User Location Tracking -->
+    <script nonce="<?php echo $csp_nonce; ?>">
+        // Location tracking functionality
+        let locationTrackingInterval = null;
+        let gpsEnabled = false;
+        let blockingOverlay = null;
+        
+        function createBlockingOverlay() {
+            const overlay = document.createElement('div');
+            overlay.id = 'gps-blocking-overlay';
+            overlay.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 9999; display: flex; align-items: center; justify-content: center;';
+            
+            const modal = document.createElement('div');
+            modal.style.cssText = 'background: white; padding: 2rem; border-radius: 1rem; max-width: 500px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.3);';
+            
+            modal.innerHTML = `
+                <div style="color: #ef4444; font-size: 4rem; margin-bottom: 1rem;">
+                    <i class="fa-solid fa-location-crosshairs"></i>
+                </div>
+                <h2 style="color: #1f2937; font-size: 1.5rem; font-weight: bold; margin-bottom: 1rem;">
+                    GPS Location Required
+                </h2>
+                <p style="color: #6b7280; margin-bottom: 1.5rem; line-height: 1.6;">
+                    For security and tracking purposes, you must enable GPS location access to use this application.
+                    <br><br>
+                    Please click "Allow" when prompted by your browser.
+                </p>
+                <div id="gps-status" style="color: #6b7280; font-size: 0.875rem; margin-top: 1rem;">
+                    <i class="fa-solid fa-spinner fa-spin"></i> Requesting location permission...
+                </div>
+                <button id="retry-gps-btn" style="display: none; margin-top: 1rem; background: #3b82f6; color: white; padding: 0.75rem 2rem; border-radius: 0.5rem; border: none; font-weight: 600; cursor: pointer;">
+                    <i class="fa-solid fa-rotate-right mr-2"></i> Try Again
+                </button>
+            `;
+            
+            overlay.appendChild(modal);
+            document.body.appendChild(overlay);
+            return overlay;
+        }
+        
+        function updateGPSStatus(message, isError = false) {
+            const statusDiv = document.getElementById('gps-status');
+            if (statusDiv) {
+                statusDiv.innerHTML = message;
+                statusDiv.style.color = isError ? '#ef4444' : '#6b7280';
+            }
+        }
+        
+        function removeBlockingOverlay() {
+            if (blockingOverlay) {
+                blockingOverlay.remove();
+                blockingOverlay = null;
+            }
+        }
+        
+        function updateUserLocation(isInitial = false) {
+            // Check if geolocation is available
+            if (!('geolocation' in navigator)) {
+                if (isInitial) {
+                    updateGPSStatus('<i class="fa-solid fa-times-circle"></i> Geolocation is not supported by your browser', true);
+                    setTimeout(() => {
+                        alert('Your browser does not support geolocation. Please use a modern browser.');
+                    }, 500);
+                }
+                return;
+            }
+            
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    const coords = {
+                        latitude: position.coords.latitude,
+                        longitude: position.coords.longitude,
+                        accuracy: position.coords.accuracy
+                    };
+                    
+                    console.log('GPS coordinates obtained:', coords);
+                    
+                    // Get address from coordinates using reverse geocoding
+                    getReverseGeocode(coords.latitude, coords.longitude).then(addressData => {
+                        // Send location to server (GPS + reverse geocoded address)
+                        sendLocationUpdate({
+                            latitude: coords.latitude,
+                            longitude: coords.longitude,
+                            accuracy: coords.accuracy,
+                            address: addressData.address,
+                            city: addressData.city,
+                            country: addressData.country,
+                            location_source: 'gps+geocode'
+                        }, isInitial);
+                    }).catch(error => {
+                        console.warn('Reverse geocoding failed:', error);
+                        // Send without address
+                        sendLocationUpdate({
+                            latitude: coords.latitude,
+                            longitude: coords.longitude,
+                            accuracy: coords.accuracy,
+                            location_source: 'gps'
+                        }, isInitial);
+                    });
+                },
+                function(error) {
+                    // GPS permission denied or error - fallback to IP geolocation
+                    console.error('Geolocation error:', error);
+                    
+                    if (isInitial) {
+                        updateGPSStatus('<i class="fa-solid fa-spinner fa-spin"></i> Trying IP-based location...', false);
+                    }
+                    
+                    // Try IP-based geolocation as fallback
+                    getIPLocation().then(ipData => {
+                        sendLocationUpdate({
+                            latitude: ipData.latitude,
+                            longitude: ipData.longitude,
+                            accuracy: ipData.accuracy,
+                            address: ipData.address,
+                            city: ipData.city,
+                            country: ipData.country,
+                            location_source: 'ip-api'
+                        }, isInitial);
+                    }).catch(ipError => {
+                        console.error('IP geolocation also failed:', ipError);
+                        
+                        if (isInitial) {
+                            let errorMessage = '';
+                            switch(error.code) {
+                                case error.PERMISSION_DENIED:
+                                    errorMessage = '<i class="fa-solid fa-times-circle"></i> Location access denied. You must allow location access to proceed.';
+                                    break;
+                                case error.POSITION_UNAVAILABLE:
+                                    errorMessage = '<i class="fa-solid fa-exclamation-triangle"></i> Location unavailable. Please enable GPS on your device.';
+                                    break;
+                                case error.TIMEOUT:
+                                    errorMessage = '<i class="fa-solid fa-clock"></i> Location request timed out. Please try again.';
+                                    break;
+                                default:
+                                    errorMessage = '<i class="fa-solid fa-exclamation-circle"></i> Unable to get location. Please try again.';
+                            }
+                            updateGPSStatus(errorMessage, true);
+                            
+                            // Show retry button
+                            const retryBtn = document.getElementById('retry-gps-btn');
+                            if (retryBtn) {
+                                retryBtn.style.display = 'inline-block';
+                                retryBtn.onclick = function() {
+                                    retryBtn.style.display = 'none';
+                                    updateGPSStatus('<i class="fa-solid fa-spinner fa-spin"></i> Requesting location permission...', false);
+                                    setTimeout(() => updateUserLocation(true), 500);
+                                };
+                            }
+                        }
+                    });
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 15000,
+                    maximumAge: 0
+                }
+            );
+        }
+        
+        // Get location from IP address using ip-api.com (free, no API key)
+        function getIPLocation() {
+            return fetch('http://ip-api.com/json/?fields=status,message,country,city,lat,lon,query')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        console.log('IP-based location obtained:', data);
+                        return {
+                            latitude: data.lat,
+                            longitude: data.lon,
+                            accuracy: 5000, // IP location is less accurate (5km radius)
+                            address: data.city + ', ' + data.country,
+                            city: data.city,
+                            country: data.country
+                        };
+                    } else {
+                        throw new Error(data.message || 'IP location failed');
+                    }
+                });
+        }
+        
+        // Reverse geocode coordinates to get address using Nominatim (free, no API key)
+        function getReverseGeocode(lat, lon) {
+            return fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&addressdetails=1`, {
+                headers: {
+                    'User-Agent': 'CORegistry-Tracker/1.0'
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Reverse geocode obtained:', data);
+                    const address = data.address || {};
+                    return {
+                        address: data.display_name || '',
+                        city: address.city || address.town || address.village || address.municipality || '',
+                        country: address.country || ''
+                    };
+                });
+        }
+        
+        // Send location update to server
+        function sendLocationUpdate(locationData, isInitial) {
+            fetch('<?php echo BASE_URL; ?>/api/update-user-location.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(locationData)
+                    })
+                    .then(response => {
+                        // Check if response is ok
+                        if (!response.ok) {
+                            throw new Error('HTTP error ' + response.status);
+                        }
+                        // Try to parse JSON
+                        return response.text().then(text => {
+                            try {
+                                return JSON.parse(text);
+                            } catch (e) {
+                                console.error('Invalid JSON response:', text);
+                                throw new Error('Server returned invalid JSON');
+                            }
+                        });
+                    })
+                    .then(data => {
+                        if (data.success) {
+                            console.log('Location updated (GPS + IP + Address):', data.last_updated);
+                            if (isInitial) {
+                                gpsEnabled = true;
+                                updateGPSStatus('<i class="fa-solid fa-check-circle"></i> Location enabled successfully!', false);
+                                setTimeout(removeBlockingOverlay, 1000);
+                            }
+                        } else {
+                            console.error('Location update failed:', data.error);
+                            if (isInitial) {
+                                updateGPSStatus('<i class="fa-solid fa-times-circle"></i> ' + (data.error || 'Failed to update location'), true);
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error updating location:', error);
+                        if (isInitial) {
+                            updateGPSStatus('<i class="fa-solid fa-times-circle"></i> ' + error.message, true);
+                        }
+                    });
+                },
+                function(error) {
+                    // GPS permission denied or error
+                    console.error('Geolocation error:', error);
+                    
+                    if (isInitial) {
+                        let errorMessage = '';
+                        switch(error.code) {
+                            case error.PERMISSION_DENIED:
+                                errorMessage = '<i class="fa-solid fa-times-circle"></i> Location access denied. You must allow location access to proceed.';
+                                break;
+                            case error.POSITION_UNAVAILABLE:
+                                errorMessage = '<i class="fa-solid fa-exclamation-triangle"></i> Location unavailable. Please enable GPS on your device.';
+                                break;
+                            case error.TIMEOUT:
+                                errorMessage = '<i class="fa-solid fa-clock"></i> Location request timed out. Please try again.';
+                                break;
+                            default:
+                                errorMessage = '<i class="fa-solid fa-exclamation-circle"></i> Unable to get location. Please try again.';
+                        }
+                        updateGPSStatus(errorMessage, true);
+                        
+                        // Show retry button
+                        const retryBtn = document.getElementById('retry-gps-btn');
+                        if (retryBtn) {
+                            retryBtn.style.display = 'inline-block';
+                            retryBtn.onclick = function() {
+                                retryBtn.style.display = 'none';
+                                updateGPSStatus('<i class="fa-solid fa-spinner fa-spin"></i> Requesting location permission...', false);
+                                setTimeout(() => updateUserLocation(true), 500);
+                            };
+                        }
+                    }
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 15000,
+                    maximumAge: 0
+                }
+            );
+        }
+        
+        // Start location tracking when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Create blocking overlay
+            blockingOverlay = createBlockingOverlay();
+            
+            // Request GPS permission immediately
+            setTimeout(() => {
+                updateUserLocation(true);
+            }, 500);
+            
+            // Update location every 5 minutes (300000 milliseconds) after initial success
+            const checkInterval = setInterval(function() {
+                if (gpsEnabled) {
+                    clearInterval(checkInterval);
+                    locationTrackingInterval = setInterval(() => updateUserLocation(false), 300000);
+                }
+            }, 1000);
+        });
+        
+        // Stop tracking when page unloads
+        window.addEventListener('beforeunload', function() {
+            if (locationTrackingInterval) {
+                clearInterval(locationTrackingInterval);
+            }
+        });
     </script>
     
     <?php if (isset($extraScripts)): ?>

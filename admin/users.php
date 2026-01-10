@@ -257,6 +257,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                     'can_manage_districts' => isset($_POST['can_manage_districts']) ? 1 : 0,
                     'can_view_audit_log' => isset($_POST['can_view_audit_log']) ? 1 : 0,
                     'can_view_legacy_registry' => isset($_POST['can_view_legacy_registry']) ? 1 : 0,
+                    'can_track_users' => isset($_POST['can_track_users']) ? 1 : 0,
                 ];
                 
                 try {
@@ -340,7 +341,8 @@ try {
             up.can_manage_announcements,
             up.can_manage_districts,
             up.can_view_audit_log,
-            up.can_view_legacy_registry
+            up.can_view_legacy_registry,
+            up.can_track_users
         FROM users u
         LEFT JOIN districts d ON u.district_code = d.district_code
         LEFT JOIN local_congregations lc ON u.local_code = lc.local_code
@@ -962,7 +964,8 @@ function openPermissionsModal(user) {
         'can_manage_announcements',
         'can_manage_districts',
         'can_view_audit_log',
-        'can_view_legacy_registry'
+        'can_view_legacy_registry',
+        'can_track_users'
     ];
     
     // Check boxes based on user permissions
@@ -1590,6 +1593,10 @@ function closeResetPasswordModal() {
                         <label class="flex items-center p-3 bg-white dark:bg-gray-800 rounded border border-gray-200 hover:bg-red-100 cursor-pointer transition-colors">
                             <input type="checkbox" name="can_view_legacy_registry" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
                             <span class="ml-2 text-sm text-gray-700">View Legacy Registry</span>
+                        </label>
+                        <label class="flex items-center p-3 bg-white dark:bg-gray-800 rounded border border-gray-200 hover:bg-red-100 cursor-pointer transition-colors">
+                            <input type="checkbox" name="can_track_users" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                            <span class="ml-2 text-sm text-gray-700">Track User Locations</span>
                         </label>
                     </div>
                 </div>

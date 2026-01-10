@@ -277,6 +277,35 @@ ob_start();
             
             <!-- Editable Fields -->
             <div class="space-y-4">
+                <!-- Registration Type Section -->
+                <div class="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
+                    <h4 class="text-sm font-semibold text-gray-700 mb-3 flex items-center">
+                        <svg class="w-4 h-4 mr-2 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        Registration Type
+                    </h4>
+                    <div class="grid grid-cols-3 gap-3">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">Type</label>
+                            <select id="edit_registration_type" name="registration_type" onchange="handleEditRegistrationTypeChange()" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                                <option value="">-- Not specified --</option>
+                                <option value="transfer-in">Transfer-In</option>
+                                <option value="newly-baptized">Newly Baptized</option>
+                                <option value="others">Others (Specify)</option>
+                            </select>
+                        </div>
+                        <div id="edit_registration_date_field">
+                            <label class="block text-xs font-medium text-gray-700 mb-1">Registration Date</label>
+                            <input type="date" id="edit_registration_date" name="registration_date" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                        </div>
+                        <div id="edit_registration_others_field" style="display: none;">
+                            <label class="block text-xs font-medium text-gray-700 mb-1">Specify</label>
+                            <input type="text" id="edit_registration_others_specify" name="registration_others_specify" maxlength="255" placeholder="Please specify..." class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                        </div>
+                    </div>
+                </div>
+                
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
                         <svg class="w-4 h-4 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -285,12 +314,26 @@ ob_start();
                         CFO Classification
                         <span class="text-red-600 ml-1">*</span>
                     </label>
-                    <select id="edit_classification" name="cfo_classification" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
-                        <option value="">-- Select Classification --</option>
-                        <option value="Buklod">💑 Buklod (Married Couples)</option>
-                        <option value="Kadiwa">👥 Kadiwa (Youth 18+)</option>
-                        <option value="Binhi">🌱 Binhi (Children under 18)</option>
-                    </select>
+                    <div class="flex gap-2">
+                        <select id="edit_classification" name="cfo_classification" required onchange="handleClassificationChange()" class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
+                            <option value="">-- Select Classification --</option>
+                            <option value="Buklod">💑 Buklod (Married Couples)</option>
+                            <option value="Kadiwa">👥 Kadiwa (Youth 18+)</option>
+                            <option value="Binhi">🌱 Binhi (Children under 18)</option>
+                        </select>
+                        <button type="button" id="lipatKapisananBtn" onclick="openLipatKapisananModal()" class="px-4 py-3 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors flex items-center gap-2" title="Lipat-Kapisanan">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
+                            </svg>
+                            <span class="text-xs hidden md:inline">Lipat</span>
+                        </button>
+                    </div>
+                    <input type="hidden" id="edit_marriage_date" name="marriage_date">
+                    <input type="hidden" id="edit_classification_change_date" name="classification_change_date">
+                    <input type="hidden" id="edit_classification_change_reason" name="classification_change_reason">
+                    <div id="marriage_date_display" class="hidden mt-2 text-sm text-gray-600">
+                        <span class="font-medium">Marriage Date:</span> <span id="marriage_date_text"></span>
+                    </div>
                 </div>
                 
                 <div>
@@ -301,10 +344,22 @@ ob_start();
                         Status
                         <span class="text-red-600 ml-1">*</span>
                     </label>
-                    <select id="edit_status" name="cfo_status" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
-                        <option value="active">✓ Active</option>
-                        <option value="transferred-out">→ Transferred Out</option>
-                    </select>
+                    <div class="flex gap-2">
+                        <select id="edit_status" name="cfo_status" required onchange="handleStatusChange()" class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
+                            <option value="active">✓ Active</option>
+                            <option value="transferred-out">→ Transferred Out</option>
+                        </select>
+                        <button type="button" id="transferOutBtn" onclick="openTransferOutModal()" class="hidden px-4 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <div id="transfer_out_date_display" class="hidden mt-2 text-sm text-gray-600">
+                        <span class="font-medium">Transfer Out Date:</span> 
+                        <span id="transfer_out_date_text"></span>
+                        <input type="hidden" id="edit_transfer_out_date" name="transfer_out_date">
+                    </div>
                 </div>
                 
                 <div>
@@ -339,6 +394,52 @@ ob_start();
     </div>
 </div>
 
+<!-- Transfer Out Modal -->
+<div id="transferOutModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 transition-opacity duration-300 opacity-0">
+    <div id="transferOutModalContent" class="bg-white rounded-2xl shadow-2xl max-w-md w-full transform transition-all duration-300 scale-95">
+        <!-- Modal Header -->
+        <div class="bg-gradient-to-r from-orange-600 to-red-600 px-6 py-4 rounded-t-2xl">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-white">Transfer Out</h3>
+                        <p class="text-orange-100 text-sm">Set transfer out date</p>
+                    </div>
+                </div>
+                <button onclick="closeTransferOutModal()" class="text-white hover:bg-white hover:bg-opacity-20 rounded-lg p-2 transition-all duration-200">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        
+        <div class="p-6">
+            <div class="mb-4">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                    Transfer Out Date <span class="text-red-600">*</span>
+                </label>
+                <input type="date" id="transfer_out_date_input" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
+                <p class="text-xs text-gray-500 mt-2">Select the date when the member was transferred out.</p>
+            </div>
+            
+            <div class="flex gap-3 pt-4">
+                <button type="button" onclick="confirmTransferOut()" class="flex-1 px-6 py-3 bg-gradient-to-r from-orange-600 to-red-600 text-white rounded-lg hover:from-orange-700 hover:to-red-700 transition-all duration-200 font-semibold">
+                    Confirm Transfer Out
+                </button>
+                <button type="button" onclick="closeTransferOutModal()" class="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all duration-200 font-semibold">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Success Toast -->
 <div id="successToast" class="hidden fixed top-4 right-4 z-50 bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg transform transition-all duration-300 translate-x-full">
     <div class="flex items-center space-x-3">
@@ -356,6 +457,175 @@ ob_start();
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
         </svg>
         <span class="font-semibold" id="errorMessage">Error occurred!</span>
+    </div>
+</div>
+
+<!-- Transfer Out Modal -->
+<div id="transferOutModal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50 flex items-center justify-center p-4 transition-opacity duration-300 opacity-0">
+    <div id="transferOutModalContent" class="bg-white rounded-lg shadow-xl max-w-md w-full transform transition-all duration-300 scale-95">
+        <div class="bg-gradient-to-r from-orange-600 to-orange-700 p-6 rounded-t-lg">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-white">Transfer Out</h3>
+                        <p class="text-orange-100 text-sm">Set transfer out date</p>
+                    </div>
+                </div>
+                <button onclick="closeTransferOutModal()" class="text-white hover:bg-white hover:bg-opacity-20 rounded-lg p-2 transition-all duration-200">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        
+        <div class="p-6">
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Transfer Out Date <span class="text-red-600">*</span>
+                </label>
+                <input type="date" id="transfer_out_date_input" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
+                <p class="text-xs text-gray-500 mt-1">Date when member was transferred out</p>
+            </div>
+            
+            <div class="flex gap-3 pt-4">
+                <button onclick="confirmTransferOut()" class="flex-1 px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-medium">
+                    Confirm Transfer Out
+                </button>
+                <button onclick="closeTransferOutModal()" class="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Transfer In Modal -->
+<div id="transferInModal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50 flex items-center justify-center p-4 transition-opacity duration-300 opacity-0">
+    <div id="transferInModalContent" class="bg-white rounded-lg shadow-xl max-w-md w-full transform transition-all duration-300 scale-95">
+        <div class="bg-gradient-to-r from-green-600 to-green-700 p-6 rounded-t-lg">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-white">Transfer In</h3>
+                        <p class="text-green-100 text-sm">Set transfer in date</p>
+                    </div>
+                </div>
+                <button onclick="closeTransferInModal()" class="text-white hover:bg-white hover:bg-opacity-20 rounded-lg p-2 transition-all duration-200">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        
+        <div class="p-6">
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Transfer In Date <span class="text-red-600">*</span>
+                </label>
+                <input type="date" id="transfer_in_date_input" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                <p class="text-xs text-gray-500 mt-1">Date when member was transferred back in</p>
+            </div>
+            
+            <div class="flex gap-3 pt-4">
+                <button onclick="confirmTransferIn()" class="flex-1 px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium">
+                    Confirm Transfer In
+                </button>
+                <button onclick="closeTransferInModal()" class="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Lipat-Kapisanan Modal -->
+<div id="lipatKapisananModal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50 flex items-center justify-center p-4 transition-opacity duration-300 opacity-0">
+    <div id="lipatKapisananModalContent" class="bg-white rounded-lg shadow-xl max-w-lg w-full transform transition-all duration-300 scale-95">
+        <div class="bg-gradient-to-r from-purple-600 to-purple-700 p-6 rounded-t-lg">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-white">Lipat-Kapisanan</h3>
+                        <p class="text-purple-100 text-sm">Change CFO classification</p>
+                    </div>
+                </div>
+                <button onclick="closeLipatKapisananModal()" class="text-white hover:bg-white hover:bg-opacity-20 rounded-lg p-2 transition-all duration-200">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        
+        <div class="p-6">
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Current Classification
+                </label>
+                <input type="text" id="lipat_current_classification" readonly class="w-full px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-700">
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    New Classification <span class="text-red-600">*</span>
+                </label>
+                <select id="lipat_new_classification" onchange="handleLipatClassificationChange()" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                    <option value="">-- Select New Classification --</option>
+                    <option value="Binhi">🌱 Binhi (Children under 18)</option>
+                    <option value="Kadiwa">👥 Kadiwa (Youth 18+)</option>
+                    <option value="Buklod">💑 Buklod (Married Couples)</option>
+                </select>
+            </div>
+            
+            <div id="lipat_marriage_date_field" class="mb-4 hidden">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Marriage Date <span class="text-red-600">*</span>
+                </label>
+                <input type="date" id="lipat_marriage_date" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                <p class="text-xs text-gray-500 mt-1">Required when transferring to Buklod</p>
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Change Date <span class="text-red-600">*</span>
+                </label>
+                <input type="date" id="lipat_change_date" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                <p class="text-xs text-gray-500 mt-1">Date of classification change</p>
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Reason
+                </label>
+                <textarea id="lipat_reason" rows="2" placeholder="Optional reason for change..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"></textarea>
+            </div>
+            
+            <div class="flex gap-3 pt-4">
+                <button onclick="confirmLipatKapisanan()" class="flex-1 px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium">
+                    Confirm Change
+                </button>
+                <button onclick="closeLipatKapisananModal()" class="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium">
+                    Cancel
+                </button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -584,11 +854,268 @@ async function editCFO(id) {
         $('#edit_classification').val(data.cfo_classification || '');
         $('#edit_status').val(data.cfo_status || 'active');
         $('#edit_notes').val(data.cfo_notes || '');
+        
+        // Populate registration type fields
+        $('#edit_registration_type').val(data.registration_type || '');
+        $('#edit_registration_date').val(data.registration_date || '');
+        $('#edit_registration_others_specify').val(data.registration_others_specify || '');
+        $('#edit_transfer_out_date').val(data.transfer_out_date || '');
+        
+        // Populate Lipat-Kapisanan fields
+        $('#edit_marriage_date').val(data.marriage_date || '');
+        $('#edit_classification_change_date').val(data.classification_change_date || '');
+        $('#edit_classification_change_reason').val(data.classification_change_reason || '');
+        
+        // Update displays
+        if (data.marriage_date) {
+            $('#marriage_date_text').text(data.marriage_date);
+            $('#marriage_date_display').removeClass('hidden');
+        } else {
+            $('#marriage_date_display').addClass('hidden');
+        }
+        
+        // Update transfer out date display
+        if (data.transfer_out_date) {
+            $('#transfer_out_date_text').text(data.transfer_out_date);
+            $('#transfer_out_date_display').removeClass('hidden');
+        } else {
+            $('#transfer_out_date_display').addClass('hidden');
+        }
+        
+        // Set previous status for change tracking
+        previousStatus = data.cfo_status || 'active';
+        
+        // Initialize field visibility
+        handleEditRegistrationTypeChange();
     } catch (error) {
         console.error('Error loading CFO details:', error);
         showError('Error loading CFO details');
         closeEditModal();
     }
+}
+
+// Handle registration type field visibility in edit modal
+function handleEditRegistrationTypeChange() {
+    const registrationType = $('#edit_registration_type').val();
+    const dateField = $('#edit_registration_date_field');
+    const othersField = $('#edit_registration_others_field');
+    
+    // Always show date field for now, hide others field
+    dateField.show();
+    othersField.hide();
+    
+    // Show others field if type is 'others'
+    if (registrationType === 'others') {
+        othersField.show();
+    }
+}
+
+// Handle status change to show/hide transfer out button
+function handleStatusChange() {
+    const status = $('#edit_status').val();
+    const transferOutBtn = $('#transferOutBtn');
+    const transferOutDisplay = $('#transfer_out_date_display');
+    
+    if (status === 'transferred-out') {
+        transferOutBtn.removeClass('hidden');
+        // Show transfer out date if it exists
+        if ($('#edit_transfer_out_date').val()) {
+            transferOutDisplay.removeClass('hidden');
+        }
+    } else {
+        transferOutBtn.addClass('hidden');
+        transferOutDisplay.addClass('hidden');
+    }
+}
+
+// Open transfer out modal
+function openTransferOutModal() {
+    const modal = $('#transferOutModal');
+    const content = $('#transferOutModalContent');
+    
+    // Set today's date as default
+    const today = new Date().toISOString().split('T')[0];
+    const existingDate = $('#edit_transfer_out_date').val();
+    $('#transfer_out_date_input').val(existingDate || today);
+    
+    modal.removeClass('hidden');
+    setTimeout(() => {
+        modal.removeClass('opacity-0');
+        content.removeClass('scale-95').addClass('scale-100');
+    }, 10);
+}
+
+// Close transfer out modal
+function closeTransferOutModal() {
+    const modal = $('#transferOutModal');
+    const content = $('#transferOutModalContent');
+    
+    content.removeClass('scale-100').addClass('scale-95');
+    modal.addClass('opacity-0');
+    
+    setTimeout(() => {
+        modal.addClass('hidden');
+    }, 300);
+}
+
+// Confirm transfer out
+function confirmTransferOut() {
+    const transferDate = $('#transfer_out_date_input').val();
+    
+    if (!transferDate) {
+        showError('Please select a transfer out date');
+        return;
+    }
+    
+    // Set the transfer out date in the main form
+    $('#edit_transfer_out_date').val(transferDate);
+    $('#transfer_out_date_text').text(transferDate);
+    $('#transfer_out_date_display').removeClass('hidden');
+    
+    // Close the modal
+    closeTransferOutModal();
+    
+    showSuccess('Transfer out date set to ' + transferDate);
+}
+
+// Transfer-In Modal Functions
+function openTransferInModal() {
+    const modal = $('#transferInModal');
+    const content = $('#transferInModalContent');
+    
+    // Set today's date as default
+    const today = new Date().toISOString().split('T')[0];
+    $('#transfer_in_date_input').val(today);
+    
+    modal.removeClass('hidden');
+    setTimeout(() => {
+        modal.removeClass('opacity-0');
+        content.removeClass('scale-95').addClass('scale-100');
+    }, 10);
+}
+
+function closeTransferInModal() {
+    const modal = $('#transferInModal');
+    const content = $('#transferInModalContent');
+    
+    content.removeClass('scale-100').addClass('scale-95');
+    modal.addClass('opacity-0');
+    
+    setTimeout(() => {
+        modal.addClass('hidden');
+        // Revert status to transferred-out if not confirmed
+        if ($('#edit_status').val() === 'active' && !$('#edit_registration_date').val()) {
+            $('#edit_status').val('transferred-out');
+            previousStatus = 'transferred-out';
+        }
+    }, 300);
+}
+
+function confirmTransferIn() {
+    const transferInDate = $('#transfer_in_date_input').val();
+    
+    if (!transferInDate) {
+        showError('Please select a transfer in date');
+        return;
+    }
+    
+    // Update registration type and date
+    $('#edit_registration_type').val('transfer-in');
+    $('#edit_registration_date').val(transferInDate);
+    
+    // Clear transfer out date
+    $('#edit_transfer_out_date').val('');
+    $('#transfer_out_date_display').addClass('hidden');
+    
+    closeTransferInModal();
+    showSuccess('Transfer in date set to ' + transferInDate);
+}
+
+// Lipat-Kapisanan Modal Functions
+function openLipatKapisananModal() {
+    const modal = $('#lipatKapisananModal');
+    const content = $('#lipatKapisananModalContent');
+    
+    const currentClassification = $('#edit_classification').val();
+    $('#lipat_current_classification').val(currentClassification || 'None');
+    $('#lipat_new_classification').val('');
+    $('#lipat_marriage_date').val('');
+    $('#lipat_change_date').val(new Date().toISOString().split('T')[0]);
+    $('#lipat_reason').val('');
+    $('#lipat_marriage_date_field').addClass('hidden');
+    
+    modal.removeClass('hidden');
+    setTimeout(() => {
+        modal.removeClass('opacity-0');
+        content.removeClass('scale-95').addClass('scale-100');
+    }, 10);
+}
+
+function closeLipatKapisananModal() {
+    const modal = $('#lipatKapisananModal');
+    const content = $('#lipatKapisananModalContent');
+    
+    content.removeClass('scale-100').addClass('scale-95');
+    modal.addClass('opacity-0');
+    
+    setTimeout(() => {
+        modal.addClass('hidden');
+    }, 300);
+}
+
+function handleLipatClassificationChange() {
+    const newClassification = $('#lipat_new_classification').val();
+    const marriageDateField = $('#lipat_marriage_date_field');
+    
+    if (newClassification === 'Buklod') {
+        marriageDateField.removeClass('hidden');
+        $('#lipat_marriage_date').attr('required', true);
+    } else {
+        marriageDateField.addClass('hidden');
+        $('#lipat_marriage_date').removeAttr('required');
+    }
+}
+
+function confirmLipatKapisanan() {
+    const newClassification = $('#lipat_new_classification').val();
+    const marriageDate = $('#lipat_marriage_date').val();
+    const changeDate = $('#lipat_change_date').val();
+    const reason = $('#lipat_reason').val();
+    
+    if (!newClassification) {
+        showError('Please select a new classification');
+        return;
+    }
+    
+    if (!changeDate) {
+        showError('Please select a change date');
+        return;
+    }
+    
+    if (newClassification === 'Buklod' && !marriageDate) {
+        showError('Marriage date is required for Buklod classification');
+        return;
+    }
+    
+    // Update form fields
+    $('#edit_classification').val(newClassification);
+    $('#edit_classification_change_date').val(changeDate);
+    $('#edit_classification_change_reason').val(reason);
+    
+    if (newClassification === 'Buklod' && marriageDate) {
+        $('#edit_marriage_date').val(marriageDate);
+        $('#marriage_date_display').removeClass('hidden');
+        $('#marriage_date_text').text(marriageDate);
+    }
+    
+    closeLipatKapisananModal();
+    showSuccess('Classification changed to ' + newClassification);
+}
+
+// Handle classification change
+function handleClassificationChange() {
+    const classification = $('#edit_classification').val();
+    // You can add logic here if needed
 }
 
 function closeEditModal() {

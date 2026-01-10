@@ -77,6 +77,13 @@ try {
         'cfo_classification_auto' => $record['cfo_classification_auto'],
         'cfo_status' => $record['cfo_status'],
         'cfo_notes' => $record['cfo_notes'],
+        'registration_type' => $record['registration_type'],
+        'registration_date' => $record['registration_date'],
+        'registration_others_specify' => $record['registration_others_specify'],
+        'transfer_out_date' => $record['transfer_out_date'],
+        'marriage_date' => $record['marriage_date'],
+        'classification_change_date' => $record['classification_change_date'],
+        'classification_change_reason' => $record['classification_change_reason'],
         'district_name' => $record['district_name'],
         'local_name' => $record['local_name']
     ]);

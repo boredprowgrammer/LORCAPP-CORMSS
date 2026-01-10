@@ -11,6 +11,7 @@ $db = Database::getInstance()->getConnection();
 $searchQuery = Security::sanitizeInput($_GET['search'] ?? '');
 $filterDepartment = Security::sanitizeInput($_GET['department'] ?? '');
 $filterStatus = Security::sanitizeInput($_GET['status'] ?? 'active');
+$filterCfoClassification = Security::sanitizeInput($_GET['cfo_classification'] ?? '');
 $currentPage = max(1, intval($_GET['page'] ?? 1));
 
 // Build WHERE clause based on user role
@@ -38,6 +39,12 @@ if (!empty($filterDepartment)) {
     $params[] = $filterDepartment;
 }
 
+// CFO Classification filter
+if (!empty($filterCfoClassification)) {
+    $whereConditions[] = 'tc.cfo_classification = ?';
+    $params[] = $filterCfoClassification;
+}
+
 $whereClause = !empty($whereConditions) ? 'WHERE ' . implode(' AND ', $whereConditions) : '';
 
 // Get all officers for search filtering (without pagination first)
@@ -54,13 +61,17 @@ try {
             MAX(r.removal_code) as latest_removal_code,
             MAX(r.reason) as latest_removal_reason,
             MAX(t.transfer_type) as latest_transfer_type,
-            MAX(t.transfer_date) as latest_transfer_date
+            MAX(t.transfer_date) as latest_transfer_date,
+            tc.cfo_classification,
+            tc.cfo_status
         FROM officers o
         LEFT JOIN districts d ON o.district_code = d.district_code
         LEFT JOIN local_congregations lc ON o.local_code = lc.local_code
         LEFT JOIN officer_departments od ON o.officer_id = od.officer_id AND od.is_active = 1
         LEFT JOIN officer_removals r ON r.officer_id = o.officer_id
         LEFT JOIN transfers t ON t.officer_id = o.officer_id
+        LEFT JOIN tarheta_control tc ON o.registry_number_encrypted = tc.registry_number_encrypted 
+            AND o.district_code = tc.district_code
         $whereClause
         GROUP BY o.officer_id
         ORDER BY o.created_at DESC
@@ -137,7 +148,7 @@ ob_start();
     
     <!-- Filters -->
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-5">
-        <form method="GET" action="" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <form method="GET" action="" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
             <div>
                 <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Search</label>
                 <input 
@@ -171,6 +182,16 @@ ob_start();
             </div>
             
             <div>
+                <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">CFO Classification</label>
+                <select name="cfo_classification" class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white dark:bg-gray-800">
+                    <option value="">All Classifications</option>
+                    <option value="Buklod" <?php echo $filterCfoClassification === 'Buklod' ? 'selected' : ''; ?>>Buklod</option>
+                    <option value="Kadiwa" <?php echo $filterCfoClassification === 'Kadiwa' ? 'selected' : ''; ?>>Kadiwa</option>
+                    <option value="Binhi" <?php echo $filterCfoClassification === 'Binhi' ? 'selected' : ''; ?>>Binhi</option>
+                </select>
+            </div>
+            
+            <div>
                 <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Status</label>
                 <select name="status" class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white dark:bg-gray-800">
                     <option value="all" <?php echo $filterStatus === 'all' ? 'selected' : ''; ?>>All Status</option>
@@ -200,6 +221,7 @@ ob_start();
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Officer Name</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Purok / Grupo / Control #</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CFO</th>
                         <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Data Verified</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -208,7 +230,7 @@ ob_start();
                 <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200">
                     <?php if (empty($officers)): ?>
                         <tr>
-                            <td colspan="7" class="px-6 py-12 text-center">
+                            <td colspan="8" class="px-6 py-12 text-center">
                                 <svg class="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
                                 </svg>
@@ -279,6 +301,27 @@ ob_start();
                                             <span class="text-xs text-gray-400 italic">Not set</span>
                                         <?php endif; ?>
                                     </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <?php if (!empty($officer['cfo_classification'])): ?>
+                                        <?php
+                                        $cfoClass = $officer['cfo_classification'];
+                                        $cfoBadgeColors = [
+                                            'Buklod' => 'bg-purple-100 text-purple-800',
+                                            'Kadiwa' => 'bg-blue-100 text-blue-800',
+                                            'Binhi' => 'bg-pink-100 text-pink-800'
+                                        ];
+                                        $badgeClass = $cfoBadgeColors[$cfoClass] ?? 'bg-gray-100 text-gray-800';
+                                        ?>
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <?php echo $badgeClass; ?>">
+                                            <?php echo Security::escape($cfoClass); ?>
+                                        </span>
+                                        <?php if ($officer['cfo_status'] === 'transferred-out'): ?>
+                                            <span class="block text-xs text-gray-500 mt-1">(Transferred Out)</span>
+                                        <?php endif; ?>
+                                    <?php else: ?>
+                                        <span class="text-xs text-gray-400 italic">Not in CFO</span>
+                                    <?php endif; ?>
                                 </td>
                                 <td class="px-6 py-4 text-center">
                                     <i class="<?php echo $officer['r518_data_verify'] == 1 ? 'fa-solid' : 'fa-regular'; ?> fa-thumbs-up text-2xl <?php echo $officer['r518_data_verify'] == 1 ? 'text-green-600' : 'text-gray-400'; ?>" title="<?php echo $officer['r518_data_verify'] == 1 ? 'Data Verified' : 'Data Not Verified'; ?>"></i>
@@ -519,6 +562,29 @@ ob_start();
                                 </span>
                             <?php else: ?>
                                 <span class="text-gray-400 ml-1">None</span>
+                            <?php endif; ?>
+                        </div>
+                        
+                        <div>
+                            <span class="text-gray-500">CFO Classification:</span>
+                            <?php if (!empty($officer['cfo_classification'])): ?>
+                                <?php
+                                $cfoClass = $officer['cfo_classification'];
+                                $cfoBadgeColors = [
+                                    'Buklod' => 'bg-purple-100 text-purple-800',
+                                    'Kadiwa' => 'bg-blue-100 text-blue-800',
+                                    'Binhi' => 'bg-pink-100 text-pink-800'
+                                ];
+                                $badgeClass = $cfoBadgeColors[$cfoClass] ?? 'bg-gray-100 text-gray-800';
+                                ?>
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium <?php echo $badgeClass; ?> ml-1">
+                                    <?php echo Security::escape($cfoClass); ?>
+                                </span>
+                                <?php if ($officer['cfo_status'] === 'transferred-out'): ?>
+                                    <span class="text-gray-500 ml-1">(Transferred Out)</span>
+                                <?php endif; ?>
+                            <?php else: ?>
+                                <span class="text-gray-400 ml-1">Not in CFO</span>
                             <?php endif; ?>
                         </div>
                         

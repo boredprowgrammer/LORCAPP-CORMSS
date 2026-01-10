@@ -22,6 +22,13 @@ try {
     $cfoClassification = isset($_POST['cfo_classification']) ? Security::sanitizeInput($_POST['cfo_classification']) : null;
     $cfoStatus = isset($_POST['cfo_status']) ? Security::sanitizeInput($_POST['cfo_status']) : null;
     $cfoNotes = isset($_POST['cfo_notes']) ? Security::sanitizeInput($_POST['cfo_notes']) : null;
+    $registrationType = isset($_POST['registration_type']) ? Security::sanitizeInput($_POST['registration_type']) : null;
+    $registrationDate = isset($_POST['registration_date']) ? Security::sanitizeInput($_POST['registration_date']) : null;
+    $registrationOthersSpecify = isset($_POST['registration_others_specify']) ? Security::sanitizeInput($_POST['registration_others_specify']) : null;
+    $transferOutDate = isset($_POST['transfer_out_date']) ? Security::sanitizeInput($_POST['transfer_out_date']) : null;
+    $marriageDate = isset($_POST['marriage_date']) ? Security::sanitizeInput($_POST['marriage_date']) : null;
+    $classificationChangeDate = isset($_POST['classification_change_date']) ? Security::sanitizeInput($_POST['classification_change_date']) : null;
+    $classificationChangeReason = isset($_POST['classification_change_reason']) ? Security::sanitizeInput($_POST['classification_change_reason']) : null;
     
     // Name fields
     $firstName = isset($_POST['first_name']) ? Security::sanitizeInput($_POST['first_name']) : null;
@@ -173,6 +180,50 @@ try {
     if ($cfoStatus !== null) {
         $updateFields[] = 'cfo_status = ?';
         $params[] = $cfoStatus;
+        
+        // If status is being set to transferred-out and no transfer_out_date is provided, use current date
+        if ($cfoStatus === 'transferred-out' && $transferOutDate === null) {
+            $transferOutDate = date('Y-m-d');
+        }
+    }
+    
+    if ($transferOutDate !== null) {
+        $updateFields[] = 'transfer_out_date = ?';
+        $params[] = !empty($transferOutDate) ? $transferOutDate : null;
+    }
+    
+    if ($registrationType !== null) {
+        $validTypes = ['transfer-in', 'newly-baptized', 'others', ''];
+        if (!in_array($registrationType, $validTypes)) {
+            throw new Exception('Invalid registration type');
+        }
+        $updateFields[] = 'registration_type = ?';
+        $params[] = empty($registrationType) ? null : $registrationType;
+    }
+    
+    if ($registrationDate !== null) {
+        $updateFields[] = 'registration_date = ?';
+        $params[] = !empty($registrationDate) ? $registrationDate : null;
+    }
+    
+    if ($registrationOthersSpecify !== null) {
+        $updateFields[] = 'registration_others_specify = ?';
+        $params[] = !empty(trim($registrationOthersSpecify)) ? trim($registrationOthersSpecify) : null;
+    }
+    
+    if ($marriageDate !== null) {
+        $updateFields[] = 'marriage_date = ?';
+        $params[] = !empty($marriageDate) ? $marriageDate : null;
+    }
+    
+    if ($classificationChangeDate !== null) {
+        $updateFields[] = 'classification_change_date = ?';
+        $params[] = !empty($classificationChangeDate) ? $classificationChangeDate : null;
+    }
+    
+    if ($classificationChangeReason !== null) {
+        $updateFields[] = 'classification_change_reason = ?';
+        $params[] = !empty(trim($classificationChangeReason)) ? trim($classificationChangeReason) : null;
     }
     
     if ($cfoNotes !== null) {

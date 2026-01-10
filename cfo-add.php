@@ -33,12 +33,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $cfoClassification = Security::sanitizeInput($_POST['cfo_classification'] ?? '');
         $cfoStatus = Security::sanitizeInput($_POST['cfo_status'] ?? 'active');
         $cfoNotes = Security::sanitizeInput($_POST['cfo_notes'] ?? '');
+        $registrationType = Security::sanitizeInput($_POST['registration_type'] ?? '');
+        $registrationDate = Security::sanitizeInput($_POST['registration_date'] ?? '');
+        $registrationOthersSpecify = Security::sanitizeInput($_POST['registration_others_specify'] ?? '');
         
         // Validation
         if (empty($districtCode) || empty($localCode)) {
             $error = 'District and local congregation are required.';
         } elseif (empty($lastName) || empty($firstName) || empty($registryNumber)) {
             $error = 'Last name, first name, and registry number are required.';
+        } elseif (!empty($registrationType) && $registrationType === 'transfer-in' && empty($registrationDate)) {
+            $error = 'Registration date is required for Transfer-In type.';
+        } elseif (!empty($registrationType) && $registrationType === 'others' && empty($registrationOthersSpecify)) {
+            $error = 'Please specify details for "Others" registration type.';
         } elseif (!hasDistrictAccess($districtCode) || !hasLocalAccess($localCode)) {
             $error = 'You do not have access to this district/local.';
         } else {
@@ -123,9 +130,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         husbands_surname_encrypted, registry_number_encrypted, registry_number_hash,
                         district_code, local_code, birthday_encrypted,
                         cfo_classification, cfo_classification_auto, cfo_status, cfo_notes,
+                        registration_type, registration_date, registration_others_specify,
                         search_name, search_registry,
                         imported_by, imported_at, cfo_updated_by, cfo_updated_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, NOW())
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, NOW())
                 ");
                 
                 $stmt->execute([
@@ -142,6 +150,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $cfoClassificationAuto ? 1 : 0,
                     $cfoStatus,
                     $cfoNotes,
+                    !empty($registrationType) ? $registrationType : null,
+                    !empty($registrationDate) ? $registrationDate : null,
+                    !empty($registrationOthersSpecify) ? $registrationOthersSpecify : null,
                     $searchName,
                     $searchRegistry,
                     $currentUser['user_id'],
@@ -345,6 +356,45 @@ ob_start();
             <!-- CFO Information -->
             <div>
                 <h3 class="text-lg font-semibold text-gray-900 mb-4">CFO Information</h3>
+                
+                <!-- Registration Type Section -->
+                <div class="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <h4 class="text-sm font-semibold text-gray-700 mb-3">Registration Type</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Type
+                            </label>
+                            <select name="registration_type" id="registration_type" onchange="handleRegistrationTypeChange()" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <option value="">-- Not specified --</option>
+                                <option value="transfer-in" <?php echo (isset($_POST['registration_type']) && $_POST['registration_type'] === 'transfer-in') ? 'selected' : ''; ?>>Transfer-In</option>
+                                <option value="newly-baptized" <?php echo (isset($_POST['registration_type']) && $_POST['registration_type'] === 'newly-baptized') ? 'selected' : ''; ?>>Newly Baptized</option>
+                                <option value="others" <?php echo (isset($_POST['registration_type']) && $_POST['registration_type'] === 'others') ? 'selected' : ''; ?>>Others (Specify)</option>
+                            </select>
+                        </div>
+
+                        <div id="registration_date_field" style="display: none;">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Registration Date <span class="text-red-600" id="date_required_indicator">*</span>
+                            </label>
+                            <input type="date" name="registration_date" id="registration_date"
+                                value="<?php echo Security::escape($_POST['registration_date'] ?? ''); ?>"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <p class="text-xs text-gray-500 mt-1">Date transferred in</p>
+                        </div>
+
+                        <div id="registration_others_field" style="display: none;">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Specify <span class="text-red-600">*</span>
+                            </label>
+                            <input type="text" name="registration_others_specify" id="registration_others_specify" maxlength="255"
+                                value="<?php echo Security::escape($_POST['registration_others_specify'] ?? ''); ?>"
+                                placeholder="Please specify..."
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                    </div>
+                </div>
+                
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -469,6 +519,7 @@ function autoClassify() {
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
     autoClassify();
+    handleRegistrationTypeChange(); // Initialize registration type fields
     
     // Auto-load locals if district is pre-set (for district/local users with hidden district field)
     const districtInput = document.getElementById('district_code');
@@ -492,6 +543,36 @@ document.addEventListener('DOMContentLoaded', function() {
         classificationSelect.addEventListener('change', autoClassify);
     }
 });
+
+// Handle registration type field visibility
+function handleRegistrationTypeChange() {
+    const registrationType = document.getElementById('registration_type').value;
+    const dateField = document.getElementById('registration_date_field');
+    const othersField = document.getElementById('registration_others_field');
+    const dateInput = document.getElementById('registration_date');
+    const othersInput = document.getElementById('registration_others_specify');
+    
+    // Hide all conditional fields first
+    dateField.style.display = 'none';
+    othersField.style.display = 'none';
+    
+    // Clear required attributes
+    dateInput.removeAttribute('required');
+    othersInput.removeAttribute('required');
+    
+    // Show relevant fields based on selection
+    if (registrationType === 'transfer-in') {
+        dateField.style.display = 'block';
+        dateInput.setAttribute('required', 'required');
+    } else if (registrationType === 'newly-baptized') {
+        dateField.style.display = 'block';
+        // Date is optional for newly baptized
+    } else if (registrationType === 'others') {
+        dateField.style.display = 'block';
+        othersField.style.display = 'block';
+        othersInput.setAttribute('required', 'required');
+    }
+}
 </script>
 
 <?php
