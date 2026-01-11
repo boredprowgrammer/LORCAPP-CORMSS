@@ -1970,11 +1970,13 @@ if (Security::isLoggedIn()) {
 </head>
 <body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen antialiased transition-colors duration-300">
     
+    <?php if (!isset($noLoadingOverlay) || !$noLoadingOverlay): ?>
     <!-- Simple Loading Spinner Overlay -->
     <div id="loadingOverlay">
         <div class="simple-spinner"></div>
         <div class="loading-text">Loading...</div>
     </div>
+    <?php endif; ?>
     
     <?php if (Security::isLoggedIn()): ?>
         <?php $currentUser = getCurrentUser(); ?>

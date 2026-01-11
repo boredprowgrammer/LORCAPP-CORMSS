@@ -19,6 +19,9 @@ $db = Database::getInstance()->getConnection();
 $error = '';
 $success = '';
 
+// Disable loading overlay for this page
+$noLoadingOverlay = true;
+
 $pageTitle = 'CFO Checker';
 ob_start();
 ?>
