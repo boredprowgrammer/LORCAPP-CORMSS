@@ -316,27 +316,51 @@ try {
         $allRecords = $stmt->fetchAll();
         
         // Decrypt and filter records based on search term
-        $searchLower = strtolower($searchValue);
+        $searchLower = mb_strtolower(trim($searchValue), 'UTF-8');
+        // Split search into individual terms for better matching
+        $searchTerms = array_filter(preg_split('/\s+/', $searchLower));
         $filteredData = [];
         
         foreach ($allRecords as $record) {
             try {
-                $lastName = Encryption::decrypt($record['last_name_encrypted'], $record['district_code']);
-                $firstName = Encryption::decrypt($record['first_name_encrypted'], $record['district_code']);
-                $middleName = $record['middle_name_encrypted'] ? Encryption::decrypt($record['middle_name_encrypted'], $record['district_code']) : '';
-                $husbandsSurname = $record['husbands_surname_encrypted'] ? Encryption::decrypt($record['husbands_surname_encrypted'], $record['district_code']) : '';
-                $registryNumber = Encryption::decrypt($record['registry_number_encrypted'], $record['district_code']);
-                $birthday = $record['birthday_encrypted'] ? Encryption::decrypt($record['birthday_encrypted'], $record['district_code']) : '';
+                $lastName = trim(Encryption::decrypt($record['last_name_encrypted'], $record['district_code']) ?? '');
+                $firstName = trim(Encryption::decrypt($record['first_name_encrypted'], $record['district_code']) ?? '');
+                $middleName = $record['middle_name_encrypted'] ? trim(Encryption::decrypt($record['middle_name_encrypted'], $record['district_code']) ?? '') : '';
+                $husbandsSurname = $record['husbands_surname_encrypted'] ? trim(Encryption::decrypt($record['husbands_surname_encrypted'], $record['district_code']) ?? '') : '';
+                $registryNumber = trim(Encryption::decrypt($record['registry_number_encrypted'], $record['district_code']) ?? '');
+                $birthday = $record['birthday_encrypted'] ? trim(Encryption::decrypt($record['birthday_encrypted'], $record['district_code']) ?? '') : '';
                 
-                // Check if search term matches any field
-                $searchableText = strtolower(implode(' ', [
-                    $lastName, $firstName, $middleName, $husbandsSurname, $registryNumber,
-                    $record['district_name'] ?? '', $record['local_name'] ?? '',
-                    $record['cfo_classification'] ?? '', $record['cfo_status'] ?? '',
-                    $record['purok'] ?? '', $record['grupo'] ?? ''
-                ]));
+                // Skip records that failed to decrypt (empty last name and first name)
+                if (empty($lastName) && empty($firstName)) {
+                    continue;
+                }
                 
-                if (strpos($searchableText, $searchLower) !== false) {
+                // Build searchable text from all fields - normalize for better matching
+                $searchableFields = [
+                    mb_strtolower($lastName, 'UTF-8'),
+                    mb_strtolower($firstName, 'UTF-8'),
+                    mb_strtolower($middleName, 'UTF-8'),
+                    mb_strtolower($husbandsSurname, 'UTF-8'),
+                    mb_strtolower($registryNumber, 'UTF-8'),
+                    mb_strtolower($record['district_name'] ?? '', 'UTF-8'),
+                    mb_strtolower($record['local_name'] ?? '', 'UTF-8'),
+                    mb_strtolower($record['cfo_classification'] ?? '', 'UTF-8'),
+                    mb_strtolower($record['cfo_status'] ?? '', 'UTF-8'),
+                    mb_strtolower($record['purok'] ?? '', 'UTF-8'),
+                    mb_strtolower($record['grupo'] ?? '', 'UTF-8')
+                ];
+                $searchableText = implode(' ', $searchableFields);
+                
+                // Check if ALL search terms match (for multi-word searches like "Juan Dela Cruz")
+                $allTermsMatch = true;
+                foreach ($searchTerms as $term) {
+                    if (mb_strpos($searchableText, $term, 0, 'UTF-8') === false) {
+                        $allTermsMatch = false;
+                        break;
+                    }
+                }
+                
+                if ($allTermsMatch) {
                     // Format birthday
                     $birthdayFormatted = '-';
                     if ($birthday) {
