@@ -356,3 +356,87 @@ function obfuscateSingleWord($word) {
         return $first . $asterisks . $last;
     }
 }
+
+/**
+ * Check if maintenance mode is enabled
+ * @return array|false Returns maintenance settings if enabled, false otherwise
+ */
+function isMaintenanceMode() {
+    static $maintenanceCache = null;
+    
+    if ($maintenanceCache !== null) {
+        return $maintenanceCache;
+    }
+    
+    try {
+        $db = Database::getInstance()->getConnection();
+        
+        // Check if table exists first
+        $tableCheck = $db->query("SHOW TABLES LIKE 'system_settings'");
+        if ($tableCheck->rowCount() === 0) {
+            $maintenanceCache = false;
+            return false;
+        }
+        
+        $stmt = $db->query("SELECT setting_key, setting_value FROM system_settings WHERE setting_key IN ('maintenance_mode', 'maintenance_message', 'maintenance_end_time')");
+        $settings = [];
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $settings[$row['setting_key']] = $row['setting_value'];
+        }
+        
+        if (isset($settings['maintenance_mode']) && $settings['maintenance_mode'] === '1') {
+            $maintenanceCache = [
+                'enabled' => true,
+                'message' => $settings['maintenance_message'] ?? 'The system is currently undergoing scheduled maintenance.',
+                'end_time' => $settings['maintenance_end_time'] ?? ''
+            ];
+            return $maintenanceCache;
+        }
+    } catch (Exception $e) {
+        // If database error, don't block access
+        error_log("Error checking maintenance mode: " . $e->getMessage());
+    }
+    
+    $maintenanceCache = false;
+    return false;
+}
+
+/**
+ * Check maintenance mode and redirect if enabled (for non-admin users)
+ * Call this at the top of pages that should respect maintenance mode
+ */
+function checkMaintenanceMode() {
+    $maintenance = isMaintenanceMode();
+    
+    if ($maintenance && $maintenance['enabled']) {
+        // Check if user is logged in and is admin - admins bypass maintenance
+        if (isset($_SESSION['user_id'])) {
+            try {
+                $db = Database::getInstance()->getConnection();
+                $stmt = $db->prepare("SELECT role FROM users WHERE user_id = ?");
+                $stmt->execute([$_SESSION['user_id']]);
+                $user = $stmt->fetch(PDO::FETCH_ASSOC);
+                
+                if ($user && $user['role'] === 'admin') {
+                    return; // Admin can access during maintenance
+                }
+            } catch (Exception $e) {
+                // Continue to maintenance page on error
+            }
+        }
+        
+        // Check if bypass_maintenance parameter is set (for admin login)
+        if (isset($_GET['bypass_maintenance']) && basename($_SERVER['PHP_SELF']) === 'login.php') {
+            return; // Allow access to login page with bypass parameter
+        }
+        
+        // Redirect to maintenance page
+        $maintenanceMessage = $maintenance['message'];
+        $maintenanceEndTime = $maintenance['end_time'];
+        
+        // Include maintenance page instead of redirecting (to pass variables)
+        include __DIR__ . '/../maintenance.php';
+        exit;
+    }
+}
+

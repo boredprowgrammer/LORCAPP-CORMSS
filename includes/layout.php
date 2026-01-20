@@ -4,6 +4,9 @@ if (!isset($csp_nonce)) {
     $csp_nonce = base64_encode(random_bytes(16));
 }
 
+// Check maintenance mode for all pages using layout
+checkMaintenanceMode();
+
 // Detect current app context based on URL path
 function detectAppContext() {
     $path = $_SERVER['REQUEST_URI'];

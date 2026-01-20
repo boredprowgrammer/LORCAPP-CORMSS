@@ -165,7 +165,9 @@ try {
 if (empty($masterKey)) {
     if ($appEnv === 'production') {
         error_log('MASTER_KEY not found in Infisical or environment');
-        die('Configuration error. Please contact the system administrator.');
+        // Redirect to maintenance page instead of showing error
+        header('Location: /maintenance.php?reason=config');
+        exit;
     } else {
         // Development fallback only
         $masterKey = 'DEVELOPMENT_ONLY_KEY_CHANGE_IN_PRODUCTION_' . hash('sha256', __DIR__);
@@ -183,7 +185,9 @@ try {
 if (empty($chatKey)) {
     if ($appEnv === 'production') {
         error_log('CHAT_MASTER_KEY not found in Infisical or environment');
-        die('Configuration error. Please contact the system administrator.');
+        // Redirect to maintenance page instead of showing error
+        header('Location: /maintenance.php?reason=config');
+        exit;
     } else {
         // Development fallback - derive from MASTER_KEY
         $chatKey = hash('sha256', $masterKey . '_chat_key_salt');
