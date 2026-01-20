@@ -57,6 +57,7 @@ $stmt->execute($params);
 $requests = $stmt->fetchAll();
 
 $pageTitle = 'Officer Removal Requests';
+$csp_nonce = base64_encode(random_bytes(16));
 ob_start();
 ?>
 
@@ -64,8 +65,8 @@ ob_start();
     <div class="mb-6">
         <div class="flex items-center justify-between">
             <div>
-                <h2 class="text-3xl font-bold text-gray-900">Officer Removal Requests</h2>
-                <p class="text-gray-600 mt-1">Manage the three-stage removal approval process</p>
+                <h2 class="text-3xl font-bold text-gray-900 dark:text-gray-100">Officer Removal Requests</h2>
+                <p class="text-gray-600 dark:text-gray-400 mt-1">Manage the three-stage removal approval process</p>
             </div>
             <?php if ($currentUser['role'] === 'local'): ?>
             <a href="remove.php" class="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
@@ -79,12 +80,12 @@ ob_start();
     </div>
 
     <!-- Workflow Info -->
-    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+    <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
         <div class="flex items-start">
             <svg class="w-5 h-5 text-blue-600 mr-3 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
             </svg>
-            <div class="text-sm text-blue-800">
+            <div class="text-sm text-blue-800 dark:text-blue-300">
                 <p class="font-semibold mb-1">Three-Stage Workflow:</p>
                 <ol class="list-decimal list-inside space-y-1 ml-2">
                     <li><strong>Deliberated by Local:</strong> Local admin creates removal request</li>
@@ -96,20 +97,20 @@ ob_start();
     </div>
 
     <!-- Requests Table -->
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
         <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
+            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead class="bg-gray-50 dark:bg-gray-700">
                     <tr>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Officer</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Location</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Code</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Officer</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Location</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Code</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Status</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Date</th>
+                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-200">
+                <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                     <?php if (empty($requests)): ?>
                     <tr>
                         <td colspan="6" class="px-4 py-8 text-center text-gray-500">
@@ -132,9 +133,9 @@ ob_start();
                             ];
                             $statusInfo = $statusConfig[$request['status']] ?? ['color' => 'gray', 'label' => ucfirst($request['status'])];
                         ?>
-                        <tr class="hover:bg-gray-50">
+                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
                             <td class="px-4 py-3">
-                                <div class="font-mono font-semibold text-gray-900 uppercase"><?php echo Security::escape($fullName); ?></div>
+                                <div class="font-mono font-semibold text-gray-900 dark:text-gray-100 uppercase"><?php echo Security::escape($fullName); ?></div>
                                 <?php if (!empty($request['department_id']) && !empty($request['department'])): ?>
                                     <div class="text-xs text-blue-600 mt-1">
                                         <svg class="w-3 h-3 inline mr-1" fill="currentColor" viewBox="0 0 20 20">
@@ -148,27 +149,27 @@ ob_start();
                                 <?php endif; ?>
                             </td>
                             <td class="px-4 py-3">
-                                <div class="text-sm text-gray-900"><?php echo Security::escape($request['local_name']); ?></div>
-                                <div class="text-xs text-gray-500"><?php echo Security::escape($request['district_name']); ?></div>
+                                <div class="text-sm text-gray-900 dark:text-gray-100"><?php echo Security::escape($request['local_name']); ?></div>
+                                <div class="text-xs text-gray-500 dark:text-gray-400"><?php echo Security::escape($request['district_name']); ?></div>
                             </td>
                             <td class="px-4 py-3">
-                                <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-800">
+                                <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400">
                                     CODE <?php echo Security::escape($request['removal_code']); ?>
                                 </span>
                             </td>
                             <td class="px-4 py-3">
-                                <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-<?php echo $statusInfo['color']; ?>-100 text-<?php echo $statusInfo['color']; ?>-800">
+                                <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-<?php echo $statusInfo['color']; ?>-100 dark:bg-<?php echo $statusInfo['color']; ?>-900/30 text-<?php echo $statusInfo['color']; ?>-800 dark:text-<?php echo $statusInfo['color']; ?>-400">
                                     <?php echo $statusInfo['label']; ?>
                                 </span>
                             </td>
                             <td class="px-4 py-3">
-                                <div class="text-sm text-gray-900"><?php echo date('M j, Y', strtotime($request['removal_date'])); ?></div>
-                                <div class="text-xs text-gray-500"><?php echo date('g:i A', strtotime($request['created_at'])); ?></div>
+                                <div class="text-sm text-gray-900 dark:text-gray-100"><?php echo date('M j, Y', strtotime($request['removal_date'])); ?></div>
+                                <div class="text-xs text-gray-500 dark:text-gray-400"><?php echo date('g:i A', strtotime($request['created_at'])); ?></div>
                             </td>
                             <td class="px-4 py-3 text-right">
                                 <div class="flex items-center justify-end gap-2">
                                     <a href="view.php?id=<?php echo $request['officer_uuid']; ?>" 
-                                       class="inline-flex items-center px-3 py-1 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 text-sm font-medium">
+                                       class="inline-flex items-center px-3 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 text-sm font-medium">
                                         View Officer
                                     </a>
                                     
@@ -183,7 +184,7 @@ ob_start();
                                         <input type="hidden" name="csrf_token" value="<?php echo Security::generateCSRFToken(); ?>">
                                         <input type="hidden" name="action" value="request_to_district">
                                         <input type="hidden" name="removal_id" value="<?php echo $request['removal_id']; ?>">
-                                        <button type="submit" class="inline-flex items-center px-3 py-1 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 text-sm font-medium">
+                                        <button type="submit" class="inline-flex items-center px-3 py-1 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/50 text-sm font-medium">
                                             Request to District
                                         </button>
                                     </form>
@@ -195,7 +196,7 @@ ob_start();
                                         <input type="hidden" name="action" value="approve_removal">
                                         <input type="hidden" name="removal_id" value="<?php echo $request['removal_id']; ?>">
                                         <button type="submit" onclick="return confirm('Approve this removal? This will deactivate the officer/department and update headcount.');" 
-                                                class="inline-flex items-center px-3 py-1 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 text-sm font-medium">
+                                                class="inline-flex items-center px-3 py-1 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/50 text-sm font-medium">
                                             Approve Removal
                                         </button>
                                     </form>
@@ -207,7 +208,7 @@ ob_start();
                                         <input type="hidden" name="action" value="delete_removal">
                                         <input type="hidden" name="removal_id" value="<?php echo $request['removal_id']; ?>">
                                         <button type="submit" onclick="return confirm('Are you sure you want to delete this removal request? This action cannot be undone.');" 
-                                                class="inline-flex items-center px-3 py-1 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 text-sm font-medium">
+                                                class="inline-flex items-center px-3 py-1 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 text-sm font-medium">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                                             </svg>

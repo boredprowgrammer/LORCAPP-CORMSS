@@ -7,10 +7,47 @@
 require_once __DIR__ . '/config/config.php';
 
 Security::requireLogin();
-requirePermission('can_add_officers');
 
 $currentUser = getCurrentUser();
 $db = Database::getInstance()->getConnection();
+
+// Check access permissions
+$hasAddAccess = false;
+$approvedCfoTypes = [];
+
+if ($currentUser['role'] === 'admin' || $currentUser['role'] === 'local') {
+    // Admin and local have full access (if they have can_add_officers permission)
+    if (hasPermission('can_add_officers')) {
+        $hasAddAccess = true;
+    }
+} elseif ($currentUser['role'] === 'local_cfo') {
+    // Check for approved add_member access
+    $stmt = $db->prepare("
+        SELECT * FROM cfo_access_requests 
+        WHERE requester_user_id = ? 
+        AND status = 'approved'
+        AND access_mode = 'add_member'
+        AND deleted_at IS NULL
+        AND (expires_at IS NULL OR expires_at > NOW())
+    ");
+    $stmt->execute([$currentUser['user_id']]);
+    $approvedRequests = $stmt->fetchAll();
+    
+    if (count($approvedRequests) > 0) {
+        $hasAddAccess = true;
+        foreach ($approvedRequests as $request) {
+            if (!in_array($request['cfo_type'], $approvedCfoTypes)) {
+                $approvedCfoTypes[] = $request['cfo_type'];
+            }
+        }
+    }
+}
+
+// Restrict access if no add permission
+if (!$hasAddAccess) {
+    header('Location: ' . BASE_URL . '/cfo-registry.php?error=' . urlencode('You need approved add access to add CFO members.'));
+    exit();
+}
 
 $error = '';
 $success = '';
@@ -48,6 +85,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $error = 'Please specify details for "Others" registration type.';
         } elseif (!hasDistrictAccess($districtCode) || !hasLocalAccess($localCode)) {
             $error = 'You do not have access to this district/local.';
+        } elseif ($currentUser['role'] === 'local_cfo' && !empty($approvedCfoTypes) && !empty($cfoClassification) && !in_array($cfoClassification, $approvedCfoTypes)) {
+            $error = 'You can only add members with your approved CFO classification: ' . implode(', ', $approvedCfoTypes);
         } else {
             try {
                 $db->beginTransaction();
@@ -61,7 +100,62 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     throw new Exception('This registry number already exists in the database.');
                 }
                 
-                // Encrypt data
+                // For local_cfo users, save to pending_actions instead of direct insert
+                if ($currentUser['role'] === 'local_cfo') {
+                    // Find senior approver (local account from same congregation)
+                    $stmt = $db->prepare("
+                        SELECT user_id FROM users 
+                        WHERE role = 'local' AND local_code = ? AND is_active = 1 
+                        LIMIT 1
+                    ");
+                    $stmt->execute([$currentUser['local_code']]);
+                    $seniorApprover = $stmt->fetch();
+                    
+                    if (!$seniorApprover) {
+                        throw new Exception('No senior approver (LORC/LCRC) found for your local congregation.');
+                    }
+                    
+                    // Prepare action data (store raw data, encryption happens on approval)
+                    $actionData = json_encode([
+                        'last_name' => $lastName,
+                        'first_name' => $firstName,
+                        'middle_name' => $middleName,
+                        'husbands_surname' => $husbandsSurname,
+                        'registry_number' => $registryNumber,
+                        'district_code' => $districtCode,
+                        'local_code' => $localCode,
+                        'birthday' => $birthday,
+                        'cfo_classification' => $cfoClassification,
+                        'cfo_status' => $cfoStatus,
+                        'cfo_notes' => $cfoNotes,
+                        'registration_type' => $registrationType,
+                        'registration_date' => $registrationDate,
+                        'registration_others_specify' => $registrationOthersSpecify
+                    ]);
+                    
+                    $actionDescription = "Add CFO member: $firstName $lastName ($cfoClassification)";
+                    
+                    $stmt = $db->prepare("
+                        INSERT INTO pending_actions (
+                            requester_user_id, approver_user_id, action_type, action_data,
+                            action_description, target_table, status, created_at, expires_at
+                        ) VALUES (?, ?, 'add_cfo', ?, ?, 'tarheta_control', 'pending', NOW(), DATE_ADD(NOW(), INTERVAL 7 DAY))
+                    ");
+                    $stmt->execute([
+                        $currentUser['user_id'],
+                        $seniorApprover['user_id'],
+                        $actionData,
+                        $actionDescription
+                    ]);
+                    
+                    $db->commit();
+                    
+                    $success = 'CFO member submitted for LORC/LCRC review. You will be notified once approved.';
+                    $_POST = [];
+                    
+                } else {
+                    // Direct insert for admin/local users
+                    // Encrypt data
                 $lastNameEnc = Encryption::encrypt($lastName, $districtCode);
                 $firstNameEnc = Encryption::encrypt($firstName, $districtCode);
                 $middleNameEnc = !empty($middleName) ? Encryption::encrypt($middleName, $districtCode) : null;
@@ -165,6 +259,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 // Clear form
                 $_POST = [];
+                } // End of else block for admin/local direct insert
                 
             } catch (Exception $e) {
                 if ($db->inTransaction()) {
@@ -197,13 +292,13 @@ ob_start();
 
 <div class="space-y-6">
     <!-- Header -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
         <div class="flex items-center justify-between">
             <div>
-                <h1 class="text-2xl font-semibold text-gray-900">Add CFO Member</h1>
-                <p class="text-sm text-gray-500 mt-1">Add new member to CFO Registry</p>
+                <h1 class="text-2xl font-semibold text-gray-900 dark:text-gray-100">Add CFO Member</h1>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Add new member to CFO Registry</p>
             </div>
-            <a href="cfo-registry.php" class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+            <a href="cfo-registry.php" class="inline-flex items-center px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                 </svg>
@@ -213,28 +308,60 @@ ob_start();
     </div>
 
     <?php if ($error): ?>
-        <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+        <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg">
             <?php echo Security::escape($error); ?>
         </div>
     <?php endif; ?>
 
     <?php if ($success): ?>
-        <div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
+        <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-300 px-4 py-3 rounded-lg">
             <?php echo Security::escape($success); ?>
         </div>
     <?php endif; ?>
 
+    <?php if ($currentUser['role'] === 'local_cfo'): ?>
+    <!-- Workflow Stepper for Local CFO Users -->
+    <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
+        <h3 class="text-lg font-semibold text-blue-800 dark:text-blue-200 mb-4">📋 Submission Workflow</h3>
+        <div class="flex items-center justify-between relative">
+            <!-- Step 1: Submit -->
+            <div class="flex flex-col items-center z-10">
+                <div class="w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold">1</div>
+                <span class="text-sm text-blue-700 dark:text-blue-300 mt-2 text-center font-medium">Submit Request</span>
+            </div>
+            <!-- Line -->
+            <div class="flex-1 h-1 bg-gray-300 dark:bg-gray-600 mx-2 relative top-[-1rem]"></div>
+            <!-- Step 2: Pending Review -->
+            <div class="flex flex-col items-center z-10">
+                <div class="w-10 h-10 bg-yellow-500 text-white rounded-full flex items-center justify-center font-bold">2</div>
+                <span class="text-sm text-yellow-700 dark:text-yellow-300 mt-2 text-center font-medium">Pending LORC/LCRC<br>Review</span>
+            </div>
+            <!-- Line -->
+            <div class="flex-1 h-1 bg-gray-300 dark:bg-gray-600 mx-2 relative top-[-1rem]"></div>
+            <!-- Step 3: Approved -->
+            <div class="flex flex-col items-center z-10">
+                <div class="w-10 h-10 bg-gray-400 text-white rounded-full flex items-center justify-center font-bold">3</div>
+                <span class="text-sm text-gray-600 dark:text-gray-400 mt-2 text-center font-medium">Approved &<br>Added to Registry</span>
+            </div>
+        </div>
+        <p class="text-sm text-blue-700 dark:text-blue-300 mt-4">
+            <strong>Note:</strong> Your submissions will be reviewed by your local LORC/LCRC before being added to the registry.
+            <a href="pending-actions.php" class="underline hover:text-blue-800 dark:hover:text-blue-200">View your pending submissions →</a>
+        </p>
+    </div>
+    <?php endif; ?>
+
     <!-- Add Form -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
         <form method="POST" class="space-y-6">
             <input type="hidden" name="csrf_token" value="<?php echo Security::generateCSRFToken('add_cfo'); ?>">
             
             <!-- Location Information -->
             <div>
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">Location Information</h3>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Location Information</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             District <span class="text-red-600">*</span>
                         </label>
                         <?php if ($currentUser['role'] === 'district' || $currentUser['role'] === 'local' || $currentUser['role'] === 'local_cfo'): ?>
@@ -401,10 +528,23 @@ ob_start();
                             CFO Classification
                         </label>
                         <select name="cfo_classification" id="cfo_classification" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                            <option value="">-- Auto-classify --</option>
-                            <option value="Buklod" <?php echo (isset($_POST['cfo_classification']) && $_POST['cfo_classification'] === 'Buklod') ? 'selected' : ''; ?>>Buklod (Married Couples)</option>
-                            <option value="Kadiwa" <?php echo (isset($_POST['cfo_classification']) && $_POST['cfo_classification'] === 'Kadiwa') ? 'selected' : ''; ?>>Kadiwa (Youth)</option>
-                            <option value="Binhi" <?php echo (isset($_POST['cfo_classification']) && $_POST['cfo_classification'] === 'Binhi') ? 'selected' : ''; ?>>Binhi (Children)</option>
+                            <?php if ($currentUser['role'] === 'local_cfo' && !empty($approvedCfoTypes)): ?>
+                                <!-- Restricted to approved CFO types -->
+                                <?php if (count($approvedCfoTypes) == 1): ?>
+                                    <option value="<?php echo Security::escape($approvedCfoTypes[0]); ?>" selected><?php echo Security::escape($approvedCfoTypes[0]); ?></option>
+                                <?php else: ?>
+                                    <option value="">-- Select Classification --</option>
+                                    <?php foreach ($approvedCfoTypes as $type): ?>
+                                        <option value="<?php echo Security::escape($type); ?>" <?php echo (isset($_POST['cfo_classification']) && $_POST['cfo_classification'] === $type) ? 'selected' : ''; ?>><?php echo Security::escape($type); ?></option>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            <?php else: ?>
+                                <!-- Full access - all options -->
+                                <option value="">-- Auto-classify --</option>
+                                <option value="Buklod" <?php echo (isset($_POST['cfo_classification']) && $_POST['cfo_classification'] === 'Buklod') ? 'selected' : ''; ?>>Buklod (Married Couples)</option>
+                                <option value="Kadiwa" <?php echo (isset($_POST['cfo_classification']) && $_POST['cfo_classification'] === 'Kadiwa') ? 'selected' : ''; ?>>Kadiwa (Youth)</option>
+                                <option value="Binhi" <?php echo (isset($_POST['cfo_classification']) && $_POST['cfo_classification'] === 'Binhi') ? 'selected' : ''; ?>>Binhi (Children)</option>
+                            <?php endif; ?>
                         </select>
                         <p class="text-xs text-gray-500 mt-1" id="auto-classify-msg"></p>
                     </div>

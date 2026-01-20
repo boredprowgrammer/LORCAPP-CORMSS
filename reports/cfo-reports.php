@@ -512,6 +512,11 @@ try {
 // Purok Statistics
 $purokStats = [];
 try {
+    $purokConditions = $whereConditions;
+    $purokConditions[] = 't.purok IS NOT NULL';
+    $purokConditions[] = "t.purok != ''";
+    $purokWhereClause = 'WHERE ' . implode(' AND ', $purokConditions);
+    
     $stmt = $db->prepare("
         SELECT 
             t.purok,
@@ -521,9 +526,7 @@ try {
             SUM(CASE WHEN t.cfo_classification = 'Kadiwa' THEN 1 ELSE 0 END) as kadiwa,
             SUM(CASE WHEN t.cfo_classification = 'Binhi' THEN 1 ELSE 0 END) as binhi
         FROM tarheta_control t
-        $whereClause
-          AND t.purok IS NOT NULL
-          AND t.purok != ''
+        $purokWhereClause
         GROUP BY t.purok
         ORDER BY t.purok
     ");
@@ -534,6 +537,7 @@ try {
 }
 
 $pageTitle = 'CFO Reports';
+$csp_nonce = base64_encode(random_bytes(16));
 ob_start();
 ?>
 
@@ -549,30 +553,30 @@ ob_start();
 
 <div class="container mx-auto px-4 py-8 max-w-7xl">
     <div class="mb-6">
-        <h1 class="text-2xl font-bold text-gray-900 flex items-center">
-            <i class="fa-solid fa-chart-bar mr-3 text-blue-600 text-2xl"></i>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center">
+            <i class="fa-solid fa-chart-bar mr-3 text-blue-600 dark:text-blue-400 text-2xl"></i>
             CFO Reports
         </h1>
-        <p class="text-sm text-gray-500 mt-1">Christian Family Organization Statistics and Analysis</p>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Christian Family Organization Statistics and Analysis</p>
     </div>
     
     <!-- Tabs Navigation -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
-        <div class="border-b border-gray-200">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+        <div class="border-b border-gray-200 dark:border-gray-700">
             <nav class="flex -mb-px" role="tablist">
-                <button onclick="switchTab('overview')" id="tab-overview" class="tab-button active px-6 py-4 text-sm font-medium border-b-2 border-blue-600 text-blue-600">
+                <button data-tab="overview" id="tab-overview" class="tab-button active px-6 py-4 text-sm font-medium border-b-2 border-blue-600 text-blue-600 dark:text-blue-400">
                     <i class="fa-solid fa-chart-column mr-2"></i>
                     Overview
                 </button>
-                <button onclick="switchTab('transactions')" id="tab-transactions" class="tab-button px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                <button data-tab="transactions" id="tab-transactions" class="tab-button px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600">
                     <i class="fa-solid fa-arrow-right-arrow-left mr-2"></i>
                     Transactions
                 </button>
-                <button onclick="switchTab('lipat-kapisanan')" id="tab-lipat-kapisanan" class="tab-button px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                <button data-tab="lipat-kapisanan" id="tab-lipat-kapisanan" class="tab-button px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
                     <i class="fa-solid fa-people-arrows mr-2"></i>
                     Lipat-Kapisanan
                 </button>
-                <button onclick="switchTab('purok')" id="tab-purok" class="tab-button px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                <button data-tab="purok" id="tab-purok" class="tab-button px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
                     <i class="fa-solid fa-map-location-dot mr-2"></i>
                     By Purok
                 </button>
@@ -583,9 +587,9 @@ ob_start();
     <!-- Tab Content: Overview -->
     <div id="content-overview" class="tab-content">
     <!-- Organization Count Statistics -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
-        <div class="px-6 py-4 border-b border-gray-200">
-            <h2 class="text-lg font-semibold text-gray-900 flex items-center">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
                 <i class="fa-solid fa-chart-column mr-2 text-blue-600"></i>
                 Organization Count by Classification
             </h2>
@@ -720,13 +724,13 @@ ob_start();
     
     <?php if ($currentUser['role'] === 'local'): ?>
     <!-- Reset Statistics Section -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
-        <div class="px-6 py-4 border-b border-gray-200">
-            <h2 class="text-lg font-semibold text-gray-900 flex items-center">
-                <i class="fa-solid fa-rotate-right mr-2 text-gray-600"></i>
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
+                <i class="fa-solid fa-rotate-right mr-2 text-gray-600 dark:text-gray-400"></i>
                 Reset Statistics Baseline
             </h2>
-            <p class="text-sm text-gray-600 mt-1">Reset the baseline for dagdag/bawas calculations without deleting any data</p>
+            <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Reset the baseline for dagdag/bawas calculations without deleting any data</p>
         </div>
         <div class="p-6">
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -734,13 +738,13 @@ ob_start();
                 <div class="bg-gradient-to-br from-red-50 to-red-100 rounded-lg p-4 border border-red-200">
                     <h3 class="text-sm font-semibold text-red-800 mb-3">Buklod</h3>
                     <div class="space-y-2">
-                        <button onclick="resetCfoStats('Buklod', 'week')" class="w-full bg-red-600 hover:bg-red-700 text-white text-xs font-medium py-2 px-3 rounded transition">
+                        <button data-reset-classification="Buklod" data-reset-period="week" class="reset-stats-btn w-full bg-red-600 hover:bg-red-700 text-white text-xs font-medium py-2 px-3 rounded transition">
                             <i class="fa-solid fa-calendar-week mr-1"></i> Reset Week
                         </button>
-                        <button onclick="resetCfoStats('Buklod', 'month')" class="w-full bg-red-600 hover:bg-red-700 text-white text-xs font-medium py-2 px-3 rounded transition">
+                        <button data-reset-classification="Buklod" data-reset-period="month" class="reset-stats-btn w-full bg-red-600 hover:bg-red-700 text-white text-xs font-medium py-2 px-3 rounded transition">
                             <i class="fa-solid fa-calendar-days mr-1"></i> Reset Month
                         </button>
-                        <button onclick="resetCfoStats('Buklod', 'both')" class="w-full bg-red-700 hover:bg-red-800 text-white text-xs font-medium py-2 px-3 rounded transition">
+                        <button data-reset-classification="Buklod" data-reset-period="both" class="reset-stats-btn w-full bg-red-700 hover:bg-red-800 text-white text-xs font-medium py-2 px-3 rounded transition">
                             <i class="fa-solid fa-calendar mr-1"></i> Reset Both
                         </button>
                     </div>
@@ -750,13 +754,13 @@ ob_start();
                 <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 border border-blue-200">
                     <h3 class="text-sm font-semibold text-blue-800 mb-3">Kadiwa</h3>
                     <div class="space-y-2">
-                        <button onclick="resetCfoStats('Kadiwa', 'week')" class="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium py-2 px-3 rounded transition">
+                        <button data-reset-classification="Kadiwa" data-reset-period="week" class="reset-stats-btn w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium py-2 px-3 rounded transition">
                             <i class="fa-solid fa-calendar-week mr-1"></i> Reset Week
                         </button>
-                        <button onclick="resetCfoStats('Kadiwa', 'month')" class="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium py-2 px-3 rounded transition">
+                        <button data-reset-classification="Kadiwa" data-reset-period="month" class="reset-stats-btn w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium py-2 px-3 rounded transition">
                             <i class="fa-solid fa-calendar-days mr-1"></i> Reset Month
                         </button>
-                        <button onclick="resetCfoStats('Kadiwa', 'both')" class="w-full bg-blue-700 hover:bg-blue-800 text-white text-xs font-medium py-2 px-3 rounded transition">
+                        <button data-reset-classification="Kadiwa" data-reset-period="both" class="reset-stats-btn w-full bg-blue-700 hover:bg-blue-800 text-white text-xs font-medium py-2 px-3 rounded transition">
                             <i class="fa-solid fa-calendar mr-1"></i> Reset Both
                         </button>
                     </div>
@@ -766,13 +770,13 @@ ob_start();
                 <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 border border-green-200">
                     <h3 class="text-sm font-semibold text-green-800 mb-3">Binhi</h3>
                     <div class="space-y-2">
-                        <button onclick="resetCfoStats('Binhi', 'week')" class="w-full bg-green-600 hover:bg-green-700 text-white text-xs font-medium py-2 px-3 rounded transition">
+                        <button data-reset-classification="Binhi" data-reset-period="week" class="reset-stats-btn w-full bg-green-600 hover:bg-green-700 text-white text-xs font-medium py-2 px-3 rounded transition">
                             <i class="fa-solid fa-calendar-week mr-1"></i> Reset Week
                         </button>
-                        <button onclick="resetCfoStats('Binhi', 'month')" class="w-full bg-green-600 hover:bg-green-700 text-white text-xs font-medium py-2 px-3 rounded transition">
+                        <button data-reset-classification="Binhi" data-reset-period="month" class="reset-stats-btn w-full bg-green-600 hover:bg-green-700 text-white text-xs font-medium py-2 px-3 rounded transition">
                             <i class="fa-solid fa-calendar-days mr-1"></i> Reset Month
                         </button>
-                        <button onclick="resetCfoStats('Binhi', 'both')" class="w-full bg-green-700 hover:bg-green-800 text-white text-xs font-medium py-2 px-3 rounded transition">
+                        <button data-reset-classification="Binhi" data-reset-period="both" class="reset-stats-btn w-full bg-green-700 hover:bg-green-800 text-white text-xs font-medium py-2 px-3 rounded transition">
                             <i class="fa-solid fa-calendar mr-1"></i> Reset Both
                         </button>
                     </div>
@@ -782,13 +786,13 @@ ob_start();
                 <div class="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-4 border border-gray-300">
                     <h3 class="text-sm font-semibold text-gray-800 mb-3">All Classifications</h3>
                     <div class="space-y-2">
-                        <button onclick="resetCfoStats('all', 'week')" class="w-full bg-gray-600 hover:bg-gray-700 text-white text-xs font-medium py-2 px-3 rounded transition">
+                        <button data-reset-classification="all" data-reset-period="week" class="reset-stats-btn w-full bg-gray-600 hover:bg-gray-700 text-white text-xs font-medium py-2 px-3 rounded transition">
                             <i class="fa-solid fa-calendar-week mr-1"></i> Reset Week
                         </button>
-                        <button onclick="resetCfoStats('all', 'month')" class="w-full bg-gray-600 hover:bg-gray-700 text-white text-xs font-medium py-2 px-3 rounded transition">
+                        <button data-reset-classification="all" data-reset-period="month" class="reset-stats-btn w-full bg-gray-600 hover:bg-gray-700 text-white text-xs font-medium py-2 px-3 rounded transition">
                             <i class="fa-solid fa-calendar-days mr-1"></i> Reset Month
                         </button>
-                        <button onclick="resetCfoStats('all', 'both')" class="w-full bg-gray-700 hover:bg-gray-800 text-white text-xs font-medium py-2 px-3 rounded transition">
+                        <button data-reset-classification="all" data-reset-period="both" class="reset-stats-btn w-full bg-gray-700 hover:bg-gray-800 text-white text-xs font-medium py-2 px-3 rounded transition">
                             <i class="fa-solid fa-calendar mr-1"></i> Reset Both
                         </button>
                     </div>
@@ -813,13 +817,13 @@ ob_start();
     <?php endif; ?>
     
     <!-- Officers Count by CFO Classification -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
-        <div class="px-6 py-4 border-b border-gray-200">
-            <h2 class="text-lg font-semibold text-gray-900 flex items-center">
-                <i class="fa-solid fa-user-tie mr-2 text-indigo-600"></i>
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
+                <i class="fa-solid fa-user-tie mr-2 text-indigo-600 dark:text-indigo-400"></i>
                 Church Officers by CFO Classification
             </h2>
-            <p class="text-sm text-gray-600 mt-1">Active officers who are also CFO members</p>
+            <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Active officers who are also CFO members</p>
         </div>
         <div class="p-6">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -870,32 +874,28 @@ ob_start();
     <div id="content-transactions" class="tab-content hidden">
     
     <!-- Transaction Filters -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
         <div class="p-4">
             <div class="flex items-center justify-between flex-wrap gap-3">
                 <div class="flex items-center gap-2">
-                    <i class="fa-solid fa-filter text-gray-600"></i>
-                    <span class="text-sm font-medium text-gray-700">Time Period:</span>
+                    <i class="fa-solid fa-filter text-gray-600 dark:text-gray-400"></i>
+                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Time Period:</span>
                 </div>
                 <div class="flex gap-2">
-                    <button onclick="filterTransactions('all')" 
-                            class="transaction-filter-btn <?php echo $transactionFilter === 'all' ? 'active' : ''; ?> px-4 py-2 text-sm font-medium rounded-lg transition-colors"
-                            data-filter="all">
+                    <button data-filter="all"
+                            class="transaction-filter-btn <?php echo $transactionFilter === 'all' ? 'active' : ''; ?> px-4 py-2 text-sm font-medium rounded-lg transition-colors">
                         <i class="fa-solid fa-infinity mr-2"></i>All Time
                     </button>
-                    <button onclick="filterTransactions('week')" 
-                            class="transaction-filter-btn <?php echo $transactionFilter === 'week' ? 'active' : ''; ?> px-4 py-2 text-sm font-medium rounded-lg transition-colors"
-                            data-filter="week">
+                    <button data-filter="week"
+                            class="transaction-filter-btn <?php echo $transactionFilter === 'week' ? 'active' : ''; ?> px-4 py-2 text-sm font-medium rounded-lg transition-colors">
                         <i class="fa-solid fa-calendar-week mr-2"></i>This Week
                     </button>
-                    <button onclick="filterTransactions('month')" 
-                            class="transaction-filter-btn <?php echo $transactionFilter === 'month' ? 'active' : ''; ?> px-4 py-2 text-sm font-medium rounded-lg transition-colors"
-                            data-filter="month">
+                    <button data-filter="month"
+                            class="transaction-filter-btn <?php echo $transactionFilter === 'month' ? 'active' : ''; ?> px-4 py-2 text-sm font-medium rounded-lg transition-colors">
                         <i class="fa-solid fa-calendar-days mr-2"></i>This Month
                     </button>
-                    <button onclick="filterTransactions('year')" 
-                            class="transaction-filter-btn <?php echo $transactionFilter === 'year' ? 'active' : ''; ?> px-4 py-2 text-sm font-medium rounded-lg transition-colors"
-                            data-filter="year">
+                    <button data-filter="year"
+                            class="transaction-filter-btn <?php echo $transactionFilter === 'year' ? 'active' : ''; ?> px-4 py-2 text-sm font-medium rounded-lg transition-colors">
                         <i class="fa-solid fa-calendar mr-2"></i>This Year
                     </button>
                 </div>
@@ -904,10 +904,10 @@ ob_start();
     </div>
     
     <!-- Newly Baptized Members -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
-        <div class="px-6 py-4 border-b border-gray-200">
-            <h2 class="text-lg font-semibold text-gray-900 flex items-center">
-                <i class="fa-solid fa-water mr-2 text-blue-600"></i>
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
+                <i class="fa-solid fa-water mr-2 text-blue-600 dark:text-blue-400"></i>
                 Recently Baptized Members
             </h2>
         </div>
@@ -938,10 +938,10 @@ ob_start();
     </div>
     
     <!-- Transfer-In Members -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
-        <div class="px-6 py-4 border-b border-gray-200">
-            <h2 class="text-lg font-semibold text-gray-900 flex items-center">
-                <i class="fa-solid fa-arrow-right-to-bracket mr-2 text-green-600"></i>
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
+                <i class="fa-solid fa-arrow-right-to-bracket mr-2 text-green-600 dark:text-green-400"></i>
                 Transfer-In Members
             </h2>
         </div>
@@ -972,15 +972,15 @@ ob_start();
     </div>
     
     <!-- Recent Transfer Outs -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
-        <div class="px-6 py-4 border-b border-gray-200">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
             <div class="flex items-center justify-between">
-                <h2 class="text-lg font-semibold text-gray-900 flex items-center">
-                    <i class="fa-solid fa-right-from-bracket mr-2 text-red-600"></i>
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
+                    <i class="fa-solid fa-right-from-bracket mr-2 text-red-600 dark:text-red-400"></i>
                     Recent Transfer Outs
                 </h2>
                 <?php if ($currentUser['role'] === 'local' && count($recentTransferOuts) > 0): ?>
-                <button onclick="clearTransferOutHistory()" class="px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors">
+                <button id="clearTransferOutBtn" class="px-3 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors">
                     <i class="fa-solid fa-trash-can mr-1"></i>
                     Clear History
                 </button>
@@ -1028,15 +1028,15 @@ ob_start();
     <div id="content-lipat-kapisanan" class="tab-content hidden">
 
     <!-- Classification Changes (Lipat Kapisanan) -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
-        <div class="px-6 py-4 border-b border-gray-200">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
             <div class="flex items-center justify-between">
-                <h2 class="text-lg font-semibold text-gray-900 flex items-center">
-                    <i class="fa-solid fa-arrow-right-arrow-left mr-2 text-red-600"></i>
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
+                    <i class="fa-solid fa-arrow-right-arrow-left mr-2 text-red-600 dark:text-red-400"></i>
                     Classification Changes (Lipat Kapisanan)
                 </h2>
                 <?php if ($currentUser['role'] === 'local' && count($classificationChanges) > 0): ?>
-                <button onclick="clearClassificationHistory()" class="px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors">
+                <button id="clearClassificationBtn" class="px-3 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors">
                     <i class="fa-solid fa-trash-can mr-1"></i>
                     Clear History
                 </button>
@@ -1090,73 +1090,73 @@ ob_start();
     <div id="content-purok" class="tab-content hidden">
     <!-- Purok Statistics -->
     <?php if (!empty($purokStats)): ?>
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
-        <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50">
-            <h2 class="text-lg font-semibold text-gray-900 flex items-center">
-                <i class="fa-solid fa-map-location-dot mr-2 text-indigo-600"></i>
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
+                <i class="fa-solid fa-map-location-dot mr-2 text-indigo-600 dark:text-indigo-400"></i>
                 CFO Members by Purok
             </h2>
-            <p class="text-sm text-gray-600 mt-1">Distribution of members across puroks</p>
+            <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Distribution of members across puroks</p>
         </div>
         <div class="p-6">
             <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-indigo-50">
+                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead class="bg-indigo-50 dark:bg-indigo-900/20">
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-semibold text-indigo-900 uppercase tracking-wider">Purok</th>
-                            <th class="px-6 py-3 text-left text-xs font-semibold text-indigo-900 uppercase tracking-wider">CFO Organization</th>
-                            <th class="px-6 py-3 text-right text-xs font-semibold text-indigo-900 uppercase tracking-wider">Count</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-indigo-900 dark:text-indigo-300 uppercase tracking-wider">Purok</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-indigo-900 dark:text-indigo-300 uppercase tracking-wider">CFO Organization</th>
+                            <th class="px-6 py-3 text-right text-xs font-semibold text-indigo-900 dark:text-indigo-300 uppercase tracking-wider">Count</th>
                         </tr>
                     </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
+                    <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                         <?php foreach ($purokStats as $stat): ?>
                             <!-- Buklod Row -->
-                            <tr class="hover:bg-red-50 transition-colors">
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-indigo-900" rowspan="4">
-                                    <i class="fa-solid fa-map-pin mr-2 text-indigo-600"></i>
+                            <tr class="hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-indigo-900 dark:text-indigo-300" rowspan="4">
+                                    <i class="fa-solid fa-map-pin mr-2 text-indigo-600 dark:text-indigo-400"></i>
                                     Purok <?php echo Security::escape($stat['purok']); ?>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                                     <span class="inline-flex items-center">
-                                        <i class="fa-solid fa-rings-wedding mr-2 text-red-600"></i>
-                                        <span class="font-medium text-red-700">Buklod</span>
+                                        <i class="fa-solid fa-rings-wedding mr-2 text-red-600 dark:text-red-400"></i>
+                                        <span class="font-medium text-red-700 dark:text-red-400">Buklod</span>
                                     </span>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-semibold text-red-900">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-semibold text-red-900 dark:text-red-300">
                                     <?php echo number_format($stat['buklod']); ?>
                                 </td>
                             </tr>
                             <!-- Kadiwa Row -->
-                            <tr class="hover:bg-blue-50 transition-colors">
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            <tr class="hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                                     <span class="inline-flex items-center">
-                                        <i class="fa-solid fa-user-group mr-2 text-blue-700"></i>
-                                        <span class="font-medium text-blue-800">Kadiwa</span>
+                                        <i class="fa-solid fa-user-group mr-2 text-blue-700 dark:text-blue-400"></i>
+                                        <span class="font-medium text-blue-800 dark:text-blue-400">Kadiwa</span>
                                     </span>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-semibold text-blue-900">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-semibold text-blue-900 dark:text-blue-300">
                                     <?php echo number_format($stat['kadiwa']); ?>
                                 </td>
                             </tr>
                             <!-- Binhi Row -->
-                            <tr class="hover:bg-green-50 transition-colors">
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            <tr class="hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                                     <span class="inline-flex items-center">
-                                        <i class="fa-solid fa-seedling mr-2 text-green-600"></i>
-                                        <span class="font-medium text-green-700">Binhi</span>
+                                        <i class="fa-solid fa-seedling mr-2 text-green-600 dark:text-green-400"></i>
+                                        <span class="font-medium text-green-700 dark:text-green-400">Binhi</span>
                                     </span>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-semibold text-green-900">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-semibold text-green-900 dark:text-green-300">
                                     <?php echo number_format($stat['binhi']); ?>
                                 </td>
                             </tr>
                             <!-- Total Row -->
-                            <tr class="bg-gray-50 hover:bg-gray-100 transition-colors">
+                            <tr class="bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                                 <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                    <i class="fa-solid fa-calculator mr-2 text-gray-600"></i>
-                                    <span class="font-bold text-gray-900">Total</span>
+                                    <i class="fa-solid fa-calculator mr-2 text-gray-600 dark:text-gray-400"></i>
+                                    <span class="font-bold text-gray-900 dark:text-gray-100">Total</span>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-bold text-gray-900">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-bold text-gray-900 dark:text-gray-100">
                                     <?php echo number_format($stat['total']); ?>
                                 </td>
                             </tr>
@@ -1177,20 +1177,20 @@ ob_start();
     <!-- Back to Lipat-Kapisanan Tab for Turning 18 Section -->
     <div id="content-lipat-kapisanan-continued" class="tab-content hidden">
     <!-- Lipat-Kapisanan: Turning 18 Soon -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
-        <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20">
             <div class="flex items-center justify-between">
                 <div>
-                    <h2 class="text-lg font-semibold text-gray-900 flex items-center">
-                        <svg class="w-5 h-5 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
                         </svg>
                         Lipat-Kapisanan: Binhi → Kadiwa
                     </h2>
-                    <p class="text-sm text-gray-600 mt-1">Members turning 18 within the next 3 months</p>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Members turning 18 within the next 3 months</p>
                 </div>
                 <div class="flex items-center space-x-2">
-                    <span class="px-4 py-2 bg-indigo-100 text-indigo-800 rounded-full text-sm font-semibold">
+                    <span class="px-4 py-2 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-800 dark:text-indigo-300 rounded-full text-sm font-semibold">
                         <?php echo count($turningEighteen); ?> member<?php echo count($turningEighteen) !== 1 ? 's' : ''; ?>
                     </span>
                 </div>
@@ -1199,58 +1199,58 @@ ob_start();
         <div class="p-6">
             <?php if (empty($turningEighteen)): ?>
                 <div class="text-center py-12">
-                    <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
-                    <p class="text-gray-500 text-lg font-medium">No members turning 18 soon</p>
-                    <p class="text-gray-400 text-sm mt-2">All Binhi members are under 17 years old or have no birthday data</p>
+                    <p class="text-gray-500 dark:text-gray-400 text-lg font-medium">No members turning 18 soon</p>
+                    <p class="text-gray-400 dark:text-gray-500 text-sm mt-2">All Binhi members are under 17 years old or have no birthday data</p>
                 </div>
             <?php else: ?>
                 <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200" id="turning18Table">
-                        <thead class="bg-gray-50">
+                    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700" id="turning18Table">
+                        <thead class="bg-gray-50 dark:bg-gray-700">
                             <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Current Age</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Birthday</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Turning 18 On</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Days Until</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Local</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Name</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Current Age</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Birthday</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Turning 18 On</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Days Until</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Local</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Action</th>
                             </tr>
                         </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
+                        <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                             <?php foreach ($turningEighteen as $member): 
                                 $displayName = obfuscateName($member['name']); // Obfuscated for privacy
                             ?>
-                                <tr class="hover:bg-gray-50">
+                                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm font-medium text-gray-900 cursor-help" title="<?php echo Security::escape($member['name']); ?>"><?php echo Security::escape($displayName); ?></div>
+                                        <div class="text-sm font-medium text-gray-900 dark:text-gray-100 cursor-help" title="<?php echo Security::escape($member['name']); ?>"><?php echo Security::escape($displayName); ?></div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="text-sm text-gray-900"><?php echo $member['age']; ?> years old</span>
+                                        <span class="text-sm text-gray-900 dark:text-gray-100"><?php echo $member['age']; ?> years old</span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="text-sm text-gray-700"><?php echo $member['birthday']; ?></span>
+                                        <span class="text-sm text-gray-700 dark:text-gray-300"><?php echo $member['birthday']; ?></span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="text-sm font-semibold text-indigo-600"><?php echo $member['turning_18_date']; ?></span>
+                                        <span class="text-sm font-semibold text-indigo-600 dark:text-indigo-400"><?php echo $member['turning_18_date']; ?></span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <?php 
                                         $days = $member['days_until_18'];
-                                        $badgeColor = $days <= 7 ? 'bg-red-100 text-red-800' : ($days <= 30 ? 'bg-orange-100 text-orange-800' : 'bg-blue-100 text-blue-800');
+                                        $badgeColor = $days <= 7 ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' : ($days <= 30 ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300' : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300');
                                         ?>
                                         <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full <?php echo $badgeColor; ?>">
                                             <?php echo $days; ?> day<?php echo $days !== 1 ? 's' : ''; ?>
                                         </span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm text-gray-700"><?php echo Security::escape($member['local']); ?></div>
-                                        <div class="text-xs text-gray-500"><?php echo Security::escape($member['district']); ?></div>
+                                        <div class="text-sm text-gray-700 dark:text-gray-300"><?php echo Security::escape($member['local']); ?></div>
+                                        <div class="text-xs text-gray-500 dark:text-gray-400"><?php echo Security::escape($member['district']); ?></div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                        <a href="<?php echo BASE_URL; ?>/cfo-registry.php" class="text-indigo-600 hover:text-indigo-900">
+                                        <a href="<?php echo BASE_URL; ?>/cfo-registry.php" class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300">
                                             View in Registry
                                         </a>
                                     </td>
@@ -1267,7 +1267,7 @@ ob_start();
 </div>
 <!-- End Main Container -->
 
-<script>
+<script nonce="<?php echo $csp_nonce; ?>">
 $(document).ready(function() {
     <?php if (!empty($turningEighteen)): ?>
     $('#turning18Table').DataTable({
@@ -1400,6 +1400,43 @@ function filterTransactions(filter) {
 document.addEventListener('DOMContentLoaded', function() {
     // Show overview tab by default
     switchTab('overview');
+    
+    // Add event listeners for tab buttons
+    document.querySelectorAll('.tab-button').forEach(button => {
+        button.addEventListener('click', function() {
+            const tabName = this.getAttribute('data-tab');
+            if (tabName) switchTab(tabName);
+        });
+    });
+    
+    // Add event listeners for transaction filter buttons
+    document.querySelectorAll('[data-filter]').forEach(button => {
+        button.addEventListener('click', function() {
+            const filter = this.getAttribute('data-filter');
+            if (filter) filterTransactions(filter);
+        });
+    });
+    
+    // Add event listeners for reset stats buttons
+    document.querySelectorAll('.reset-stats-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const classification = this.getAttribute('data-reset-classification');
+            const period = this.getAttribute('data-reset-period');
+            if (classification && period) resetCfoStats(classification, period);
+        });
+    });
+    
+    // Add event listener for clear transfer out history button
+    const clearTransferOutBtn = document.getElementById('clearTransferOutBtn');
+    if (clearTransferOutBtn) {
+        clearTransferOutBtn.addEventListener('click', clearTransferOutHistory);
+    }
+    
+    // Add event listener for clear classification history button
+    const clearClassificationBtn = document.getElementById('clearClassificationBtn');
+    if (clearClassificationBtn) {
+        clearClassificationBtn.addEventListener('click', clearClassificationHistory);
+    }
 });
 
 // Reset CFO statistics baseline

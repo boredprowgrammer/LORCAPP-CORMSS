@@ -1,16 +1,15 @@
 <?php
+/**
+ * Old Dashboard - Redirects to Launchpad
+ * The launchpad is now the main entry point
+ */
 require_once __DIR__ . '/config/config.php';
-require_once __DIR__ . '/includes/announcements.php';
 
 Security::requireLogin();
 
-$currentUser = getCurrentUser();
-
-// Redirect local_cfo users to their dedicated dashboard
-if ($currentUser['role'] === 'local_cfo') {
-    header('Location: ' . BASE_URL . '/cfo-dashboard.php');
-    exit;
-}
+// Redirect to the new launchpad
+header('Location: ' . BASE_URL . '/launchpad.php');
+exit;
 
 $db = Database::getInstance()->getConnection();
 
@@ -252,7 +251,7 @@ ob_start();
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
             <div>
                 <h1 class="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-gray-100"><?php echo Security::escape($currentUser['full_name']); ?></h1>
-                <p class="text-xs sm:text-sm text-gray-500 mt-1"><?php echo formatDate(date('Y-m-d'), 'l, F d, Y'); ?> • Week <?php echo getCurrentWeekNumber(); ?></p>
+                <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1"><?php echo formatDate(date('Y-m-d'), 'l, F d, Y'); ?> • Week <?php echo getCurrentWeekNumber(); ?></p>
             </div>
             <div class="flex items-center gap-2 sm:gap-3">
                 <?php 
@@ -267,7 +266,7 @@ ob_start();
                     <span class="ml-1 sm:ml-2 inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold leading-none text-white bg-red-600 rounded-full"><?php echo count($userAnnouncements); ?></span>
                 </button>
                 <?php endif; ?>
-                <div class="px-3 sm:px-4 py-2 bg-blue-100 text-blue-700 rounded-lg text-xs sm:text-sm font-medium">
+                <div class="px-3 sm:px-4 py-2 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg text-xs sm:text-sm font-medium">
                     <?php echo strtoupper($currentUser['role']); ?>
                 </div>
             </div>
@@ -306,10 +305,10 @@ ob_start();
                         
                         // Bootstrap-style color mapping
                         $typeColors = [
-                            'info' => 'border-l-4 border-blue-500 bg-blue-50',
-                            'success' => 'border-l-4 border-green-500 bg-green-50',
-                            'warning' => 'border-l-4 border-yellow-500 bg-yellow-50',
-                            'error' => 'border-l-4 border-red-500 bg-red-50'
+                            'info' => 'border-l-4 border-blue-500 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-700',
+                            'success' => 'border-l-4 border-green-500 bg-green-50 dark:bg-green-900/20 dark:border-green-700',
+                            'warning' => 'border-l-4 border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20 dark:border-yellow-700',
+                            'error' => 'border-l-4 border-red-500 bg-red-50 dark:bg-red-900/20 dark:border-red-700'
                         ];
                         
                         $priorityBadges = [
@@ -347,7 +346,7 @@ ob_start();
                                     <p class="text-sm text-gray-700 dark:text-gray-300 mb-2 whitespace-pre-wrap"><?php echo nl2br(Security::escape($announcement['message'])); ?></p>
                                     
                                     <!-- Metadata -->
-                                    <div class="flex items-center gap-3 text-xs text-gray-500">
+                                    <div class="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
                                         <?php if (!empty($announcement['start_date'])): ?>
                                         <span class="flex items-center gap-1">
                                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -373,9 +372,9 @@ ob_start();
                 </div>
                 
                 <!-- Simple Footer -->
-                <div class="flex items-center justify-end gap-2 px-6 py-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50">
+                <div class="flex items-center justify-end gap-2 px-6 py-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
                     <button onclick="closeAnnouncementsModal()" 
-                            class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 rounded hover:bg-gray-50">
+                            class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700">
                         Close
                     </button>
                     <button onclick="dismissAllAnnouncements()" 
@@ -506,14 +505,14 @@ ob_start();
         <!-- Total Officers -->
         <div class="bg-white dark:bg-gray-800 dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-3 sm:p-4 hover:shadow-md transition-shadow">
             <div class="flex flex-col sm:flex-row items-start sm:items-center sm:space-x-3 space-y-2 sm:space-y-0">
-                <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
-                    <svg class="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
+                    <svg class="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
                     </svg>
                 </div>
                 <div class="min-w-0">
                     <p class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 truncate"><?php echo number_format($stats['total_officers']); ?></p>
-                    <p class="text-xs text-gray-500 truncate">Total</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 truncate">Total</p>
                 </div>
             </div>
         </div>
@@ -521,14 +520,14 @@ ob_start();
         <!-- Active Officers -->
         <div class="bg-white dark:bg-gray-800 dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-3 sm:p-4 hover:shadow-md transition-shadow">
             <div class="flex flex-col sm:flex-row items-start sm:items-center sm:space-x-3 space-y-2 sm:space-y-0">
-                <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0">
-                    <svg class="w-5 h-5 sm:w-6 sm:h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center flex-shrink-0">
+                    <svg class="w-5 h-5 sm:w-6 sm:h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
                 </div>
                 <div class="min-w-0">
-                    <p class="text-xl sm:text-2xl font-bold text-green-600 truncate"><?php echo number_format($stats['active_officers']); ?></p>
-                    <p class="text-xs text-gray-500 truncate">Active</p>
+                    <p class="text-xl sm:text-2xl font-bold text-green-600 dark:text-green-400 truncate"><?php echo number_format($stats['active_officers']); ?></p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 truncate">Active</p>
                 </div>
             </div>
         </div>
@@ -536,14 +535,14 @@ ob_start();
         <!-- Inactive Officers -->
         <div class="bg-white dark:bg-gray-800 dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-3 sm:p-4 hover:shadow-md transition-shadow">
             <div class="flex flex-col sm:flex-row items-start sm:items-center sm:space-x-3 space-y-2 sm:space-y-0">
-                <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-red-100 flex items-center justify-center flex-shrink-0">
-                    <svg class="w-5 h-5 sm:w-6 sm:h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-red-100 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0">
+                    <svg class="w-5 h-5 sm:w-6 sm:h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
                 </div>
                 <div class="min-w-0">
-                    <p class="text-xl sm:text-2xl font-bold text-red-600 truncate"><?php echo number_format($stats['inactive_officers']); ?></p>
-                    <p class="text-xs text-gray-500 truncate">Inactive</p>
+                    <p class="text-xl sm:text-2xl font-bold text-red-600 dark:text-red-400 truncate"><?php echo number_format($stats['inactive_officers']); ?></p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 truncate">Inactive</p>
                 </div>
             </div>
         </div>
@@ -551,14 +550,14 @@ ob_start();
         <!-- Transfers This Week -->
         <div class="bg-white dark:bg-gray-800 dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-3 sm:p-4 hover:shadow-md transition-shadow">
             <div class="flex flex-col sm:flex-row items-start sm:items-center sm:space-x-3 space-y-2 sm:space-y-0">
-                <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-cyan-100 flex items-center justify-center flex-shrink-0">
-                    <svg class="w-5 h-5 sm:w-6 sm:h-6 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-cyan-100 dark:bg-cyan-900/30 flex items-center justify-center flex-shrink-0">
+                    <svg class="w-5 h-5 sm:w-6 sm:h-6 text-cyan-600 dark:text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
                     </svg>
                 </div>
                 <div class="min-w-0">
-                    <p class="text-xl sm:text-2xl font-bold text-cyan-600 truncate"><?php echo number_format($stats['transfers_this_week']); ?></p>
-                    <p class="text-xs text-gray-500 truncate">Transfers/Wk</p>
+                    <p class="text-xl sm:text-2xl font-bold text-cyan-600 dark:text-cyan-400 truncate"><?php echo number_format($stats['transfers_this_week']); ?></p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 truncate">Transfers/Wk</p>
                 </div>
             </div>
         </div>
@@ -566,14 +565,14 @@ ob_start();
         <!-- New Officers This Month -->
         <div class="bg-white dark:bg-gray-800 dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-3 sm:p-4 hover:shadow-md transition-shadow">
             <div class="flex flex-col sm:flex-row items-start sm:items-center sm:space-x-3 space-y-2 sm:space-y-0">
-                <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-purple-100 flex items-center justify-center flex-shrink-0">
-                    <svg class="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0">
+                    <svg class="w-5 h-5 sm:w-6 sm:h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
                     </svg>
                 </div>
                 <div class="min-w-0">
-                    <p class="text-xl sm:text-2xl font-bold text-purple-600 truncate"><?php echo number_format($stats['new_officers_this_month']); ?></p>
-                    <p class="text-xs text-gray-500 truncate">New/Month</p>
+                    <p class="text-xl sm:text-2xl font-bold text-purple-600 dark:text-purple-400 truncate"><?php echo number_format($stats['new_officers_this_month']); ?></p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 truncate">New/Month</p>
                 </div>
             </div>
         </div>
@@ -581,14 +580,14 @@ ob_start();
         <!-- Removals This Month -->
         <div class="bg-white dark:bg-gray-800 dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-3 sm:p-4 hover:shadow-md transition-shadow">
             <div class="flex flex-col sm:flex-row items-start sm:items-center sm:space-x-3 space-y-2 sm:space-y-0">
-                <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-yellow-100 flex items-center justify-center flex-shrink-0">
-                    <svg class="w-5 h-5 sm:w-6 sm:h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center flex-shrink-0">
+                    <svg class="w-5 h-5 sm:w-6 sm:h-6 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7a4 4 0 11-8 0 4 4 0 018 0zM9 14a6 6 0 00-6 6v1h12v-1a6 6 0 00-6-6zM21 12h-6"></path>
                     </svg>
                 </div>
                 <div class="min-w-0">
-                    <p class="text-xl sm:text-2xl font-bold text-yellow-600 truncate"><?php echo number_format($stats['removals_this_month']); ?></p>
-                    <p class="text-xs text-gray-500 truncate">Removals/Mo</p>
+                    <p class="text-xl sm:text-2xl font-bold text-yellow-600 dark:text-yellow-400 truncate"><?php echo number_format($stats['removals_this_month']); ?></p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 truncate">Removals/Mo</p>
                 </div>
             </div>
         </div>
@@ -621,7 +620,7 @@ ob_start();
                     </div>
                 <?php endif; ?>
             </div>
-            <a href="<?php echo BASE_URL; ?>/reports/departments.php" class="mt-4 flex items-center justify-center w-full px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors">
+            <a href="<?php echo BASE_URL; ?>/reports/departments.php" class="mt-4 flex items-center justify-center w-full px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors">
                 View All 
                 <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
@@ -757,7 +756,7 @@ ob_start();
                     </div>
                 <?php endif; ?>
             </div>
-            <a href="<?php echo BASE_URL; ?>/reports/headcount.php" class="mt-4 flex items-center justify-center w-full px-4 py-2 text-sm font-medium text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-colors">
+            <a href="<?php echo BASE_URL; ?>/reports/headcount.php" class="mt-4 flex items-center justify-center w-full px-4 py-2 text-sm font-medium text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/30 rounded-lg transition-colors">
                 Full Report 
                 <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>

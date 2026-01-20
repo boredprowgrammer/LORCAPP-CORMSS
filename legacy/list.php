@@ -229,10 +229,10 @@ ob_start();
 
 <div class="space-y-6">
     <!-- Header -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
         <div class="flex items-center justify-between flex-wrap gap-4">
             <div>
-                <h1 class="text-2xl font-semibold text-gray-900 flex items-center gap-2">
+                <h1 class="text-2xl font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
                     Legacy Control Numbers
                     <span class="text-sm px-3 py-1 bg-blue-100 text-blue-800 rounded-full font-medium">
                         <?php echo number_format($totalInDatabase); ?> total
@@ -264,7 +264,7 @@ ob_start();
     <?php endif; ?>
 
     <!-- Filters -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
         <form method="GET" class="space-y-4">
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>

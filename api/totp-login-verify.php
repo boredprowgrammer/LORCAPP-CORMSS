@@ -64,12 +64,12 @@ function sendJsonResponse($data, $statusCode = 200) {
 }
 
 // This endpoint is called during login, so user is not yet authenticated
-// If already logged in, redirect to dashboard instead of error
+// If already logged in, redirect to launchpad instead of error
 if (Security::isLoggedIn()) {
     sendJsonResponse([
         'success' => true,
         'already_logged_in' => true,
-        'redirect' => BASE_URL . '/dashboard.php',
+        'redirect' => BASE_URL . '/launchpad.php',
         'message' => 'Already logged in'
     ]);
 }
@@ -258,7 +258,7 @@ try {
     sendJsonResponse([
         'success' => true,
         'message' => 'Login successful',
-        'redirect' => BASE_URL . '/dashboard.php'
+        'redirect' => BASE_URL . '/launchpad.php'
     ]);
     
 } catch (Exception $e) {

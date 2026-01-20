@@ -9,7 +9,7 @@ $currentUser = getCurrentUser();
 
 // Check if user has permission to track users
 if ($currentUser['role'] !== 'admin' && empty($currentUser['can_track_users'])) {
-    header('Location: ' . BASE_URL . '/dashboard.php?error=insufficient_permissions');
+    header('Location: ' . BASE_URL . '/launchpad.php?error=insufficient_permissions');
     exit;
 }
 

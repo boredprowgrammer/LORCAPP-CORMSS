@@ -70,14 +70,14 @@ function hasPermission($permission, $userId = null) {
  * Require a specific permission or redirect to access denied page
  * 
  * @param string $permission The permission name
- * @param string $redirectUrl Optional redirect URL, defaults to dashboard
+ * @param string $redirectUrl Optional redirect URL, defaults to launchpad
  */
 function requirePermission($permission, $redirectUrl = null) {
     if (!hasPermission($permission)) {
         $_SESSION['error'] = "You don't have permission to access this feature.";
         
         if ($redirectUrl === null) {
-            $redirectUrl = BASE_URL . '/dashboard.php';
+            $redirectUrl = BASE_URL . '/launchpad.php';
         }
         
         header('Location: ' . $redirectUrl);

@@ -36,16 +36,35 @@ try {
         die("Error: SQL file is empty\n");
     }
     
-    // Split into individual statements
+    // Remove comments and empty lines
+    $lines = explode("\n", $sql);
+    $cleanedSql = '';
+    
+    foreach ($lines as $line) {
+        $line = trim($line);
+        // Skip empty lines and comment lines
+        if (empty($line) || strpos($line, '--') === 0) {
+            continue;
+        }
+        // Remove inline comments
+        if (strpos($line, '--') !== false) {
+            $line = trim(substr($line, 0, strpos($line, '--')));
+        }
+        $cleanedSql .= $line . "\n";
+    }
+    
+    // Split into individual statements by semicolon
     $statements = array_filter(
-        array_map('trim', explode(';', $sql)),
+        array_map('trim', explode(';', $cleanedSql)),
         function($stmt) {
-            return !empty($stmt) && !preg_match('/^--/', $stmt);
+            return !empty($stmt);
         }
     );
     
     $executed = 0;
     $errors = 0;
+    
+    echo "Found " . count($statements) . " SQL statements to execute\n\n";
     
     foreach ($statements as $statement) {
         try {
@@ -59,13 +78,14 @@ try {
             // Ignore "already exists" errors
             if (strpos($e->getMessage(), 'Duplicate column name') !== false ||
                 strpos($e->getMessage(), 'Duplicate key name') !== false ||
-                strpos($e->getMessage(), 'already exists') !== false) {
+                strpos($e->getMessage(), 'already exists') !== false ||
+                strpos($e->getMessage(), 'Table') !== false && strpos($e->getMessage(), 'already exists') !== false) {
                 echo "s"; // Skip already exists
                 $executed++;
             } else {
                 $errors++;
                 echo "\nError executing statement: " . $e->getMessage() . "\n";
-                echo "Statement: " . substr($statement, 0, 100) . "...\n";
+                echo "Statement: " . substr($statement, 0, 200) . "...\n\n";
             }
         }
     }

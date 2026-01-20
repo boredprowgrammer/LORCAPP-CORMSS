@@ -11,7 +11,7 @@ Security::requireLogin();
 // Block access for local_cfo role
 if (getCurrentUser()['role'] === 'local_cfo') {
     setFlashMessage('error', 'Access denied for this feature.');
-    header('Location: ' . BASE_URL . '/cfo-dashboard.php');
+    header('Location: ' . BASE_URL . '/launchpad.php');
     exit;
 }
 
@@ -327,10 +327,10 @@ ob_start();
 
 <div class="space-y-6">
     <!-- Header -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
         <div class="flex items-center justify-between">
             <div>
-                <h1 class="text-2xl font-semibold text-gray-900">Tarheta Control Records</h1>
+                <h1 class="text-2xl font-semibold text-gray-900 dark:text-gray-100">Tarheta Control Records</h1>
                 <p class="text-sm text-gray-500 mt-1">
                     Legacy registry data for linking to officers
                     <?php if ($totalInDatabase > 0): ?>
@@ -358,7 +358,7 @@ ob_start();
     <?php endif; ?>
 
     <!-- Filters -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-5">
         <form method="GET" action="" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">District</label>
@@ -414,7 +414,7 @@ ob_start();
     </div>
 
     <!-- Records Table -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
         <?php if ($searchProvided && count($records) > 0): ?>
             <!-- Search Statistics -->
             <div class="px-4 py-3 bg-blue-50 border-b border-blue-100">
@@ -437,20 +437,20 @@ ob_start();
         
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
+                <thead class="bg-gray-50 dark:bg-gray-700">
                     <tr>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Registry Number</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">District/Local</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Imported</th>
-                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Name</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Registry Number</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">District/Local</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Imported</th>
+                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
+                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                     <?php if (!$searchProvided): ?>
                         <tr>
-                            <td colspan="6" class="px-4 py-8 text-center text-gray-500">
+                            <td colspan="6" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
                                 <svg class="w-12 h-12 mx-auto mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                                 </svg>
@@ -460,13 +460,13 @@ ob_start();
                         </tr>
                     <?php elseif (empty($records)): ?>
                         <tr>
-                            <td colspan="6" class="px-4 py-8 text-center text-gray-500">
+                            <td colspan="6" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
                                 No records found matching your search. <a href="import.php" class="text-blue-600 hover:underline">Import CSV data</a>
                             </td>
                         </tr>
                     <?php else: ?>
                         <?php foreach ($records as $record): ?>
-                        <tr class="hover:bg-gray-50 <?php echo $record['has_decrypt_error'] ? 'bg-red-50' : ''; ?>">
+                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 <?php echo $record['has_decrypt_error'] ? 'bg-red-50 dark:bg-red-900/20' : ''; ?>">
                             <td class="px-4 py-3">
                                 <?php if ($record['has_decrypt_error']): ?>
                                     <div class="flex items-center gap-2">
@@ -481,24 +481,24 @@ ob_start();
                                         </div>
                                     </div>
                                 <?php else: ?>
-                                    <div class="text-sm font-medium text-gray-900" title="<?php echo Security::escape($record['full_name']); ?>" style="cursor: help;">
+                                    <div class="text-sm font-medium text-gray-900 dark:text-gray-100" title="<?php echo Security::escape($record['full_name']); ?>" style="cursor: help;">
                                         <?php echo Security::escape($record['obfuscated_name']); ?>
                                     </div>
                                 <?php endif; ?>
                                 <?php if (!empty($record['husbands_surname'])): ?>
-                                    <div class="text-xs text-gray-500">
+                                    <div class="text-xs text-gray-500 dark:text-gray-400">
                                         Husband's Surname: <?php echo Security::escape($record['husbands_surname']); ?>
                                     </div>
                                 <?php endif; ?>
                             </td>
                             <td class="px-4 py-3">
-                                <span class="text-sm font-mono <?php echo $record['has_decrypt_error'] ? 'text-red-900' : 'text-gray-900'; ?>">
+                                <span class="text-sm font-mono <?php echo $record['has_decrypt_error'] ? 'text-red-900' : 'text-gray-900 dark:text-gray-100'; ?>">
                                     <?php echo Security::escape($record['registry_number']); ?>
                                 </span>
                             </td>
                             <td class="px-4 py-3">
-                                <div class="text-sm text-gray-900"><?php echo Security::escape($record['district_name']); ?></div>
-                                <div class="text-xs text-gray-500"><?php echo Security::escape($record['local_name']); ?></div>
+                                <div class="text-sm text-gray-900 dark:text-gray-100"><?php echo Security::escape($record['district_name']); ?></div>
+                                <div class="text-xs text-gray-500 dark:text-gray-400"><?php echo Security::escape($record['local_name']); ?></div>
                             </td>
                             <td class="px-4 py-3">
                                 <?php if ($record['linked_officer_id']): ?>

@@ -8,7 +8,7 @@ Security::requireLogin();
 $currentUser = getCurrentUser();
 if ($currentUser['role'] !== 'local_cfo') {
     $_SESSION['error'] = 'Access denied. This page is only for CFO officers.';
-    header('Location: ' . BASE_URL . '/dashboard.php');
+    header('Location: ' . BASE_URL . '/launchpad.php');
     exit;
 }
 

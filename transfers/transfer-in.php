@@ -186,35 +186,35 @@ ob_start();
 ?>
 
 <div class="max-w-4xl mx-auto">
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
         <div class="flex items-center space-x-3 mb-6">
-            <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
+                <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
                 </svg>
             </div>
-            <h2 class="text-2xl font-semibold text-gray-900">Transfer In Officer</h2>
+            <h2 class="text-2xl font-semibold text-gray-900 dark:text-gray-100">Transfer In Officer</h2>
         </div>
         
-        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+        <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
             <div class="flex items-start">
-                <svg class="w-5 h-5 text-blue-600 mr-3 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <svg class="w-5 h-5 text-blue-600 dark:text-blue-400 mr-3 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
                 </svg>
                 <div>
-                    <p class="font-semibold text-blue-800">Transfer In Process</p>
-                    <p class="text-sm text-blue-700 mt-1">This will add the officer to your congregation and increase headcount by +1. Week number will be auto-generated based on transfer date.</p>
+                    <p class="font-semibold text-blue-800 dark:text-blue-300">Transfer In Process</p>
+                    <p class="text-sm text-blue-700 dark:text-blue-400 mt-1">This will add the officer to your congregation and increase headcount by +1. Week number will be auto-generated based on transfer date.</p>
                 </div>
             </div>
         </div>
         
         <?php if (!empty($error)): ?>
-            <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+            <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-4">
                 <div class="flex items-center">
-                    <svg class="w-5 h-5 text-red-600 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <svg class="w-5 h-5 text-red-600 dark:text-red-400 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
                     </svg>
-                    <span class="text-sm font-medium text-red-800"><?php echo Security::escape($error); ?></span>
+                    <span class="text-sm font-medium text-red-800 dark:text-red-300"><?php echo Security::escape($error); ?></span>
                 </div>
             </div>
         <?php endif; ?>
@@ -223,48 +223,48 @@ ob_start();
             <input type="hidden" name="csrf_token" value="<?php echo Security::generateCSRFToken(); ?>">
             
             <!-- Personal Information -->
-            <div class="border-b border-gray-200 pb-2 mb-6">
-                <h3 class="text-lg font-semibold text-gray-900">Officer Information</h3>
+            <div class="border-b border-gray-200 dark:border-gray-700 pb-2 mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Officer Information</h3>
             </div>
             
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Last Name <span class="text-red-600">*</span>
                     </label>
                     <input 
                         type="text" 
                         name="last_name" 
                         placeholder="Last Name" 
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                        class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 transition-colors"
                         value="<?php echo Security::escape($_POST['last_name'] ?? ''); ?>"
                         required
                     >
                 </div>
                 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         First Name <span class="text-red-600">*</span>
                     </label>
                     <input 
                         type="text" 
                         name="first_name" 
                         placeholder="First Name" 
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                        class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 transition-colors"
                         value="<?php echo Security::escape($_POST['first_name'] ?? ''); ?>"
                         required
                     >
                 </div>
                 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         M.I.
                     </label>
                     <input 
                         type="text" 
                         name="middle_initial" 
                         placeholder="M.I." 
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                        class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 transition-colors"
                         maxlength="2"
                         value="<?php echo Security::escape($_POST['middle_initial'] ?? ''); ?>"
                     >
@@ -272,34 +272,34 @@ ob_start();
             </div>
             
             <!-- Origin Information -->
-            <div class="border-b border-gray-200 pb-2 mb-6">
-                <h3 class="text-lg font-semibold text-gray-900">From (Origin)</h3>
+            <div class="border-b border-gray-200 dark:border-gray-700 pb-2 mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">From (Origin)</h3>
             </div>
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         From Local Congregation <span class="text-red-600">*</span>
                     </label>
                     <input 
                         type="text" 
                         name="from_local_name" 
                         placeholder="e.g., San Juan Local" 
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                        class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 transition-colors"
                         value="<?php echo Security::escape($_POST['from_local_name'] ?? ''); ?>"
                         required
                     >
                 </div>
                 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         From District <span class="text-red-600">*</span>
                     </label>
                     <input 
                         type="text" 
                         name="from_district" 
                         placeholder="e.g., District 5" 
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                        class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 transition-colors"
                         value="<?php echo Security::escape($_POST['from_district'] ?? ''); ?>"
                         required
                     >
@@ -307,19 +307,19 @@ ob_start();
             </div>
             
             <!-- Destination Information -->
-            <div class="border-b border-gray-200 pb-2 mb-6">
-                <h3 class="text-lg font-semibold text-gray-900">To (Destination)</h3>
+            <div class="border-b border-gray-200 dark:border-gray-700 pb-2 mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">To (Destination)</h3>
             </div>
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         To District <span class="text-red-600">*</span>
                     </label>
                     <?php if ($currentUser['role'] !== 'local'): ?>
                         <select 
                             name="to_district_code" 
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 transition-colors"
                             id="district-select"
                             required
                         >
@@ -346,7 +346,7 @@ ob_start();
                 </div>
                 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         To Local Congregation <span class="text-red-600">*</span>
                     </label>
                     <?php if ($currentUser['role'] !== 'local'): ?>
@@ -354,7 +354,7 @@ ob_start();
                             <input 
                                 type="text" 
                                 id="local-display"
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer bg-white"
+                                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                                 placeholder="Select Local Congregation"
                                 readonly
                                 onclick="openLocalModal()"
@@ -362,13 +362,13 @@ ob_start();
                             >
                             <input type="hidden" name="to_local_code" id="local-value" required>
                             <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none">
-                                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg class="w-5 h-5 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                                 </svg>
                             </div>
                         </div>
                     <?php else: ?>
-                        <input type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100" 
+                        <input type="text" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-600 text-gray-700 dark:text-gray-300" 
                                value="<?php echo Security::escape($locals[0]['local_name'] ?? ''); ?>" readonly>
                         <input type="hidden" name="to_local_code" value="<?php echo Security::escape($currentUser['local_code']); ?>">
                     <?php endif; ?>
@@ -378,39 +378,39 @@ ob_start();
             <!-- Purok, Grupo, Control Number (Optional Fields) -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                        Purok <span class="text-gray-400 text-xs">(Optional)</span>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Purok <span class="text-gray-400 dark:text-gray-500 text-xs">(Optional)</span>
                     </label>
                     <input 
                         type="text" 
                         name="purok" 
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                         placeholder="Enter purok"
                         value="<?php echo Security::escape($_POST['purok'] ?? ''); ?>"
                     >
                 </div>
                 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                        Grupo <span class="text-gray-400 text-xs">(Optional)</span>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Grupo <span class="text-gray-400 dark:text-gray-500 text-xs">(Optional)</span>
                     </label>
                     <input 
                         type="text" 
                         name="grupo" 
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                         placeholder="Enter grupo"
                         value="<?php echo Security::escape($_POST['grupo'] ?? ''); ?>"
                     >
                 </div>
                 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                        Control Number <span class="text-gray-400 text-xs">(Optional)</span>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Control Number <span class="text-gray-400 dark:text-gray-500 text-xs">(Optional)</span>
                     </label>
                     <input 
                         type="text" 
                         name="control_number" 
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                         placeholder="Enter control number"
                         value="<?php echo Security::escape($_POST['control_number'] ?? ''); ?>"
                     >
@@ -418,20 +418,20 @@ ob_start();
             </div>
             
             <!-- Department and Duty -->
-            <div class="border-b border-gray-200 pb-2 mb-6 mt-6">
-                <h3 class="text-lg font-semibold text-gray-900">Assignment Information</h3>
+            <div class="border-b border-gray-200 dark:border-gray-700 pb-2 mb-6 mt-6">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Assignment Information</h3>
             </div>
             
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Department <span class="text-red-600">*</span>
                     </label>
                     <div class="relative">
                         <input 
                             type="text" 
                             id="department-display"
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer bg-white"
+                            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                             placeholder="Select Department"
                             readonly
                             onclick="openDepartmentModal()"
@@ -439,7 +439,7 @@ ob_start();
                         >
                         <input type="hidden" name="department" id="department-value" value="<?php echo Security::escape($_POST['department'] ?? ''); ?>" required>
                         <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none">
-                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-5 h-5 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                             </svg>
                         </div>
@@ -447,13 +447,13 @@ ob_start();
                 </div>
                 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Oath Date <span class="text-red-600">*</span>
                     </label>
                     <input 
                         type="date" 
                         name="oath_date" 
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                        class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 transition-colors"
                         value="<?php echo Security::escape($_POST['oath_date'] ?? date('Y-m-d')); ?>"
                         max="<?php echo date('Y-m-d'); ?>"
                         required
@@ -461,13 +461,13 @@ ob_start();
                 </div>
                 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Transfer Date <span class="text-red-600">*</span>
                     </label>
                     <input 
                         type="date" 
                         name="transfer_date" 
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                        class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 transition-colors"
                         value="<?php echo date('Y-m-d'); ?>"
                         max="<?php echo date('Y-m-d'); ?>"
                         required
@@ -476,29 +476,29 @@ ob_start();
             </div>
             
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Duty/Specific Role
                 </label>
                 <textarea 
                     name="duty" 
                     placeholder="Describe the specific duty or role (optional)" 
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none h-24"
+                    class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 transition-colors resize-none h-24"
                     ><?php echo Security::escape($_POST['duty'] ?? ''); ?></textarea>
             </div>
             
             <!-- Week Info Display -->
-            <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+            <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
                 <div class="flex items-center">
-                    <svg class="w-5 h-5 text-green-600 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-5 h-5 text-green-600 dark:text-green-400 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                     </svg>
-                    <span class="text-sm font-medium text-green-800">Current Week: <strong>Week <?php echo getCurrentWeekNumber(); ?>, <?php echo date('Y'); ?></strong></span>
+                    <span class="text-sm font-medium text-green-800 dark:text-green-300">Current Week: <strong>Week <?php echo getCurrentWeekNumber(); ?>, <?php echo date('Y'); ?></strong></span>
                 </div>
             </div>
             
             <!-- Submit Button -->
             <div class="flex items-center justify-end space-x-3 pt-4">
-                <a href="<?php echo BASE_URL; ?>/officers/list.php" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                <a href="<?php echo BASE_URL; ?>/officers/list.php" class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                     </svg>
@@ -561,7 +561,7 @@ function openLocalModal() {
     listContainer.innerHTML = '';
     currentLocals.forEach(local => {
         const div = document.createElement('div');
-        div.className = 'local-item px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100';
+        div.className = 'local-item px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer border-b border-gray-100 dark:border-gray-700 text-gray-900 dark:text-gray-100';
         div.textContent = local.local_name;
         div.onclick = () => selectLocal(local.local_code, local.local_name);
         listContainer.appendChild(div);
@@ -631,11 +631,11 @@ function filterDepartments() {
 <div id="department-modal" class="hidden fixed inset-0 z-50 overflow-y-auto">
     <div class="flex items-center justify-center min-h-screen p-4">
         <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" onclick="closeDepartmentModal()"></div>
-        <div class="relative bg-white rounded-lg shadow-xl max-w-md w-full max-h-[80vh] flex flex-col">
+        <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full max-h-[80vh] flex flex-col">
             <!-- Header -->
-            <div class="flex items-center justify-between p-4 border-b">
-                <h3 class="text-lg font-semibold text-gray-900">Select Department</h3>
-                <button type="button" onclick="closeDepartmentModal()" class="text-gray-400 hover:text-gray-500">
+            <div class="flex items-center justify-between p-4 border-b dark:border-gray-700">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Select Department</h3>
+                <button type="button" onclick="closeDepartmentModal()" class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                     </svg>
@@ -643,11 +643,11 @@ function filterDepartments() {
             </div>
             
             <!-- Search -->
-            <div class="p-4 border-b">
+            <div class="p-4 border-b dark:border-gray-700">
                 <input 
                     type="text" 
                     id="department-search"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                     placeholder="Search departments..."
                     oninput="filterDepartments()"
                 >
@@ -656,9 +656,9 @@ function filterDepartments() {
             <!-- List -->
             <div class="overflow-y-auto flex-1">
                 <?php foreach (getDepartments() as $dept): ?>
-                    <div class="department-item px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100"
+                    <div class="department-item px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer border-b border-gray-100 dark:border-gray-700"
                          onclick="selectDepartment('<?php echo Security::escape($dept); ?>')">
-                        <span class="text-gray-900"><?php echo Security::escape($dept); ?></span>
+                        <span class="text-gray-900 dark:text-gray-100"><?php echo Security::escape($dept); ?></span>
                     </div>
                 <?php endforeach; ?>
             </div>
@@ -670,11 +670,11 @@ function filterDepartments() {
 <div id="local-modal" class="hidden fixed inset-0 z-50 overflow-y-auto">
     <div class="flex items-center justify-center min-h-screen p-4">
         <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" onclick="closeLocalModal()"></div>
-        <div class="relative bg-white rounded-lg shadow-xl max-w-md w-full max-h-[80vh] flex flex-col">
+        <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full max-h-[80vh] flex flex-col">
             <!-- Header -->
-            <div class="flex items-center justify-between p-4 border-b">
-                <h3 class="text-lg font-semibold text-gray-900">Select Local Congregation</h3>
-                <button type="button" onclick="closeLocalModal()" class="text-gray-400 hover:text-gray-500">
+            <div class="flex items-center justify-between p-4 border-b dark:border-gray-700">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Select Local Congregation</h3>
+                <button type="button" onclick="closeLocalModal()" class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                     </svg>
@@ -682,11 +682,11 @@ function filterDepartments() {
             </div>
             
             <!-- Search -->
-            <div class="p-4 border-b">
+            <div class="p-4 border-b dark:border-gray-700">
                 <input 
                     type="text" 
                     id="local-search"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                     placeholder="Search local congregations..."
                     oninput="filterLocals()"
                 >

@@ -14,7 +14,7 @@ $db = Database::getInstance()->getConnection();
 // Only local and admin accounts can access this page
 if ($currentUser['role'] !== 'local' && $currentUser['role'] !== 'admin') {
     $_SESSION['error'] = "You do not have permission to view CFO access requests.";
-    header('Location: ' . BASE_URL . '/dashboard.php');
+    header('Location: ' . BASE_URL . '/launchpad.php');
     exit;
 }
 
@@ -24,10 +24,10 @@ ob_start();
 
 <div class="space-y-6">
     <!-- Header -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
         <div class="flex items-center justify-between">
             <div>
-                <h1 class="text-2xl font-semibold text-gray-900">CFO Access Requests</h1>
+                <h1 class="text-2xl font-semibold text-gray-900 dark:text-gray-100">CFO Access Requests</h1>
                 <p class="text-sm text-gray-500 mt-1">Review and approve access requests from Local CFO accounts</p>
             </div>
             <a href="pending-actions.php" class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
@@ -40,9 +40,9 @@ ob_start();
     </div>
 
     <!-- Pending Requests -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
-        <div class="p-4 border-b border-gray-200">
-            <h2 class="text-lg font-semibold text-gray-900">Pending Requests</h2>
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+        <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Pending Requests</h2>
         </div>
         <div class="p-6">
             <div id="requestsList" class="space-y-4">

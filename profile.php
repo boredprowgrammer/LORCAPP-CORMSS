@@ -128,7 +128,7 @@ ob_start();
     </div>
     
     <?php if (!empty($error)): ?>
-        <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+        <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
             <div class="flex items-center">
                 <svg class="w-5 h-5 text-red-600 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
@@ -139,7 +139,7 @@ ob_start();
     <?php endif; ?>
     
     <?php if (!empty($success)): ?>
-        <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+        <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
             <div class="flex items-center">
                 <svg class="w-5 h-5 text-green-600 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
@@ -150,14 +150,14 @@ ob_start();
     <?php endif; ?>
     
     <!-- Profile Information -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
         <div class="flex items-center space-x-3 mb-6">
-            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+                <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                 </svg>
             </div>
-            <h3 class="text-xl font-semibold text-gray-900">Profile Information</h3>
+            <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100">Profile Information</h3>
         </div>
         
         <form method="POST" action="" class="space-y-4">
@@ -166,54 +166,54 @@ ob_start();
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Username</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Username</label>
                     <input 
                         type="text" 
                         value="<?php echo Security::escape($currentUser['username']); ?>" 
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50" 
+                        class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100" 
                         disabled
                     >
-                    <p class="mt-2 text-xs text-gray-500">Username cannot be changed</p>
+                    <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">Username cannot be changed</p>
                 </div>
                 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Role</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Role</label>
                     <input 
                         type="text" 
                         value="<?php echo ucfirst($currentUser['role']); ?>" 
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50" 
+                        class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100" 
                         disabled
                     >
                 </div>
                 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                        Full Name <span class="text-red-600">*</span>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Full Name <span class="text-red-600 dark:text-red-400">*</span>
                     </label>
                     <input 
                         type="text" 
                         name="full_name"
                         value="<?php echo Security::escape($currentUser['full_name']); ?>" 
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         required
                     >
                 </div>
                 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                        Email <span class="text-red-600">*</span>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Email <span class="text-red-600 dark:text-red-400">*</span>
                     </label>
                     <input 
                         type="email" 
                         name="email"
                         value="<?php echo Security::escape($currentUser['email']); ?>" 
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         required
                     >
                 </div>
             </div>
             
-            <div class="flex justify-end pt-4 border-t border-gray-200">
+            <div class="flex justify-end pt-4 border-t border-gray-200 dark:border-gray-700">
                 <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path>
@@ -225,14 +225,14 @@ ob_start();
     </div>
     
     <!-- Change Password -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
         <div class="flex items-center space-x-3 mb-6">
-            <div class="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
-                <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="w-10 h-10 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg flex items-center justify-center">
+                <svg class="w-6 h-6 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
                 </svg>
             </div>
-            <h3 class="text-xl font-semibold text-gray-900">Change Password</h3>
+            <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100">Change Password</h3>
         </div>
         
         <form method="POST" action="" class="space-y-4">
@@ -240,13 +240,13 @@ ob_start();
             <input type="hidden" name="action" value="change_password">
             
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">
-                    Current Password <span class="text-red-600">*</span>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Current Password <span class="text-red-600 dark:text-red-400">*</span>
                 </label>
                 <input 
                     type="password" 
                     name="current_password"
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     autocapitalize="off"
                     autocorrect="off"
                     required
@@ -255,29 +255,29 @@ ob_start();
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                        New Password <span class="text-red-600">*</span>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        New Password <span class="text-red-600 dark:text-red-400">*</span>
                     </label>
                     <input 
                         type="password" 
                         name="new_password"
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         autocapitalize="off"
                         autocorrect="off"
                         minlength="8"
                         required
                     >
-                    <p class="mt-2 text-xs text-gray-500">Minimum 8 characters</p>
+                    <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">Minimum 8 characters</p>
                 </div>
                 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                        Confirm New Password <span class="text-red-600">*</span>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Confirm New Password <span class="text-red-600 dark:text-red-400">*</span>
                     </label>
                     <input 
                         type="password" 
                         name="confirm_password"
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         autocapitalize="off"
                         autocorrect="off"
                         minlength="8"

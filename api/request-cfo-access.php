@@ -1,6 +1,7 @@
 <?php
 /**
  * Request CFO Registry Access
+ * Supports multiple access modes with 7-day expiration
  */
 
 require_once __DIR__ . '/../config/config.php';
@@ -31,69 +32,87 @@ try {
     $input = json_decode(file_get_contents('php://input'), true);
     
     $cfoType = Security::sanitizeInput($input['cfo_type'] ?? '');
-    $reason = Security::sanitizeInput($input['reason'] ?? '');
-    $password = $input['password'] ?? '';
+    $accessModes = $input['access_modes'] ?? [];
     
     // Validate inputs
     if (!in_array($cfoType, ['Buklod', 'Kadiwa', 'Binhi', 'All'])) {
         throw new Exception('Invalid CFO type selected');
     }
     
-    if (empty($password)) {
-        throw new Exception('Password is required for verification');
+    // Validate access modes
+    $validModes = ['view_data', 'add_member', 'edit_member'];
+    $accessModes = array_filter($accessModes, fn($m) => in_array($m, $validModes));
+    
+    if (empty($accessModes)) {
+        throw new Exception('Please select at least one access type');
     }
     
-    // Verify password
-    $stmt = $db->prepare("SELECT password_hash FROM users WHERE user_id = ?");
-    $stmt->execute([$currentUser['user_id']]);
-    $user = $stmt->fetch();
+    // Calculate expiration date (7 days from now)
+    $expiresAt = date('Y-m-d H:i:s', strtotime('+7 days'));
     
-    if (!$user || !password_verify($password, $user['password_hash'])) {
-        throw new Exception('Invalid password. Please try again.');
+    $createdRequestIds = [];
+    $skippedModes = [];
+    
+    foreach ($accessModes as $accessMode) {
+        // Check if there's already a pending request for this type and mode
+        $stmt = $db->prepare("
+            SELECT id FROM cfo_access_requests 
+            WHERE requester_user_id = ? 
+            AND cfo_type = ? 
+            AND access_mode = ?
+            AND status = 'pending'
+            AND deleted_at IS NULL
+        ");
+        $stmt->execute([$currentUser['user_id'], $cfoType, $accessMode]);
+        
+        if ($stmt->fetch()) {
+            // Already has pending request for this mode, skip
+            $skippedModes[] = $accessMode;
+            continue;
+        }
+        
+        // Create access request with expiration
+        $stmt = $db->prepare("
+            INSERT INTO cfo_access_requests 
+            (requester_user_id, requester_local_code, cfo_type, access_mode, expires_at) 
+            VALUES (?, ?, ?, ?, ?)
+        ");
+        
+        $stmt->execute([
+            $currentUser['user_id'],
+            $currentUser['local_code'],
+            $cfoType,
+            $accessMode,
+            $expiresAt
+        ]);
+        
+        $createdRequestIds[] = $db->lastInsertId();
     }
     
-    // Check if there's already a pending request for this type
-    $stmt = $db->prepare("
-        SELECT id FROM cfo_access_requests 
-        WHERE requester_user_id = ? 
-        AND cfo_type = ? 
-        AND status = 'pending'
-        AND deleted_at IS NULL
-    ");
-    $stmt->execute([$currentUser['user_id'], $cfoType]);
-    
-    if ($stmt->fetch()) {
-        throw new Exception('You already have a pending request for ' . $cfoType . ' records');
+    if (empty($createdRequestIds)) {
+        throw new Exception('You already have pending requests for all selected access types');
     }
-    
-    // Create access request
-    $stmt = $db->prepare("
-        INSERT INTO cfo_access_requests 
-        (requester_user_id, requester_local_code, cfo_type, request_reason) 
-        VALUES (?, ?, ?, ?)
-    ");
-    
-    $stmt->execute([
-        $currentUser['user_id'],
-        $currentUser['local_code'],
-        $cfoType,
-        $reason
-    ]);
-    
-    $requestId = $db->lastInsertId();
     
     // Log the action
     secureLog("CFO access requested", [
-        'request_id' => $requestId,
+        'request_ids' => $createdRequestIds,
         'user_id' => $currentUser['user_id'],
         'cfo_type' => $cfoType,
-        'local_code' => $currentUser['local_code']
+        'access_modes' => $accessModes,
+        'local_code' => $currentUser['local_code'],
+        'expires_at' => $expiresAt
     ]);
+    
+    $message = 'Access request submitted successfully. Your senior officer will be notified.';
+    if (!empty($skippedModes)) {
+        $message .= ' Note: Some types were skipped as you already have pending requests for them.';
+    }
     
     echo json_encode([
         'success' => true,
-        'message' => 'Access request submitted successfully. Your senior officer will be notified.',
-        'request_id' => $requestId
+        'message' => $message,
+        'request_ids' => $createdRequestIds,
+        'expires_at' => $expiresAt
     ]);
     
 } catch (Exception $e) {

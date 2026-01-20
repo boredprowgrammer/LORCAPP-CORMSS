@@ -311,10 +311,10 @@ ob_start();
 
 <div class="space-y-6">
     <!-- Header -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
         <div class="flex items-center justify-between">
             <div>
-                <h1 class="text-2xl font-semibold text-gray-900">Import Legacy Control Numbers</h1>
+                <h1 class="text-2xl font-semibold text-gray-900 dark:text-gray-100">Import Legacy Control Numbers</h1>
                 <p class="text-sm text-gray-500 mt-1">Upload CSV file with legacy officer control numbers</p>
             </div>
             <a href="list.php" class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
@@ -357,8 +357,8 @@ Garcia Maria Lopez,C2024-002</pre>
 
     <!-- Column Mapper (Step 2) -->
     <?php if ($csvHeaders && !$importResults): ?>
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">Map CSV Columns</h3>
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Map CSV Columns</h3>
         <p class="text-sm text-gray-600 mb-6">Please map your CSV columns to the required fields:</p>
         
         <form method="POST" class="space-y-6">

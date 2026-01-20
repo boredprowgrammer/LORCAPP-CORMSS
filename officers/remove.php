@@ -407,39 +407,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $removalCodes = getRemovalCodes();
 
 $pageTitle = 'Remove Officer';
+$csp_nonce = base64_encode(random_bytes(16));
 ob_start();
 ?>
 
 <div class="max-w-4xl mx-auto">
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 p-6">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
         <div class="flex items-center space-x-3 mb-6">
-            <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+            <div class="w-10 h-10 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center">
                 <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7a4 4 0 11-8 0 4 4 0 018 0zM9 14a6 6 0 00-6 6v1h12v-1a6 6 0 00-6-6zM21 12h-6"></path>
                 </svg>
             </div>
-            <h2 class="text-2xl font-semibold text-gray-900">Remove Officer</h2>
+            <h2 class="text-2xl font-semibold text-gray-900 dark:text-gray-100">Remove Officer</h2>
         </div>
         
-        <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+        <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6">
             <div class="flex items-start">
                 <svg class="w-5 h-5 text-red-600 mr-3 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
                 </svg>
                 <div>
-                    <p class="font-semibold text-red-800">Three-Stage Removal Process</p>
-                    <p class="text-sm text-red-700 mt-1">
+                    <p class="font-semibold text-red-800 dark:text-red-300">Three-Stage Removal Process</p>
+                    <p class="text-sm text-red-700 dark:text-red-400 mt-1">
                         <strong>Stage 1:</strong> Local deliberates and creates removal request<br>
                         <strong>Stage 2:</strong> Request sent to district for review<br>
                         <strong>Stage 3:</strong> District approves and officer is deactivated
                     </p>
-                    <p class="text-sm text-red-700 mt-2">This ensures proper oversight and accountability in the removal process.</p>
+                    <p class="text-sm text-red-700 dark:text-red-400 mt-2">This ensures proper oversight and accountability in the removal process.</p>
                 </div>
             </div>
         </div>
         
         <?php if ($currentUser['role'] !== 'local'): ?>
-            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+            <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4 mb-6">
                 <div class="flex items-center">
                     <svg class="w-5 h-5 text-yellow-600 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
@@ -450,7 +451,7 @@ ob_start();
         <?php endif; ?>
         
         <?php if (!empty($error)): ?>
-            <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+            <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6">
                 <div class="flex items-center">
                     <svg class="w-5 h-5 text-red-600 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
@@ -467,15 +468,15 @@ ob_start();
                 <input type="hidden" name="officer_uuid" id="officer_uuid">
                 
                 <!-- Selected Officer Display -->
-                <div id="selectedOfficerDisplay" class="bg-blue-50 border border-blue-200 rounded-lg p-4 hidden">
+                <div id="selectedOfficerDisplay" class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 hidden">
                     <div class="flex items-start justify-between">
                         <div class="flex items-center">
                             <svg class="w-5 h-5 text-blue-600 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
                             </svg>
                             <div>
-                                <p class="text-sm font-semibold text-blue-900" id="selectedOfficerName"></p>
-                                <p class="text-xs text-blue-700" id="selectedOfficerLocation"></p>
+                                <p class="text-sm font-semibold text-blue-900 dark:text-blue-300" id="selectedOfficerName"></p>
+                                <p class="text-xs text-blue-700 dark:text-blue-400" id="selectedOfficerLocation"></p>
                             </div>
                         </div>
                         <button type="button" onclick="clearOfficerSelection()" class="text-blue-600 hover:text-blue-800">
@@ -487,46 +488,46 @@ ob_start();
                 </div>
                 
                 <!-- Select Officer -->
-                <div class="border-b border-gray-200 pb-2 mb-6">
-                    <h3 class="text-lg font-semibold text-gray-900">Select Officer</h3>
+                <div class="border-b border-gray-200 dark:border-gray-700 pb-2 mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Select Officer</h3>
                 </div>
                 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Search Officer <span class="text-red-600">*</span>
                     </label>
                     <input 
                         type="text" 
                         id="officer-search"
                         placeholder="Type officer name to search..." 
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                        class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 transition-colors"
                         autocomplete="off"
                         @input="officerSelected = false"
                     >
                     <div id="search-results" class="mt-2"></div>
                 </div>
                 
-                <div x-show="officerSelected" class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div x-show="officerSelected" class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
                     <div class="flex items-center">
                         <svg class="w-5 h-5 text-blue-600 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
                         </svg>
-                        <span class="text-sm font-medium text-blue-800">Officer selected. Continue with removal details below.</span>
+                        <span class="text-sm font-medium text-blue-800 dark:text-blue-300">Officer selected. Continue with removal details below.</span>
                     </div>
                 </div>
                 
                 <!-- Removal Code -->
-                <div class="border-b border-gray-200 pb-2 mb-6">
-                    <h3 class="text-lg font-semibold text-gray-900">Removal Details</h3>
+                <div class="border-b border-gray-200 dark:border-gray-700 pb-2 mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Removal Details</h3>
                 </div>
                 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-3">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
                         Removal Code <span class="text-red-600">*</span>
                     </label>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <?php foreach ($removalCodes as $code => $description): ?>
-                            <label class="relative flex items-start p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-red-300 hover:bg-red-50 transition-colors">
+                            <label class="relative flex items-start p-4 border-2 border-gray-200 dark:border-gray-600 rounded-lg cursor-pointer hover:border-red-300 dark:hover:border-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
                                 <input 
                                     type="radio" 
                                     name="removal_code" 
@@ -535,8 +536,8 @@ ob_start();
                                     required
                                 >
                                 <div class="ml-3">
-                                    <span class="block font-semibold text-gray-900">CODE <?php echo $code; ?></span>
-                                    <p class="text-sm text-gray-600 mt-0.5"><?php echo Security::escape($description); ?></p>
+                                    <span class="block font-semibold text-gray-900 dark:text-gray-100">CODE <?php echo $code; ?></span>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-0.5"><?php echo Security::escape($description); ?></p>
                                     <?php if ($code === 'D'): ?>
                                     <p class="text-xs text-blue-600 font-medium mt-1">✓ No deliberation required - Immediate processing</p>
                                     <?php else: ?>
@@ -547,8 +548,8 @@ ob_start();
                         <?php endforeach; ?>
                     </div>
                     
-                    <div class="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-3">
-                        <p class="text-xs text-blue-800">
+                    <div class="mt-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                        <p class="text-xs text-blue-800 dark:text-blue-300">
                             <strong>Note:</strong> CODE D (Lipat Kapisanan/Transfer) will be processed immediately. 
                             Other codes (A, B, C) require approval from the district level before completion.
                         </p>
@@ -558,9 +559,9 @@ ob_start();
                 <!-- Selected Code Display -->
                 <div x-show="selectedCode" 
                      :class="{
-                         'bg-red-50 border-red-200': selectedCode === 'A',
-                         'bg-yellow-50 border-yellow-200': selectedCode === 'B' || selectedCode === 'D',
-                         'bg-blue-50 border-blue-200': selectedCode === 'C'
+                         'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800': selectedCode === 'A',
+                         'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800': selectedCode === 'B' || selectedCode === 'D',
+                         'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800': selectedCode === 'C'
                      }"
                      class="border rounded-lg p-4">
                     <div class="flex items-center">
@@ -575,9 +576,9 @@ ob_start();
                         </svg>
                         <span class="text-sm font-medium"
                               :class="{
-                                  'text-red-800': selectedCode === 'A',
-                                  'text-yellow-800': selectedCode === 'B' || selectedCode === 'D',
-                                  'text-blue-800': selectedCode === 'C'
+                                  'text-red-800 dark:text-red-300': selectedCode === 'A',
+                                  'text-yellow-800 dark:text-yellow-300': selectedCode === 'B' || selectedCode === 'D',
+                                  'text-blue-800 dark:text-blue-300': selectedCode === 'C'
                               }">Selected: <strong x-text="'CODE ' + selectedCode"></strong></span>
                     </div>
                 </div>
@@ -585,13 +586,13 @@ ob_start();
                 <!-- Removal Date and Reason -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             Removal Date <span class="text-red-600">*</span>
                         </label>
                         <input 
                             type="date" 
                             name="removal_date" 
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 transition-colors"
                             value="<?php echo date('Y-m-d'); ?>"
                             max="<?php echo date('Y-m-d'); ?>"
                             required
@@ -599,10 +600,10 @@ ob_start();
                     </div>
                     
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             Week Info
                         </label>
-                        <div class="w-full px-4 py-2 border border-gray-200 rounded-lg bg-gray-50 flex items-center text-gray-700">
+                        <div class="w-full px-4 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 flex items-center text-gray-700 dark:text-gray-300">
                             <svg class="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                             </svg>
@@ -612,32 +613,32 @@ ob_start();
                 </div>
                 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Reason / Additional Information
                     </label>
                     <textarea 
                         name="reason" 
                         placeholder="Provide additional details about this removal (optional but recommended)..." 
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none h-24"
+                        class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 transition-colors resize-none h-24"
                     ></textarea>
                 </div>
                 
                 <!-- Warning -->
-                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4">
                     <div class="flex items-start">
                         <svg class="w-5 h-5 text-yellow-600 mr-3 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
                         </svg>
                         <div>
-                            <p class="font-semibold text-yellow-800">Important</p>
-                            <p class="text-sm text-yellow-700 mt-1">This action will deactivate the officer and reduce headcount. Make sure you have selected the correct officer and removal code.</p>
+                            <p class="font-semibold text-yellow-800 dark:text-yellow-300">Important</p>
+                            <p class="text-sm text-yellow-700 dark:text-yellow-400 mt-1">This action will deactivate the officer and reduce headcount. Make sure you have selected the correct officer and removal code.</p>
                         </div>
                     </div>
                 </div>
                 
                 <!-- Submit Button -->
                 <div class="flex items-center justify-end space-x-3 pt-4">
-                    <a href="<?php echo BASE_URL; ?>/officers/list.php" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 transition-colors">
+                    <a href="<?php echo BASE_URL; ?>/officers/list.php" class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                         </svg>
@@ -652,11 +653,11 @@ ob_start();
                 </div>
             </form>
             <?php else: ?>
-            <div class="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
-                <svg class="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-8 text-center">
+                <svg class="w-16 h-16 mx-auto text-gray-400 dark:text-gray-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
                 </svg>
-                <p class="text-gray-600 mb-4">Only local administrators can initiate officer removals.</p>
+                <p class="text-gray-600 dark:text-gray-400 mb-4">Only local administrators can initiate officer removals.</p>
                 <a href="removal-requests.php" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
                     View Removal Requests
                 </a>

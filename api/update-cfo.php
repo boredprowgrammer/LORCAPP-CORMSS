@@ -6,12 +6,48 @@
 require_once __DIR__ . '/../config/config.php';
 
 Security::requireLogin();
-requirePermission('can_add_officers'); // Requires permission to add officers
 
 header('Content-Type: application/json');
 
 $currentUser = getCurrentUser();
 $db = Database::getInstance()->getConnection();
+
+// Check access for local_cfo users via approved access requests
+$hasEditAccess = false;
+$approvedCfoTypes = [];
+
+if ($currentUser['role'] === 'admin' || $currentUser['role'] === 'local') {
+    // Admin and local have full access (if they have can_add_officers permission)
+    if (hasPermission('can_add_officers')) {
+        $hasEditAccess = true;
+    }
+} elseif ($currentUser['role'] === 'local_cfo') {
+    // Check for approved edit_member access
+    $stmt = $db->prepare("
+        SELECT * FROM cfo_access_requests 
+        WHERE requester_user_id = ? 
+        AND status = 'approved'
+        AND access_mode = 'edit_member'
+        AND deleted_at IS NULL
+        AND (expires_at IS NULL OR expires_at > NOW())
+    ");
+    $stmt->execute([$currentUser['user_id']]);
+    $approvedRequests = $stmt->fetchAll();
+    
+    if (count($approvedRequests) > 0) {
+        $hasEditAccess = true;
+        foreach ($approvedRequests as $request) {
+            if (!in_array($request['cfo_type'], $approvedCfoTypes)) {
+                $approvedCfoTypes[] = $request['cfo_type'];
+            }
+        }
+    }
+}
+
+if (!$hasEditAccess) {
+    echo json_encode(['success' => false, 'error' => 'You do not have permission to edit CFO records.']);
+    exit;
+}
 
 try {
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -254,15 +290,89 @@ try {
         throw new Exception('No fields to update');
     }
     
-    // Update record
-    $sql = "UPDATE tarheta_control SET " . implode(', ', $updateFields) . " WHERE id = ?";
-    $stmt = $db->prepare($sql);
-    $stmt->execute($params);
-    
-    echo json_encode([
-        'success' => true,
-        'message' => 'CFO information updated successfully'
-    ]);
+    // For local_cfo users, save to pending_actions instead of direct update
+    if ($currentUser['role'] === 'local_cfo') {
+        // Check if CFO classification is allowed for this user
+        if (!empty($approvedCfoTypes)) {
+            // Get current classification of the record
+            $stmtClass = $db->prepare("SELECT cfo_classification FROM tarheta_control WHERE id = ?");
+            $stmtClass->execute([$id]);
+            $currentClass = $stmtClass->fetchColumn();
+            
+            // Check if user can edit this classification
+            if (!in_array($currentClass, $approvedCfoTypes)) {
+                throw new Exception('You can only edit members with classification: ' . implode(', ', $approvedCfoTypes));
+            }
+        }
+        
+        // Find senior approver (local account from same congregation)
+        $stmt = $db->prepare("
+            SELECT user_id FROM users 
+            WHERE role = 'local' AND local_code = ? AND is_active = 1 
+            LIMIT 1
+        ");
+        $stmt->execute([$currentUser['local_code']]);
+        $seniorApprover = $stmt->fetch();
+        
+        if (!$seniorApprover) {
+            throw new Exception('No senior approver (LORC/LCRC) found for your local congregation.');
+        }
+        
+        // Prepare action data (store raw data for approval)
+        $actionData = json_encode([
+            'first_name' => $firstName,
+            'middle_name' => $middleName,
+            'last_name' => $lastName,
+            'husbands_surname' => $husbandsSurname,
+            'birthday' => $birthday,
+            'registry_number' => $registryNumber,
+            'cfo_classification' => $cfoClassification,
+            'cfo_status' => $cfoStatus,
+            'cfo_notes' => $cfoNotes,
+            'registration_type' => $registrationType,
+            'registration_date' => $registrationDate,
+            'registration_others_specify' => $registrationOthersSpecify,
+            'transfer_out_date' => $transferOutDate,
+            'marriage_date' => $marriageDate,
+            'classification_change_date' => $classificationChangeDate,
+            'classification_change_reason' => $classificationChangeReason,
+            'purok' => $purok,
+            'grupo' => $grupo
+        ]);
+        
+        $actionDescription = "Edit CFO member (ID: $id)";
+        
+        $stmt = $db->prepare("
+            INSERT INTO pending_actions (
+                requester_user_id, approver_user_id, action_type, action_data,
+                action_description, target_table, target_record_id, status, created_at, expires_at
+            ) VALUES (?, ?, 'edit_cfo', ?, ?, 'tarheta_control', ?, 'pending', NOW(), DATE_ADD(NOW(), INTERVAL 7 DAY))
+        ");
+        $stmt->execute([
+            $currentUser['user_id'],
+            $seniorApprover['user_id'],
+            $actionData,
+            $actionDescription,
+            $id
+        ]);
+        
+        echo json_encode([
+            'success' => true,
+            'message' => 'Edit submitted for LORC/LCRC review. You will be notified once approved.',
+            'pending' => true
+        ]);
+        
+    } else {
+        // Direct update for admin/local users
+        $sql = "UPDATE tarheta_control SET " . implode(', ', $updateFields) . " WHERE id = ?";
+        $stmt = $db->prepare($sql);
+        $stmt->execute($params);
+        
+        echo json_encode([
+            'success' => true,
+            'message' => 'CFO information updated successfully'
+        ]);
+    }
     
 } catch (Exception $e) {
     error_log("Error in update-cfo.php: " . $e->getMessage());

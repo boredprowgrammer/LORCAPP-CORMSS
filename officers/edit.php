@@ -333,17 +333,18 @@ try {
 }
 
 $pageTitle = 'Edit Officer';
+$csp_nonce = base64_encode(random_bytes(16));
 ob_start();
 ?>
 
 <div class="max-w-4xl mx-auto space-y-6">
     <!-- Header -->
-    <div class="flex items-center justify-between bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 p-4">
+    <div class="flex items-center justify-between bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
         <div>
-            <h1 class="text-2xl font-bold text-gray-900">Edit Officer</h1>
-            <p class="text-sm text-gray-600">Update officer information</p>
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Edit Officer</h1>
+            <p class="text-sm text-gray-600 dark:text-gray-400">Update officer information</p>
         </div>
-        <a href="<?php echo BASE_URL; ?>/officers/view.php?id=<?php echo urlencode($officerUuid); ?>" class="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 transition-colors">
+        <a href="<?php echo BASE_URL; ?>/officers/view.php?id=<?php echo urlencode($officerUuid); ?>" class="inline-flex items-center px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
             </svg>
@@ -351,14 +352,14 @@ ob_start();
         </a>
     </div>
     
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 p-6">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
         <?php if (!empty($error)): ?>
-            <div class="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+            <div class="mb-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
                 <div class="flex items-center">
-                    <svg class="w-5 h-5 text-red-600 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <svg class="w-5 h-5 text-red-600 dark:text-red-400 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
                     </svg>
-                    <span class="text-sm font-medium text-red-800"><?php echo Security::escape($error); ?></span>
+                    <span class="text-sm font-medium text-red-800 dark:text-red-300"><?php echo Security::escape($error); ?></span>
                 </div>
             </div>
         <?php endif; ?>
@@ -369,56 +370,74 @@ ob_start();
                 <!-- Personal Information -->
                 <div>
                     <div class="flex items-center space-x-2 mb-4">
-                        <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <div class="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
                             <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                             </svg>
                         </div>
-                        <h3 class="font-semibold text-gray-900">Personal Information</h3>
+                        <h3 class="font-semibold text-gray-900 dark:text-gray-100">Personal Information</h3>
                     </div>
                     
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                 Last Name <span class="text-red-600">*</span>
                             </label>
-                            <input 
-                                type="text" 
-                                name="last_name" 
-                                placeholder="Last Name" 
-                                class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 uppercase"
-                                style="text-transform: uppercase;"
-                                oninput="this.value = this.value.toUpperCase()"
-                                value="<?php echo Security::escape($decrypted['last_name']); ?>"
-                                required
-                            >
+                            <div class="relative">
+                                <input 
+                                    type="text" 
+                                    name="last_name" 
+                                    id="last_name"
+                                    placeholder="Last Name" 
+                                    class="w-full px-3 py-2 pr-10 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 uppercase"
+                                    style="text-transform: uppercase;"
+                                    oninput="this.value = this.value.toUpperCase(); markFormDirty()"
+                                    value="<?php echo Security::escape($decrypted['last_name']); ?>"
+                                    required
+                                >
+                                <button 
+                                    type="button"
+                                    onclick="insertEnye('last_name')"
+                                    class="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 text-sm font-bold text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-600 rounded transition-colors"
+                                    title="Insert ñ"
+                                >ñ</button>
+                            </div>
                         </div>
                         
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                 First Name <span class="text-red-600">*</span>
                             </label>
-                            <input 
-                                type="text" 
-                                name="first_name" 
-                                placeholder="First Name" 
-                                class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 uppercase"
-                                style="text-transform: uppercase;"
-                                oninput="this.value = this.value.toUpperCase()"
-                                value="<?php echo Security::escape($decrypted['first_name']); ?>"
-                                required
-                            >
+                            <div class="relative">
+                                <input 
+                                    type="text" 
+                                    name="first_name" 
+                                    id="first_name"
+                                    placeholder="First Name" 
+                                    class="w-full px-3 py-2 pr-10 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 uppercase"
+                                    style="text-transform: uppercase;"
+                                    oninput="this.value = this.value.toUpperCase(); markFormDirty()"
+                                    value="<?php echo Security::escape($decrypted['first_name']); ?>"
+                                    required
+                                >
+                                <button 
+                                    type="button"
+                                    onclick="insertEnye('first_name')"
+                                    class="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 text-sm font-bold text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-600 rounded transition-colors"
+                                    title="Insert ñ"
+                                >ñ</button>
+                            </div>
                         </div>
                         
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">M.I.</label>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">M.I.</label>
                             <input 
                                 type="text" 
                                 name="middle_initial" 
                                 placeholder="M.I." 
-                                class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 uppercase"
+                                class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 uppercase"
                                 style="text-transform: uppercase;"
-                                oninput="this.value = this.value.toUpperCase()"
+                                oninput="this.value = this.value.toUpperCase(); markFormDirty()"
                                 maxlength="2"
                                 value="<?php echo Security::escape($decrypted['middle_initial']); ?>"
                             >
@@ -429,24 +448,24 @@ ob_start();
                 <!-- Location Information -->
                 <div>
                     <div class="flex items-center space-x-2 mb-4">
-                        <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                        <div class="w-8 h-8 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
                             <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
                             </svg>
                         </div>
-                        <h3 class="font-semibold text-gray-900">Location Information</h3>
+                        <h3 class="font-semibold text-gray-900 dark:text-gray-100">Location Information</h3>
                     </div>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                 District <span class="text-red-600">*</span>
                             </label>
                             <?php if ($currentUser['role'] !== 'local' && $currentUser['role'] !== 'local_limited'): ?>
                                 <select 
                                     name="district_code" 
-                                    class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                                     id="district-select"
                                     required
                                 >
@@ -459,14 +478,14 @@ ob_start();
                                     <?php endforeach; ?>
                                 </select>
                             <?php else: ?>
-                                <input type="text" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed" 
+                                <input type="text" class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-400 cursor-not-allowed" 
                                        value="<?php echo Security::escape($officer['district_name'] ?? ''); ?>" readonly>
                                 <input type="hidden" name="district_code" value="<?php echo Security::escape($officer['district_code']); ?>">
                             <?php endif; ?>
                         </div>
                         
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                 Local Congregation <span class="text-red-600">*</span>
                             </label>
                             <?php if ($currentUser['role'] !== 'local' && $currentUser['role'] !== 'local_limited'): ?>
@@ -495,7 +514,7 @@ ob_start();
                                     </div>
                                 </div>
                             <?php else: ?>
-                                <input type="text" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed" 
+                                <input type="text" class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-400 cursor-not-allowed" 
                                        value="<?php echo Security::escape($officer['local_name'] ?? ''); ?>" readonly>
                                 <input type="hidden" name="local_code" value="<?php echo Security::escape($officer['local_code']); ?>">
                             <?php endif; ?>
@@ -505,38 +524,38 @@ ob_start();
                     <!-- Purok, Grupo, Kapisanan (Optional Fields) -->
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                 Purok <span class="text-gray-400 text-xs">(Optional)</span>
                             </label>
                             <input 
                                 type="text" 
                                 name="purok" 
-                                class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                                 placeholder="Enter purok"
                                 value="<?php echo Security::escape($officer['purok'] ?? ''); ?>"
                             >
                         </div>
                         
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                 Grupo <span class="text-gray-400 text-xs">(Optional)</span>
                             </label>
                             <input 
                                 type="text" 
                                 name="grupo" 
-                                class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                                 placeholder="Enter grupo"
                                 value="<?php echo Security::escape($officer['grupo'] ?? ''); ?>"
                             >
                         </div>
                         
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                 Kapisanan <span class="text-gray-400 text-xs">(Optional)</span>
                             </label>
                             <select 
                                 name="kapisanan" 
-                                class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                                 <option value="">Select Kapisanan</option>
                                 <option value="Buklod" <?php echo (($officer['kapisanan'] ?? '') === 'Buklod') ? 'selected' : ''; ?>>Buklod</option>
                                 <option value="Kadiwa" <?php echo (($officer['kapisanan'] ?? '') === 'Kadiwa') ? 'selected' : ''; ?>>Kadiwa</option>
@@ -548,7 +567,7 @@ ob_start();
                     <!-- Control Number (Optional Field) -->
                     <div class="mt-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                 Control Number <span class="text-gray-400 text-xs">(Optional - Search Legacy)</span>
                             </label>
                             <div class="relative">
@@ -556,7 +575,7 @@ ob_start();
                                     type="text" 
                                     id="control_search"
                                     name="control_number" 
-                                    class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                                     placeholder="Search by name or control #..."
                                     value="<?php echo Security::escape($officer['control_number'] ?? ''); ?>"
                                     autocomplete="off"
@@ -578,20 +597,20 @@ ob_start();
                                     </svg>
                                 </div>
                             </div>
-                            <p class="text-xs text-gray-500 mt-1">Search for legacy control numbers or enter manually</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Search for legacy control numbers or enter manually</p>
                         </div>
                     </div>
 
                     <!-- Registry Number (Optional Field) -->
                     <div class="mt-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
-                            Registry Number <span class="text-gray-400 text-xs">(Optional - from Tarheta Control)</span>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Registry Number <span class="text-gray-400 dark:text-gray-500 text-xs">(Optional - from Tarheta Control)</span>
                         </label>
                         <div class="relative">
                             <input 
                                 type="text" 
                                 id="registry_search" 
-                                class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                                 placeholder="Search registry number or leave blank..."
                                 value="<?php echo Security::escape($registryNumber ?? ''); ?>"
                                 onkeyup="searchTarheta(this.value)"
@@ -599,35 +618,35 @@ ob_start();
                             >
                             <input type="hidden" name="registry_number" id="registry_number_hidden" value="<?php echo Security::escape($registryNumber ?? ''); ?>">
                             <input type="hidden" name="tarheta_control_id" id="tarheta_control_id" value="<?php echo Security::escape($officer['tarheta_control_id'] ?? ''); ?>">
-                            <div id="tarheta_results" class="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 rounded-lg shadow-lg hidden max-h-60 overflow-y-auto"></div>
+                            <div id="tarheta_results" class="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg hidden max-h-60 overflow-y-auto"></div>
                         </div>
-                        <p class="text-xs text-gray-500 mt-1">Search for records from Tarheta Control or enter manually</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Search for records from Tarheta Control or enter manually</p>
                     </div>
                 </div>
                 
                 <!-- Departments & Duties -->
                 <div>
                     <div class="flex items-center space-x-2 mb-4">
-                        <div class="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center">
-                            <svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="w-8 h-8 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg flex items-center justify-center">
+                            <svg class="w-5 h-5 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
                             </svg>
                         </div>
-                        <h3 class="font-semibold text-gray-900">Departments & Duties</h3>
+                        <h3 class="font-semibold text-gray-900 dark:text-gray-100">Departments & Duties</h3>
                     </div>
                     
                     <?php if (empty($departments)): ?>
-                        <p class="text-sm text-gray-600 p-4 bg-gray-50 rounded-lg text-center">No departments assigned</p>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg text-center">No departments assigned</p>
                     <?php else: ?>
                         <div class="space-y-3">
                             <?php foreach ($departments as $dept): ?>
-                                <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                                <div class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
                                     <input type="hidden" name="departments[<?php echo $dept['id']; ?>][id]" value="<?php echo $dept['id']; ?>">
                                     
                                     <div class="flex items-center justify-between mb-3">
                                         <div class="flex items-center space-x-2">
-                                            <span class="font-semibold text-sm text-gray-900"><?php echo Security::escape($dept['department'] ?? 'N/A'); ?></span>
-                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium <?php echo ($dept['is_active'] ?? 1) ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'; ?>">
+                                            <span class="font-semibold text-sm text-gray-900 dark:text-gray-100"><?php echo Security::escape($dept['department'] ?? 'N/A'); ?></span>
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium <?php echo ($dept['is_active'] ?? 1) ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400' : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400'; ?>">
                                                 <?php echo ($dept['is_active'] ?? 1) ? 'Active' : 'Inactive'; ?>
                                             </span>
                                         </div>
@@ -636,18 +655,18 @@ ob_start();
                                     <?php if ($dept['is_active'] ?? 1): ?>
                                         <div class="grid grid-cols-1 gap-3">
                                             <div>
-                                                <label class="block text-xs font-medium text-gray-700 mb-1">Duty/Role</label>
+                                                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Duty/Role</label>
                                                 <input 
                                                     type="text" 
                                                     name="departments[<?php echo $dept['id']; ?>][duty]"
                                                     placeholder="Specific duty or role"
-                                                    class="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                    class="w-full px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                                                     value="<?php echo Security::escape($dept['duty'] ?? ''); ?>"
                                                 >
                                             </div>
                                             
                                             <div>
-                                                <label class="block text-xs font-medium text-gray-700 mb-1">Oath Date</label>
+                                                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Oath Date</label>
                                                 <div class="grid grid-cols-3 gap-2">
                                                     <?php 
                                                     // Parse saved oath_date
@@ -669,10 +688,10 @@ ob_start();
                                                     }
                                                     ?>
                                                     <div>
-                                                        <label class="block text-xs text-gray-500 mb-0.5">Month</label>
+                                                        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-0.5">Month</label>
                                                         <select 
                                                             name="departments[<?php echo $dept['id']; ?>][oath_month]" 
-                                                            class="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                                            class="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                                                             <option value="">MM</option>
                                                             <?php for($m = 1; $m <= 12; $m++): 
                                                                 $monthVal = str_pad($m, 2, '0', STR_PAD_LEFT);
@@ -685,10 +704,10 @@ ob_start();
                                                         </select>
                                                     </div>
                                                     <div>
-                                                        <label class="block text-xs text-gray-500 mb-0.5">Day</label>
+                                                        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-0.5">Day</label>
                                                         <select 
                                                             name="departments[<?php echo $dept['id']; ?>][oath_day]" 
-                                                            class="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                                            class="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                                                             <option value="">DD</option>
                                                             <?php for($d = 1; $d <= 31; $d++): 
                                                                 $dayVal = str_pad($d, 2, '0', STR_PAD_LEFT);
@@ -701,10 +720,10 @@ ob_start();
                                                         </select>
                                                     </div>
                                                     <div>
-                                                        <label class="block text-xs text-gray-500 mb-0.5">Year</label>
+                                                        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-0.5">Year</label>
                                                         <select 
                                                             name="departments[<?php echo $dept['id']; ?>][oath_year]" 
-                                                            class="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                                            class="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                                                             <option value="">YYYY</option>
                                                             <?php 
                                                             $currentYear = date('Y');
@@ -718,24 +737,24 @@ ob_start();
                                                         </select>
                                                     </div>
                                                 </div>
-                                                <p class="text-xs text-gray-500 mt-1">Month and day are optional. If provided, full date will be saved; otherwise only year.</p>
+                                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Month and day are optional. If provided, full date will be saved; otherwise only year.</p>
                                             </div>
                                         </div>
                                         
-                                        <p class="text-xs text-gray-500 mt-2 flex items-center">
+                                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-2 flex items-center">
                                             <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                                             </svg>
                                             Assigned: <?php echo isset($dept['assigned_at']) ? formatDateTime($dept['assigned_at']) : 'N/A'; ?>
                                         </p>
                                     <?php else: ?>
-                                        <p class="text-xs text-gray-600 mt-2">This department has been deactivated and cannot be edited.</p>
+                                        <p class="text-xs text-gray-600 dark:text-gray-400 mt-2">This department has been deactivated and cannot be edited.</p>
                                     <?php endif; ?>
                                 </div>
                             <?php endforeach; ?>
                         </div>
                         
-                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-4">
+                        <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mt-4">
                             <div class="flex items-start">
                                 <svg class="w-4 h-4 text-blue-600 mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
@@ -749,25 +768,26 @@ ob_start();
                 <!-- Status -->
                 <div>
                     <div class="flex items-center space-x-2 mb-4">
-                        <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                            <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="w-8 h-8 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
+                            <svg class="w-5 h-5 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                             </svg>
                         </div>
-                        <h3 class="font-semibold text-gray-900">Status</h3>
+                        <h3 class="font-semibold text-gray-900 dark:text-gray-100">Status</h3>
                     </div>
                     
-                    <div class="flex items-start space-x-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <div class="flex items-start space-x-3 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
                         <input 
                             type="checkbox" 
                             name="is_active" 
                             id="is_active"
-                            class="mt-1 h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                            class="mt-1 h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 dark:border-gray-600 rounded"
                             <?php echo $officer['is_active'] ? 'checked' : ''; ?>
+                            onchange="markFormDirty()"
                         >
                         <label for="is_active" class="flex-1 cursor-pointer">
-                            <span class="font-medium text-gray-900 block">Active Officer</span>
-                            <p class="text-xs text-gray-600 mt-1">Uncheck to mark officer as inactive</p>
+                            <span class="font-medium text-gray-900 dark:text-gray-100 block">Active Officer</span>
+                            <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Uncheck to mark officer as inactive</p>
                         </label>
                     </div>
                 </div>
@@ -775,52 +795,137 @@ ob_start();
                 <!-- Officer Info (Read-only) -->
                 <div>
                     <div class="flex items-center space-x-2 mb-4">
-                        <div class="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
-                            <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="w-8 h-8 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg flex items-center justify-center">
+                            <svg class="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                             </svg>
                         </div>
-                        <h3 class="font-semibold text-gray-900">Officer Information</h3>
+                        <h3 class="font-semibold text-gray-900 dark:text-gray-100">Officer Information</h3>
                     </div>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div class="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                            <p class="text-xs text-gray-600 mb-1">Officer UUID</p>
-                            <p class="text-sm font-mono text-gray-900"><?php echo Security::escape($officer['officer_uuid']); ?></p>
+                        <div class="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
+                            <p class="text-xs text-gray-600 dark:text-gray-400 mb-1">Officer UUID</p>
+                            <p class="text-sm font-mono text-gray-900 dark:text-gray-100"><?php echo Security::escape($officer['officer_uuid']); ?></p>
                         </div>
-                        <div class="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                            <p class="text-xs text-gray-600 mb-1">Record Code</p>
+                        <div class="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
+                            <p class="text-xs text-gray-600 dark:text-gray-400 mb-1">Record Code</p>
                             <div class="flex items-center">
-                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium <?php echo $officer['record_code'] === 'A' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'; ?>">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium <?php echo $officer['record_code'] === 'A' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400' : 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400'; ?>">
                                     CODE <?php echo Security::escape($officer['record_code']); ?>
                                 </span>
-                                <span class="ml-2 text-sm text-gray-700"><?php echo $officer['record_code'] === 'A' ? 'New Record' : 'Existing Record'; ?></span>
+                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300"><?php echo $officer['record_code'] === 'A' ? 'New Record' : 'Existing Record'; ?></span>
                             </div>
                         </div>
                     </div>
                 </div>
                 
                 <!-- Submit Buttons -->
-                <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200">
-                    <a href="<?php echo BASE_URL; ?>/officers/view.php?id=<?php echo urlencode($officerUuid); ?>" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg font-medium text-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 transition-colors">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-6 border-t border-gray-200 dark:border-gray-700">
+                    <!-- Unsaved changes indicator -->
+                    <div id="unsaved-indicator" class="hidden items-center text-sm text-amber-600 dark:text-amber-400">
+                        <svg class="w-4 h-4 mr-1.5 animate-pulse" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
                         </svg>
-                        Cancel
-                    </a>
-                    <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path>
-                        </svg>
-                        Update Officer
-                    </button>
+                        <span>You have unsaved changes</span>
+                    </div>
+                    
+                    <div class="flex items-center space-x-3">
+                        <a href="<?php echo BASE_URL; ?>/officers/view.php?id=<?php echo urlencode($officerUuid); ?>" class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                            Cancel
+                        </a>
+                        <button type="submit" id="submit-btn" class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg font-medium text-white bg-blue-600 hover:bg-blue-700 focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path>
+                            </svg>
+                            <span id="btn-text">Update Officer</span>
+                            <span class="hidden sm:inline-flex ml-2 px-1.5 py-0.5 text-xs bg-blue-500 rounded">Ctrl+S</span>
+                        </button>
+                    </div>
+                </div>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
-<script>
+<script nonce="<?php echo $csp_nonce; ?>">
+// Form state tracking
+let formIsDirty = false;
+let isSubmitting = false;
+
+// Mark form as having unsaved changes
+function markFormDirty() {
+    if (!formIsDirty) {
+        formIsDirty = true;
+        document.getElementById('unsaved-indicator')?.classList.remove('hidden');
+        document.getElementById('unsaved-indicator')?.classList.add('flex');
+    }
+}
+
+// Insert ñ character at cursor position
+function insertEnye(fieldId) {
+    const input = document.getElementById(fieldId);
+    if (!input) return;
+    
+    const start = input.selectionStart;
+    const end = input.selectionEnd;
+    const text = input.value;
+    
+    // Insert Ñ at cursor position (uppercase since field is uppercase)
+    input.value = text.substring(0, start) + 'Ñ' + text.substring(end);
+    
+    // Move cursor after inserted character
+    input.selectionStart = input.selectionEnd = start + 1;
+    input.focus();
+    
+    // Mark form as dirty
+    markFormDirty();
+}
+
+// Keyboard shortcut: Ctrl+S to save
+document.addEventListener('keydown', function(e) {
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        const form = document.querySelector('form');
+        if (form && !isSubmitting) {
+            form.requestSubmit();
+        }
+    }
+});
+
+// Warn before leaving with unsaved changes
+window.addEventListener('beforeunload', function(e) {
+    if (formIsDirty && !isSubmitting) {
+        e.preventDefault();
+        e.returnValue = '';
+        return '';
+    }
+});
+
+// Handle form submission
+document.querySelector('form')?.addEventListener('submit', function(e) {
+    isSubmitting = true;
+    formIsDirty = false;
+    
+    // Show loading state on button
+    const btn = document.getElementById('submit-btn');
+    const btnText = document.getElementById('btn-text');
+    if (btn && btnText) {
+        btn.disabled = true;
+        btn.classList.add('opacity-75', 'cursor-not-allowed');
+        btnText.innerHTML = '<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Saving...';
+    }
+});
+
+// Track all form input changes
+document.querySelectorAll('form input, form select, form textarea').forEach(el => {
+    el.addEventListener('change', markFormDirty);
+});
+
 // Dynamic local congregation loading
 let currentLocals = <?php echo json_encode($locals); ?>;
 
@@ -866,7 +971,7 @@ function openLocalModal() {
     listContainer.innerHTML = '';
     currentLocals.forEach(local => {
         const div = document.createElement('div');
-        div.className = 'local-item px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100';
+        div.className = 'local-item px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer border-b border-gray-100 dark:border-gray-700 text-gray-900 dark:text-gray-100';
         div.textContent = local.local_name;
         div.onclick = () => selectLocal(local.local_code, local.local_name);
         listContainer.appendChild(div);
@@ -928,7 +1033,7 @@ function searchTarheta(query) {
                     statsText += ` - ${data.decryption_errors} decrypt error${data.decryption_errors > 1 ? 's' : ''}`;
                 }
                 
-                html += `<div class="px-3 py-1.5 bg-blue-50 border-b border-blue-100 text-xs text-blue-700">
+                html += `<div class="px-3 py-1.5 bg-blue-50 dark:bg-blue-900/30 border-b border-blue-100 dark:border-blue-800 text-xs text-blue-700 dark:text-blue-300">
                     ${statsText}
                 </div>`;
                 
@@ -944,10 +1049,10 @@ function searchTarheta(query) {
                     additionalInfo.push(`${escapeHtml(record.district_name)} - ${escapeHtml(record.local_name)}`);
                     
                     html += `
-                        <div class="px-3 py-2 hover:bg-blue-50 cursor-pointer border-b border-gray-100 text-sm transition-colors"
+                        <div class="px-3 py-2 hover:bg-blue-50 dark:hover:bg-blue-900/30 cursor-pointer border-b border-gray-100 dark:border-gray-700 text-sm transition-colors"
                              onclick="selectTarheta(${record.id}, '${escapeHtml(record.registry_number)}', '${escapeHtml(record.last_name)}', '${escapeHtml(record.first_name)}', '${escapeHtml(record.middle_name)}', '${escapeHtml(record.husbands_surname || '')}')">
-                            <div class="font-medium text-gray-900">${escapeHtml(record.full_name)}</div>
-                            <div class="text-xs text-gray-600 mt-0.5">${additionalInfo.join(' • ')}</div>
+                            <div class="font-medium text-gray-900 dark:text-gray-100">${escapeHtml(record.full_name)}</div>
+                            <div class="text-xs text-gray-600 dark:text-gray-400 mt-0.5">${additionalInfo.join(' • ')}</div>
                         </div>
                     `;
                 });
@@ -962,12 +1067,12 @@ function searchTarheta(query) {
                 if (data.decryption_errors > 0) {
                     message += ` - Warning: ${data.decryption_errors} record${data.decryption_errors > 1 ? 's' : ''} skipped due to decryption errors`;
                 }
-                resultsDiv.innerHTML = `<div class="px-3 py-3 text-sm text-gray-500 text-center">${message}</div>`;
+                resultsDiv.innerHTML = `<div class="px-3 py-3 text-sm text-gray-500 dark:text-gray-400 text-center">${message}</div>`;
                 resultsDiv.classList.remove('hidden');
             }
         } catch (error) {
             console.error('Error searching tarheta:', error);
-            resultsDiv.innerHTML = '<div class="px-3 py-3 text-sm text-red-600 text-center">Error searching records. Please try again.</div>';
+            resultsDiv.innerHTML = '<div class="px-3 py-3 text-sm text-red-600 dark:text-red-400 text-center">Error searching records. Please try again.</div>';
             resultsDiv.classList.remove('hidden');
         }
     }, 300);
@@ -1013,7 +1118,7 @@ function searchControl(search) {
         const localCode = document.querySelector('[name="local_code"]').value;
         
         if (!districtCode || !localCode) {
-            resultsListDiv.innerHTML = '<div class="p-3 text-sm text-gray-500">Please select district and local first</div>';
+            resultsListDiv.innerHTML = '<div class="p-3 text-sm text-gray-500 dark:text-gray-400">Please select district and local first</div>';
             resultsDiv.classList.remove('hidden');
             return;
         }
@@ -1038,16 +1143,16 @@ function searchControl(search) {
                     statsText += ` - ${data.decryption_errors} decrypt error${data.decryption_errors > 1 ? 's' : ''}`;
                 }
                 
-                html += `<div class="px-3 py-1.5 bg-blue-50 border-b border-blue-100 text-xs text-blue-700">
+                html += `<div class="px-3 py-1.5 bg-blue-50 dark:bg-blue-900/30 border-b border-blue-100 dark:border-blue-800 text-xs text-blue-700 dark:text-blue-300">
                     ${statsText}
                 </div>`;
                 
                 data.records.forEach(record => {
                     html += `
-                        <div class="px-3 py-2 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-0 transition-colors" 
+                        <div class="px-3 py-2 hover:bg-blue-50 dark:hover:bg-blue-900/30 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-0 transition-colors" 
                              onclick="selectLegacyControl(${record.id}, '${escapeHtml(record.name)}', '${escapeHtml(record.control_number)}')">
-                            <div class="text-sm font-medium text-gray-900">${escapeHtml(record.name)}</div>
-                            <div class="text-xs text-gray-600 mt-0.5">Control#: ${escapeHtml(record.control_number)}</div>
+                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">${escapeHtml(record.name)}</div>
+                            <div class="text-xs text-gray-600 dark:text-gray-400 mt-0.5">Control#: ${escapeHtml(record.control_number)}</div>
                         </div>
                     `;
                 });
@@ -1062,13 +1167,13 @@ function searchControl(search) {
                 if (data.decryption_errors > 0) {
                     message += ` - Warning: ${data.decryption_errors} record${data.decryption_errors > 1 ? 's' : ''} skipped due to decryption errors`;
                 }
-                resultsListDiv.innerHTML = `<div class="p-3 text-sm text-gray-500 text-center">${message}</div>`;
+                resultsListDiv.innerHTML = `<div class="p-3 text-sm text-gray-500 dark:text-gray-400 text-center">${message}</div>`;
                 resultsDiv.classList.remove('hidden');
             }
         } catch (error) {
             console.error('Error searching legacy control:', error);
             loadingDiv.classList.add('hidden');
-            resultsListDiv.innerHTML = '<div class="p-3 text-sm text-red-500 text-center">Error searching records. Please try again.</div>';
+            resultsListDiv.innerHTML = '<div class="p-3 text-sm text-red-500 dark:text-red-400 text-center">Error searching records. Please try again.</div>';
             resultsDiv.classList.remove('hidden');
         }
     }, 300);
@@ -1113,11 +1218,11 @@ document.addEventListener('click', function(event) {
 <div id="local-modal" class="hidden fixed inset-0 z-50 overflow-y-auto">
     <div class="flex items-center justify-center min-h-screen p-4">
         <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" onclick="closeLocalModal()"></div>
-        <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full max-h-[80vh] flex flex-col">
+        <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full max-h-[80vh] flex flex-col border dark:border-gray-700">
             <!-- Header -->
-            <div class="flex items-center justify-between p-4 border-b">
-                <h3 class="text-lg font-semibold text-gray-900">Select Local Congregation</h3>
-                <button type="button" onclick="closeLocalModal()" class="text-gray-400 hover:text-gray-500">
+            <div class="flex items-center justify-between p-4 border-b dark:border-gray-700">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Select Local Congregation</h3>
+                <button type="button" onclick="closeLocalModal()" class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                     </svg>
@@ -1125,18 +1230,18 @@ document.addEventListener('click', function(event) {
             </div>
             
             <!-- Search -->
-            <div class="p-4 border-b">
+            <div class="p-4 border-b dark:border-gray-700">
                 <input 
                     type="text" 
                     id="local-search"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                     placeholder="Search local congregations..."
                     oninput="filterLocals()"
                 >
             </div>
             
             <!-- List -->
-            <div id="local-list" class="overflow-y-auto flex-1">
+            <div id="local-list" class="overflow-y-auto flex-1 dark:text-gray-100">
                 <!-- Will be populated dynamically -->
             </div>
         </div>

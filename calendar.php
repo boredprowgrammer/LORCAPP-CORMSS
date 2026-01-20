@@ -89,22 +89,22 @@ ob_start();
     <div class="mb-6">
         <div class="flex items-center justify-between flex-wrap gap-4">
             <div>
-                <h1 class="text-3xl font-bold text-gray-900">Calendar & Week Guide</h1>
-                <p class="text-gray-600 mt-1">ISO 8601 week numbering system</p>
+                <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">Calendar & Week Guide</h1>
+                <p class="text-gray-600 dark:text-gray-400 mt-1">ISO 8601 week numbering system</p>
             </div>
             
             <!-- Month/Year Navigation -->
             <div class="flex items-center gap-2">
-                <a href="?year=<?php echo $prevYear; ?>&month=<?php echo $prevMonth; ?>" class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                <a href="?year=<?php echo $prevYear; ?>&month=<?php echo $prevMonth; ?>" class="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
                     <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
                     </svg>
                     <?php echo $monthNames[$prevMonth]; ?>
                 </a>
-                <div class="px-4 py-2 bg-blue-100 text-blue-800 font-semibold rounded-lg">
+                <div class="px-4 py-2 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 font-semibold rounded-lg">
                     <?php echo $monthNames[$month] . ' ' . $year; ?>
                 </div>
-                <a href="?year=<?php echo $nextYear; ?>&month=<?php echo $nextMonth; ?>" class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                <a href="?year=<?php echo $nextYear; ?>&month=<?php echo $nextMonth; ?>" class="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
                     <?php echo $monthNames[$nextMonth]; ?>
                     <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
@@ -163,9 +163,9 @@ ob_start();
 
    
     <!-- Calendar Grid -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6">
-        <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
-            <h2 class="text-lg font-semibold text-gray-900"><?php echo $monthNames[$month] . ' ' . $year; ?> Calendar</h2>
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden mb-6">
+        <div class="px-6 py-4 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-700">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100"><?php echo $monthNames[$month] . ' ' . $year; ?> Calendar</h2>
         </div>
         
         <div class="p-4">
@@ -275,9 +275,9 @@ ob_start();
     </div>
     
     <!-- Week Legend -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-        <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
-            <h2 class="text-lg font-semibold text-gray-900">Week Numbers for <?php echo $monthNames[$month]; ?></h2>
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div class="px-6 py-4 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-700">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Week Numbers for <?php echo $monthNames[$month]; ?></h2>
         </div>
         
         <div class="p-6">
@@ -351,14 +351,14 @@ ob_start();
             </svg>
         </a>
         
-        <a href="<?php echo BASE_URL; ?>/dashboard.php" class="flex items-center justify-between p-4 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors group">
+        <a href="<?php echo BASE_URL; ?>/launchpad.php" class="flex items-center justify-between p-4 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors group">
             <div class="flex items-center">
                 <svg class="w-8 h-8 text-blue-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
                 </svg>
                 <div>
-                    <p class="font-semibold text-blue-900">Dashboard</p>
-                    <p class="text-xs text-blue-700">Overview</p>
+                    <p class="font-semibold text-blue-900">Launchpad</p>
+                    <p class="text-xs text-blue-700">All Apps</p>
                 </div>
             </div>
             <svg class="w-5 h-5 text-blue-600 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -176,6 +176,7 @@ $stmt = $db->query("SELECT local_code, local_name, district_code FROM local_cong
 $allLocals = $stmt->fetchAll();
 
 $pageTitle = "Create Call-Up Slip";
+$csp_nonce = base64_encode(random_bytes(16));
 ob_start();
 ?>
 
@@ -266,20 +267,20 @@ document.addEventListener('alpine:init', () => {
 <div class="max-w-4xl mx-auto space-y-6" x-data="callupForm" x-cloak>
 
     <!-- Header -->
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 p-6">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
         <div class="flex items-center justify-between">
             <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
                     <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                     </svg>
                 </div>
                 <div>
-                    <h1 class="text-2xl font-semibold text-gray-900">Create Call-Up Slip</h1>
-                    <p class="text-sm text-gray-500 mt-1">Tawag-Pansin / Officer Call-Up Notice</p>
+                    <h1 class="text-2xl font-semibold text-gray-900 dark:text-gray-100">Create Call-Up Slip</h1>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Tawag-Pansin / Officer Call-Up Notice</p>
                 </div>
             </div>
-            <a href="call-up-list.php" class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+            <a href="call-up-list.php" class="inline-flex items-center px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
                 </svg>
@@ -290,7 +291,7 @@ document.addEventListener('alpine:init', () => {
 
     <!-- Error Messages -->
     <?php if (!empty($errors)): ?>
-    <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+    <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
         <div class="flex items-start">
             <svg class="w-5 h-5 text-red-600 mr-3 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
@@ -307,14 +308,14 @@ document.addEventListener('alpine:init', () => {
     <?php endif; ?>
 
     <!-- Form -->
-    <form method="POST" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 p-6 space-y-6">
+    <form method="POST" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 space-y-6">
         <input type="hidden" name="csrf_token" value="<?php echo Security::generateCSRFToken(); ?>">
         <input type="hidden" name="officer_uuid" :value="selectedOfficer ? selectedOfficer.uuid : ''">
         
         <!-- Officer Search/Manual Input -->
         <div>
             <div class="flex items-center justify-between mb-2">
-                <label class="block text-sm font-medium text-gray-700">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
                     Officer Name <span class="text-red-600">*</span>
                 </label>
                 <button type="button" 
@@ -328,19 +329,19 @@ document.addEventListener('alpine:init', () => {
             <!-- Manual Input Mode -->
             <div x-show="useManualInput" x-cloak class="space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Officer Name</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Officer Name</label>
                     <input type="text" 
                         id="manual-officer-name"
                         name="manual_officer_name"
                         x-model="manualName"
                         placeholder="Enter officer's full name..."
-                        class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
-                    <p class="text-xs text-gray-500 mt-1">Type the officer's name if not found in the system</p>
+                        class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm">
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Type the officer's name if not found in the system</p>
                 </div>
                 
                 <!-- District Selection -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         District <span class="text-red-600">*</span>
                     </label>
                     <select name="manual_district_code" 
@@ -360,13 +361,13 @@ document.addEventListener('alpine:init', () => {
                 
                 <!-- Local Selection -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Local Congregation <span class="text-red-600">*</span>
                     </label>
                     <select name="manual_local_code" 
                         id="manual-local"
                         x-model="manualLocal"
-                        class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white dark:bg-gray-800"
+                        class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                         :disabled="!manualDistrict"
                         :required="useManualInput">
                         <option value="">Select Local</option>
@@ -374,7 +375,7 @@ document.addEventListener('alpine:init', () => {
                             <option :value="local.code" x-text="local.name"></option>
                         </template>
                     </select>
-                    <p class="text-xs text-gray-500 mt-1" x-show="!manualDistrict">Select a district first</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1" x-show="!manualDistrict">Select a district first</p>
                 </div>
             </div>
             
@@ -386,44 +387,44 @@ document.addEventListener('alpine:init', () => {
                         x-model="searchQuery"
                         @input.debounce.300ms="searchOfficers()"
                         placeholder="Search by name..."
-                        class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                        class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm">
                     
                     <!-- Search Results -->
                     <div x-show="searchResults.length > 0" 
-                        class="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                        class="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                         <template x-for="officer in searchResults" :key="officer.id">
                             <div @click="selectOfficer(officer)" 
-                                class="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-0">
-                                <div class="font-semibold text-gray-900 name-mono text-sm" 
+                                class="p-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-0">
+                                <div class="font-semibold text-gray-900 dark:text-gray-100 name-mono text-sm" 
                                     :title="officer.full_name"
                                     @dblclick="$el.textContent = officer.full_name"
                                     x-text="officer.name"></div>
-                                <div class="text-xs text-gray-600 mt-1" x-text="officer.location"></div>
-                                <div class="text-xs text-gray-500" x-text="officer.departments"></div>
+                                <div class="text-xs text-gray-600 dark:text-gray-400 mt-1" x-text="officer.location"></div>
+                                <div class="text-xs text-gray-500 dark:text-gray-400" x-text="officer.departments"></div>
                             </div>
                         </template>
                     </div>
                     
-                    <div x-show="searching" class="text-sm text-gray-500 mt-2">Searching...</div>
+                    <div x-show="searching" class="text-sm text-gray-500 dark:text-gray-400 mt-2">Searching...</div>
                 </div>
                 
                 <!-- Selected Officer Display -->
-                <div x-show="selectedOfficer" class="bg-green-50 border border-green-200 rounded-lg p-4">
+                <div x-show="selectedOfficer" class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
                     <div class="flex items-start justify-between">
                         <div class="flex items-start flex-1">
                             <svg class="w-5 h-5 text-green-600 mr-3 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
                             </svg>
                             <div class="flex-1">
-                                <div class="font-semibold text-gray-900 name-mono cursor-pointer"
+                                <div class="font-semibold text-gray-900 dark:text-gray-100 name-mono cursor-pointer"
                                     :title="selectedOfficer?.full_name"
                                     @dblclick="$el.textContent = selectedOfficer?.full_name"
                                     x-text="selectedOfficer?.name"></div>
-                                <div class="text-sm text-gray-600 mt-1" x-text="selectedOfficer?.location"></div>
-                                <div class="text-sm text-gray-500" x-text="selectedOfficer?.departments"></div>
+                                <div class="text-sm text-gray-600 dark:text-gray-400 mt-1" x-text="selectedOfficer?.location"></div>
+                                <div class="text-sm text-gray-500 dark:text-gray-400" x-text="selectedOfficer?.departments"></div>
                             </div>
                         </div>
-                        <button type="button" @click="clearSelection()" class="text-gray-400 hover:text-gray-600">
+                        <button type="button" @click="clearSelection()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
                             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
                             </svg>
@@ -435,7 +436,7 @@ document.addEventListener('alpine:init', () => {
 
         <!-- Department -->
         <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Department/Kapisanan <span class="text-red-600">*</span>
             </label>
             <div class="relative">
@@ -459,60 +460,60 @@ document.addEventListener('alpine:init', () => {
 
         <!-- File Number (Auto-generated) -->
         <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Call-Up File # <span class="text-red-600">*</span>
             </label>
             <input type="text" 
                 name="file_number" 
                 id="file-number"
                 placeholder="Select department first..."
-                class="block w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
                 readonly
                 required>
-            <p class="text-xs text-gray-500 mt-1">Auto-generated: DEPT-YEAR-### (e.g., BUK-2025-001)</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Auto-generated: DEPT-YEAR-### (e.g., BUK-2025-001)</p>
         </div>
 
         
         <!-- Reason -->
         <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Reason (Dahilan) <span class="text-red-600">*</span>
             </label>
             <textarea name="reason" 
                 rows="4" 
                 placeholder="Hindi po pagsumite ng R7-02 noong..."
-                class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm"
                 required></textarea>
-            <p class="text-xs text-gray-500 mt-1">Explain the reason for the call-up notice</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Explain the reason for the call-up notice</p>
         </div>
 
         <!-- Deadline Date -->
         <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Deadline Date <span class="text-red-600">*</span>
             </label>
             <input type="date" 
                 name="deadline_date" 
-                class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm"
                 required>
         </div>
 
         <!-- Destinado (Signatory/Resident Minister) -->
         <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Destinado (Signatory) <span class="text-red-600">*</span>
             </label>
             <input type="text" 
                 name="destinado" 
                 placeholder="e.g., Kap. Juan Dela Cruz, Resident Minister"
-                class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm"
                 required>
-            <p class="text-xs text-gray-500 mt-1">Name and title of the resident minister who will sign this call-up</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Name and title of the resident minister who will sign this call-up</p>
         </div>
 
         <!-- Actions -->
-        <div class="flex items-center justify-between pt-4 border-t border-gray-200">
-            <a href="list.php" class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white dark:bg-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+        <div class="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
+            <a href="list.php" class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                 Cancel
             </a>
             <button type="submit" 
@@ -533,9 +534,9 @@ document.addEventListener('alpine:init', () => {
         <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" onclick="closeDepartmentModal()"></div>
         <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full max-h-[80vh] flex flex-col">
             <!-- Header -->
-            <div class="flex items-center justify-between p-4 border-b">
-                <h3 class="text-lg font-semibold text-gray-900">Select Department</h3>
-                <button type="button" onclick="closeDepartmentModal()" class="text-gray-400 hover:text-gray-500">
+            <div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Select Department</h3>
+                <button type="button" onclick="closeDepartmentModal()" class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                     </svg>
@@ -543,11 +544,11 @@ document.addEventListener('alpine:init', () => {
             </div>
             
             <!-- Search -->
-            <div class="p-4 border-b">
+            <div class="p-4 border-b border-gray-200 dark:border-gray-700">
                 <input 
                     type="text" 
                     id="department-search"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                     placeholder="Search departments..."
                     oninput="filterDepartments()"
                 >
@@ -556,9 +557,9 @@ document.addEventListener('alpine:init', () => {
             <!-- List -->
             <div class="overflow-y-auto flex-1">
                 <?php foreach ($departments as $dept): ?>
-                    <div class="department-item px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100"
+                    <div class="department-item px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer border-b border-gray-100 dark:border-gray-700"
                          onclick="selectDepartment('<?php echo Security::escape($dept); ?>')">
-                        <span class="text-gray-900"><?php echo Security::escape($dept); ?></span>
+                        <span class="text-gray-900 dark:text-gray-100"><?php echo Security::escape($dept); ?></span>
                     </div>
                 <?php endforeach; ?>
             </div>

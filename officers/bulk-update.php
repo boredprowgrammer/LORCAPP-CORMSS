@@ -177,32 +177,33 @@ try {
 }
 
 $pageTitle = 'Bulk Update Officers';
+$csp_nonce = base64_encode(random_bytes(16));
 ob_start();
 ?>
 
 <div class="container mx-auto px-4 py-6">
     <?php if ($error): ?>
-        <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">
+        <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg mb-4">
             <?php echo Security::escape($error); ?>
         </div>
     <?php endif; ?>
     
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md">
-        <div class="px-6 py-4 border-b border-gray-200">
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
                         <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                         </svg>
                     </div>
                     <div>
-                        <h1 class="text-2xl font-bold text-gray-900">Bulk Update Officers</h1>
-                        <p class="text-sm text-gray-500">Update Purok, Grupo, or Control Number for multiple officers</p>
+                        <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Bulk Update Officers</h1>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Update Purok, Grupo, or Control Number for multiple officers</p>
                     </div>
                 </div>
                 <a href="<?php echo getBaseUrl(); ?>/officers/list.php" 
-                   class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200">
+                   class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600">
                     Back to List
                 </a>
             </div>
@@ -212,29 +213,29 @@ ob_start();
             <input type="hidden" name="csrf_token" value="<?php echo Security::generateCSRFToken(); ?>">
             
             <!-- Field Selection -->
-            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                <h3 class="text-sm font-semibold text-blue-900 mb-3">Select Fields to Update</h3>
-                <p class="text-xs text-blue-700 mb-4">Check which fields you want to update, then set their values below:</p>
+            <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
+                <h3 class="text-sm font-semibold text-blue-900 dark:text-blue-300 mb-3">Select Fields to Update</h3>
+                <p class="text-xs text-blue-700 dark:text-blue-400 mb-4">Check which fields you want to update, then set their values below:</p>
                 
                 <div class="space-y-3">
                     <label class="flex items-center space-x-2 cursor-pointer">
                         <input type="checkbox" name="update_purok" id="update_purok" class="w-4 h-4 text-blue-600 rounded">
-                        <span class="text-sm font-medium text-gray-700">Update Purok</span>
+                        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Update Purok</span>
                     </label>
                     
                     <label class="flex items-center space-x-2 cursor-pointer">
                         <input type="checkbox" name="update_grupo" id="update_grupo" class="w-4 h-4 text-blue-600 rounded">
-                        <span class="text-sm font-medium text-gray-700">Update Grupo</span>
+                        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Update Grupo</span>
                     </label>
                     
                     <label class="flex items-center space-x-2 cursor-pointer">
                         <input type="checkbox" name="update_kapisanan" id="update_kapisanan" class="w-4 h-4 text-blue-600 rounded">
-                        <span class="text-sm font-medium text-gray-700">Update Kapisanan</span>
+                        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Update Kapisanan</span>
                     </label>
                     
                     <label class="flex items-center space-x-2 cursor-pointer">
                         <input type="checkbox" name="update_control_number" id="update_control_number" class="w-4 h-4 text-blue-600 rounded">
-                        <span class="text-sm font-medium text-gray-700">Update Control Number</span>
+                        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Update Control Number</span>
                     </label>
                 </div>
             </div>
@@ -242,66 +243,66 @@ ob_start();
             <!-- Values to Set -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Purok Value</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Purok Value</label>
                     <input 
                         type="text" 
                         name="purok" 
                         id="purok_value"
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                        class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:cursor-not-allowed"
                         placeholder="Enter purok"
                         disabled
                     >
-                    <p class="text-xs text-gray-500 mt-1">Leave empty to clear existing value</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Leave empty to clear existing value</p>
                 </div>
                 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Grupo Value</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Grupo Value</label>
                     <input 
                         type="text" 
                         name="grupo" 
                         id="grupo_value"
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                        class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:cursor-not-allowed"
                         placeholder="Enter grupo"
                         disabled
                     >
-                    <p class="text-xs text-gray-500 mt-1">Leave empty to clear existing value</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Leave empty to clear existing value</p>
                 </div>
                 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Kapisanan Value</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Kapisanan Value</label>
                     <select 
                         name="kapisanan" 
                         id="kapisanan_value"
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                        class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:cursor-not-allowed"
                         disabled>
                         <option value="">Select Kapisanan</option>
                         <option value="Buklod">Buklod</option>
                         <option value="Kadiwa">Kadiwa</option>
                         <option value="Binhi">Binhi</option>
                     </select>
-                    <p class="text-xs text-gray-500 mt-1">Leave empty to clear existing value</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Leave empty to clear existing value</p>
                 </div>
             </div>
             
             <div class="grid grid-cols-1 md:grid-cols-1 gap-4 mb-6">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Control Number Value</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Control Number Value</label>
                     <input 
                         type="text" 
                         name="control_number" 
                         id="control_number_value"
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                        class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:cursor-not-allowed"
                         placeholder="Enter control number"
                         disabled
                     >
-                    <p class="text-xs text-gray-500 mt-1">Leave empty to clear existing value</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Leave empty to clear existing value</p>
                 </div>
             </div>
             
             <!-- Officer Selection -->
             <div class="mb-6">
                 <div class="flex items-center justify-between mb-3">
-                    <label class="block text-sm font-medium text-gray-700">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
                         Select Officers <span class="text-red-600">*</span>
                     </label>
                     <div class="space-x-2">
@@ -310,15 +311,15 @@ ob_start();
                     </div>
                 </div>
                 
-                <div class="border border-gray-300 rounded-lg max-h-96 overflow-y-auto">
+                <div class="border border-gray-300 dark:border-gray-600 rounded-lg max-h-96 overflow-y-auto">
                     <?php if (empty($officers)): ?>
-                        <div class="p-4 text-center text-gray-500">
+                        <div class="p-4 text-center text-gray-500 dark:text-gray-400">
                             No officers found.
                         </div>
                     <?php else: ?>
-                        <div class="divide-y divide-gray-200">
+                        <div class="divide-y divide-gray-200 dark:divide-gray-700">
                             <?php foreach ($officers as $officer): ?>
-                                <label class="flex items-center p-3 hover:bg-gray-50 cursor-pointer">
+                                <label class="flex items-center p-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
                                     <input 
                                         type="checkbox" 
                                         name="officer_ids[]" 
@@ -326,10 +327,10 @@ ob_start();
                                         class="officer-checkbox w-4 h-4 text-blue-600 rounded mr-3"
                                     >
                                     <div class="flex-1">
-                                        <div class="font-medium text-gray-900">
+                                        <div class="font-medium text-gray-900 dark:text-gray-100">
                                             <?php echo Security::escape($officer['full_name']); ?>
                                         </div>
-                                        <div class="text-sm text-gray-500">
+                                        <div class="text-sm text-gray-500 dark:text-gray-400">
                                             <?php echo Security::escape($officer['district_name']); ?> - 
                                             <?php echo Security::escape($officer['local_name']); ?>
                                             <?php if (!empty($officer['purok'])): ?>
@@ -348,7 +349,7 @@ ob_start();
                         </div>
                     <?php endif; ?>
                 </div>
-                <p class="text-xs text-gray-500 mt-2">
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
                     <span id="selected-count">0</span> officer(s) selected
                 </p>
             </div>
@@ -356,7 +357,7 @@ ob_start();
             <!-- Submit Button -->
             <div class="flex items-center justify-end space-x-3">
                 <a href="<?php echo getBaseUrl(); ?>/officers/list.php" 
-                   class="px-6 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200">
+                   class="px-6 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600">
                     Cancel
                 </a>
                 <button 

@@ -315,7 +315,7 @@ $html = str_replace('src="target002.png"', 'src="R2-01/target002.png"', $html);
         <button class="print-btn" id="printBtn" onclick="showPrintGuide()" disabled>Loading...</button>
         <button class="print-btn" id="pdfBtn" onclick="savePDF()" disabled>Save PDF</button>
         <button class="print-btn" onclick="window.close()">Close</button>
-        <button class="print-btn" onclick="window.location.href='dashboard.php'">Back to Dashboard</button>
+        <button class="print-btn" onclick="window.location.href='../launchpad.php'">Back to Launchpad</button>
     </div>
 
     <!-- Print Guide Modal -->

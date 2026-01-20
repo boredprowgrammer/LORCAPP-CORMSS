@@ -286,6 +286,7 @@ try {
 }
 
 $pageTitle = 'Officer Details';
+$csp_nonce = base64_encode(random_bytes(16));
 ob_start();
 ?>
 
@@ -293,13 +294,13 @@ ob_start();
     <!-- Header -->
     <div class="flex flex-wrap items-center justify-between gap-4">
         <div>
-            <a href="<?php echo BASE_URL; ?>/officers/list.php" class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-gray-700 bg-white dark:bg-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors mb-2">
+            <a href="<?php echo BASE_URL; ?>/officers/list.php" class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors mb-2">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                 </svg>
                 Back to List
             </a>
-            <h2 class="text-3xl font-bold text-gray-900">Officer Profile</h2>
+            <h2 class="text-3xl font-bold text-gray-900 dark:text-gray-100">Officer Profile</h2>
         </div>
         <div class="flex gap-2">
             <a href="<?php echo BASE_URL; ?>/officers/edit.php?id=<?php echo urlencode($officerUuid); ?>" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
@@ -312,7 +313,7 @@ ob_start();
     </div>
     
     <!-- Officer Card -->
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 p-6">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
         <div class="flex flex-col md:flex-row gap-6">
             <!-- Avatar -->
             <div class="flex-shrink-0">
@@ -326,7 +327,7 @@ ob_start();
             <!-- Details -->
             <div class="flex-1 space-y-4">
                 <div>
-                    <h3 class="text-3xl font-bold text-gray-900 cursor-pointer name-mono" 
+                    <h3 class="text-3xl font-bold text-gray-900 dark:text-gray-100 cursor-pointer name-mono" 
                         title="<?php echo Security::escape($decryptedName['first_name'] . ' ' . 
                             ($decryptedName['middle_initial'] ? $decryptedName['middle_initial'] . '. ' : '') . 
                             $decryptedName['last_name']); ?>"
@@ -341,39 +342,39 @@ ob_start();
                         echo Security::escape(obfuscateName($fullName)); 
                         ?>
                     </h3>
-                    <p class="text-sm text-gray-600">UUID: <?php echo Security::escape($officer['officer_uuid']); ?></p>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">UUID: <?php echo Security::escape($officer['officer_uuid']); ?></p>
                 </div>
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <p class="text-sm text-gray-600">District</p>
-                        <p class="font-semibold text-gray-900"><?php echo Security::escape($officer['district_name']); ?></p>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">District</p>
+                        <p class="font-semibold text-gray-900 dark:text-gray-100"><?php echo Security::escape($officer['district_name']); ?></p>
                     </div>
                     <div>
-                        <p class="text-sm text-gray-600">Local Congregation</p>
-                        <p class="font-semibold text-gray-900"><?php echo Security::escape($officer['local_name']); ?></p>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">Local Congregation</p>
+                        <p class="font-semibold text-gray-900 dark:text-gray-100"><?php echo Security::escape($officer['local_name']); ?></p>
                     </div>
                     <div>
-                        <p class="text-sm text-gray-600">Purok</p>
-                        <p class="font-semibold text-gray-900">
+                        <p class="text-sm text-gray-600 dark:text-gray-400">Purok</p>
+                        <p class="font-semibold text-gray-900 dark:text-gray-100">
                             <?php echo !empty($officer['purok']) ? Security::escape($officer['purok']) : '<span class="text-gray-400 italic">Not set</span>'; ?>
                         </p>
                     </div>
                     <div>
-                        <p class="text-sm text-gray-600">Grupo</p>
-                        <p class="font-semibold text-gray-900">
+                        <p class="text-sm text-gray-600 dark:text-gray-400">Grupo</p>
+                        <p class="font-semibold text-gray-900 dark:text-gray-100">
                             <?php echo !empty($officer['grupo']) ? Security::escape($officer['grupo']) : '<span class="text-gray-400 italic">Not set</span>'; ?>
                         </p>
                     </div>
                     <div>
-                        <p class="text-sm text-gray-600">Control Number</p>
-                        <p class="font-semibold text-gray-900">
+                        <p class="text-sm text-gray-600 dark:text-gray-400">Control Number</p>
+                        <p class="font-semibold text-gray-900 dark:text-gray-100">
                             <?php echo !empty($officer['control_number']) ? Security::escape($officer['control_number']) : '<span class="text-gray-400 italic">Not set</span>'; ?>
                         </p>
                     </div>
                     <div>
-                        <p class="text-sm text-gray-600">Registry Number</p>
-                        <p class="font-semibold text-gray-900">
+                        <p class="text-sm text-gray-600 dark:text-gray-400">Registry Number</p>
+                        <p class="font-semibold text-gray-900 dark:text-gray-100">
                             <?php if (!empty($registryNumber)): ?>
                                 <?php echo Security::escape($registryNumber); ?>
                                 <?php if ($officer['tarheta_control_id']): ?>
@@ -391,14 +392,14 @@ ob_start();
                         </p>
                     </div>
                     <div>
-                        <p class="text-sm text-gray-600">Record Code</p>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">Record Code</p>
                         <div class="flex items-center gap-2">
                             <?php if ($officer['record_code']): ?>
-                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium <?php echo $officer['record_code'] === 'A' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'; ?>">
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium <?php echo $officer['record_code'] === 'A' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400' : 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400'; ?>">
                                     CODE <?php echo $officer['record_code']; ?>
                                 </span>
                             <?php else: ?>
-                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400">
                                     ⚠️ Not Set
                                 </span>
                                 <form method="POST" class="inline-block ml-2" onsubmit="return confirm('Set this officer as CODE A (New Record)?');">
@@ -410,7 +411,7 @@ ob_start();
                                 </form>
                             <?php endif; ?>
                             <?php if ($officer['is_imported']): ?>
-                                <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-purple-100 text-purple-800" title="Imported from LORCAPP R-201 Database">
+                                <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400" title="Imported from LORCAPP R-201 Database">
                                     <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
                                         <path d="M3 12v3c0 1.657 3.134 3 7 3s7-1.343 7-3v-3c0 1.657-3.134 3-7 3s-7-1.343-7-3z"/>
                                         <path d="M3 7v3c0 1.657 3.134 3 7 3s7-1.343 7-3V7c0 1.657-3.134 3-7 3S3 8.657 3 7z"/>
@@ -422,18 +423,18 @@ ob_start();
                         </div>
                     </div>
                     <div>
-                        <p class="text-sm text-gray-600">Status</p>
-                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium <?php echo $officer['is_active'] ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'; ?>">
+                        <p class="text-sm text-gray-600 dark:text-gray-400">Status</p>
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium <?php echo $officer['is_active'] ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400' : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400'; ?>">
                             <?php echo $officer['is_active'] ? 'Active' : 'Inactive'; ?>
                         </span>
                     </div>
                     <div>
-                        <p class="text-sm text-gray-600">Added By</p>
-                        <p class="font-semibold text-gray-900"><?php echo Security::escape($officer['created_by_name'] ?? 'System'); ?></p>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">Added By</p>
+                        <p class="font-semibold text-gray-900 dark:text-gray-100"><?php echo Security::escape($officer['created_by_name'] ?? 'System'); ?></p>
                     </div>
                     <div>
-                        <p class="text-sm text-gray-600">Date Added</p>
-                        <p class="font-semibold text-gray-900"><?php echo formatDateTime($officer['created_at']); ?></p>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">Date Added</p>
+                        <p class="font-semibold text-gray-900 dark:text-gray-100"><?php echo formatDateTime($officer['created_at']); ?></p>
                     </div>
                 </div>
             </div>
@@ -441,58 +442,58 @@ ob_start();
     </div>
     
     <!-- Departments -->
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 p-6">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
         <div class="flex items-center space-x-3 mb-6">
-            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+            <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
                 <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
                 </svg>
             </div>
-            <h3 class="text-xl font-semibold text-gray-900">Departments & Duties</h3>
+            <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100">Departments & Duties</h3>
         </div>
         
         <?php if (empty($departments)): ?>
-            <p class="text-center py-8 text-gray-600">No department assignments</p>
+            <p class="text-center py-8 text-gray-600 dark:text-gray-400">No department assignments</p>
         <?php else: ?>
             <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
+                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead class="bg-gray-50 dark:bg-gray-700">
                         <tr>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duty</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Oath Date</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assigned Date</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Department</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Duty</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Oath Date</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Assigned Date</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
-                    <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200">
+                    <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                         <?php foreach ($departments as $dept): ?>
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-4 py-3 font-semibold text-gray-900"><?php echo Security::escape($dept['department']); ?></td>
-                                <td class="px-4 py-3 text-gray-700"><?php echo Security::escape($dept['duty'] ?: '-'); ?></td>
-                                <td class="px-4 py-3 text-gray-700"><?php echo formatDate($dept['oath_date']); ?></td>
+                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
+                                <td class="px-4 py-3 font-semibold text-gray-900 dark:text-gray-100"><?php echo Security::escape($dept['department']); ?></td>
+                                <td class="px-4 py-3 text-gray-700 dark:text-gray-300"><?php echo Security::escape($dept['duty'] ?: '-'); ?></td>
+                                <td class="px-4 py-3 text-gray-700 dark:text-gray-300"><?php echo formatDate($dept['oath_date']); ?></td>
                                 <td class="px-4 py-3">
                                     <?php 
                                     if ($dept['is_active']) {
-                                        echo '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">Active</span>';
+                                        echo '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400">Active</span>';
                                     } else {
                                         // Smart logic: Check transfers first, then removal codes
                                         if ($dept['transfer_type'] === 'out' && !empty($dept['transfer_date'])) {
-                                            echo '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">TRANSFERRED-OUT</span>';
+                                            echo '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400">TRANSFERRED-OUT</span>';
                                         } elseif ($dept['removal_code'] === 'C') {
-                                            echo '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">SUSPENDIDO (CODE-C)</span>';
+                                            echo '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400">SUSPENDIDO (CODE-C)</span>';
                                         } elseif ($dept['removal_code'] === 'D') {
-                                            echo '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800">LIPAT-KAPISANAN (CODE-D)</span>';
+                                            echo '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-400">LIPAT-KAPISANAN (CODE-D)</span>';
                                         } elseif (!empty($dept['removal_reason']) && stripos($dept['removal_reason'], 'transfer') !== false) {
-                                            echo '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">TRANSFERRED-OUT</span>';
+                                            echo '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400">TRANSFERRED-OUT</span>';
                                         } else {
-                                            echo '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">Inactive</span>';
+                                            echo '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300">Inactive</span>';
                                         }
                                     }
                                     ?>
                                 </td>
-                                <td class="px-4 py-3 text-gray-700"><?php echo formatDateTime($dept['assigned_at']); ?></td>
+                                <td class="px-4 py-3 text-gray-700 dark:text-gray-300"><?php echo formatDateTime($dept['assigned_at']); ?></td>
                                 <td class="px-4 py-3">
                                     <div class="flex items-center space-x-2">
                                         <!-- Direct Delete Button -->
@@ -653,14 +654,14 @@ ob_start();
     <?php endif; ?>
     
     <!-- Officer Requests History -->
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 p-6">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
         <div class="flex items-center space-x-3 mb-6">
-            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+                <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                 </svg>
             </div>
-            <h3 class="text-xl font-semibold text-gray-900">Officer Requests</h3>
+            <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100">Officer Requests</h3>
         </div>
         
         <div x-data="{ 
@@ -686,76 +687,76 @@ ob_start();
             
             <!-- Processing Badge -->
             <div x-show="!loading && !error && hasPendingRequests()" class="mb-4">
-                <div class="inline-flex items-center px-3 py-1.5 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <div class="inline-flex items-center px-3 py-1.5 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700 rounded-lg">
                     <svg class="animate-spin h-4 w-4 text-yellow-600 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    <span class="text-sm font-medium text-yellow-800">Some requests are still being processed</span>
+                    <span class="text-sm font-medium text-yellow-800 dark:text-yellow-400">Some requests are still being processed</span>
                 </div>
             </div>
             
             <!-- Loading State -->
             <div x-show="loading" class="flex flex-col items-center justify-center py-12">
                 <div class="relative w-16 h-16">
-                    <div class="absolute inset-0 border-4 border-blue-200 rounded-full"></div>
-                    <div class="absolute inset-0 border-4 border-blue-600 rounded-full border-t-transparent animate-spin"></div>
+                    <div class="absolute inset-0 border-4 border-blue-200 dark:border-blue-800 rounded-full"></div>
+                    <div class="absolute inset-0 border-4 border-blue-600 dark:border-blue-400 rounded-full border-t-transparent animate-spin"></div>
                 </div>
-                <p class="mt-4 text-sm text-gray-600">Loading requests...</p>
+                <p class="mt-4 text-sm text-gray-600 dark:text-gray-400">Loading requests...</p>
             </div>
             
             <!-- Error State -->
-            <div x-show="!loading && error" class="bg-red-50 border border-red-200 rounded-lg p-4">
+            <div x-show="!loading && error" class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
                 <div class="flex items-center">
                     <svg class="w-5 h-5 text-red-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
                     </svg>
-                    <span class="text-sm text-red-800" x-text="error"></span>
+                    <span class="text-sm text-red-800 dark:text-red-400" x-text="error"></span>
                 </div>
             </div>
             
             <!-- Empty State -->
             <div x-show="!loading && !error && requests.length === 0" class="text-center py-12">
-                <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                 </svg>
-                <p class="text-gray-500 font-medium">No officer requests found</p>
-                <p class="text-sm text-gray-400 mt-1">This officer has no associated requests</p>
+                <p class="text-gray-500 dark:text-gray-400 font-medium">No officer requests found</p>
+                <p class="text-sm text-gray-400 dark:text-gray-500 mt-1">This officer has no associated requests</p>
             </div>
             
             <!-- Requests Table -->
             <div x-show="!loading && !error && requests.length > 0" class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
+                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead class="bg-gray-50 dark:bg-gray-700">
                         <tr>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Request ID</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Requested Date</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Request ID</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Department</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Requested Date</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
-                    <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200">
+                    <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                         <template x-for="request in requests" :key="request.request_id">
-                            <tr class="hover:bg-gray-50">
+                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
                                 <td class="px-4 py-3">
-                                    <span class="text-sm font-medium text-gray-900" x-text="'#' + request.request_id"></span>
+                                    <span class="text-sm font-medium text-gray-900 dark:text-gray-100" x-text="'#' + request.request_id"></span>
                                 </td>
                                 <td class="px-4 py-3">
-                                    <div class="text-sm font-medium text-gray-900" x-text="request.requested_department"></div>
-                                    <div class="text-xs text-gray-500" x-text="request.requested_duty" x-show="request.requested_duty"></div>
+                                    <div class="text-sm font-medium text-gray-900 dark:text-gray-100" x-text="request.requested_department"></div>
+                                    <div class="text-xs text-gray-500 dark:text-gray-400" x-text="request.requested_duty" x-show="request.requested_duty"></div>
                                 </td>
                                 <td class="px-4 py-3">
                                     <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium" 
                                           :class="{
-                                              'bg-yellow-100 text-yellow-800': request.status === 'pending',
-                                              'bg-blue-100 text-blue-800': request.status === 'requested_to_seminar',
-                                              'bg-indigo-100 text-indigo-800': request.status === 'in_seminar',
-                                              'bg-green-100 text-green-800': request.status === 'seminar_completed' || request.status === 'oath_taken',
-                                              'bg-purple-100 text-purple-800': request.status === 'requested_to_oath',
-                                              'bg-pink-100 text-pink-800': request.status === 'ready_to_oath',
-                                              'bg-red-100 text-red-800': request.status === 'rejected',
-                                              'bg-gray-100 text-gray-800': request.status === 'cancelled'
+                                              'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400': request.status === 'pending',
+                                              'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400': request.status === 'requested_to_seminar',
+                                              'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-800 dark:text-indigo-400': request.status === 'in_seminar',
+                                              'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400': request.status === 'seminar_completed' || request.status === 'oath_taken',
+                                              'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400': request.status === 'requested_to_oath',
+                                              'bg-pink-100 dark:bg-pink-900/30 text-pink-800 dark:text-pink-400': request.status === 'ready_to_oath',
+                                              'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400': request.status === 'rejected',
+                                              'bg-gray-100 dark:bg-gray-900/30 text-gray-800 dark:text-gray-400': request.status === 'cancelled'
                                           }">
                                         <!-- Animated spinner for pending statuses -->
                                         <template x-if="request.status !== 'oath_taken' && request.status !== 'rejected' && request.status !== 'cancelled'">
@@ -767,11 +768,11 @@ ob_start();
                                         <span x-text="request.status_label"></span>
                                     </span>
                                 </td>
-                                <td class="px-4 py-3 text-sm text-gray-700" x-text="request.requested_at_formatted"></td>
+                                <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300" x-text="request.requested_at_formatted"></td>
                                 <td class="px-4 py-3">
                                     <button type="button"
                                         @click="$dispatch('open-request-modal', { requestId: request.request_id })"
-                                        class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                                        class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm font-medium">
                                         View Details
                                     </button>
                                 </td>
@@ -909,7 +910,7 @@ ob_start();
                         
                         <!-- Requirements Checklist Tab -->
                         <div x-show="activeTab === 'requirements'" class="space-y-4">
-                            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                            <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
                                 <div class="flex items-center">
                                     <svg class="w-5 h-5 text-blue-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
@@ -920,18 +921,18 @@ ob_start();
                             
                             <div class="space-y-3">
                                 <!-- R5-15/04 -->
-                                <div class="flex items-center justify-between p-4 bg-white dark:bg-gray-800 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
+                                <div class="flex items-center justify-between p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-blue-300 dark:hover:border-blue-600 transition-colors">
                                     <div class="flex items-center space-x-3">
                                         <input type="checkbox" 
                                                :checked="requestData?.has_r515" 
                                                @change="toggleRequirement('has_r515', $event.target.checked)"
                                                class="w-5 h-5 text-blue-600 rounded">
                                         <div>
-                                            <p class="font-medium text-gray-900">R5-15/04</p>
-                                            <p class="text-sm text-gray-500">Officer Application Form</p>
+                                            <p class="font-medium text-gray-900 dark:text-gray-100">R5-15/04</p>
+                                            <p class="text-sm text-gray-500 dark:text-gray-400">Officer Application Form</p>
                                         </div>
                                     </div>
-                                    <span x-show="requestData?.has_r515" class="text-green-600">
+                                    <span x-show="requestData?.has_r515" class="text-green-600 dark:text-green-400">
                                         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                                             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
                                         </svg>
@@ -939,18 +940,18 @@ ob_start();
                                 </div>
                                 
                                 <!-- Patotoo ng Katiwala -->
-                                <div class="flex items-center justify-between p-4 bg-white dark:bg-gray-800 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
+                                <div class="flex items-center justify-between p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-blue-300 dark:hover:border-blue-600 transition-colors">
                                     <div class="flex items-center space-x-3">
                                         <input type="checkbox" 
                                                :checked="requestData?.has_patotoo_katiwala" 
                                                @change="toggleRequirement('has_patotoo_katiwala', $event.target.checked)"
                                                class="w-5 h-5 text-blue-600 rounded">
                                         <div>
-                                            <p class="font-medium text-gray-900">Patotoo ng Katiwala</p>
-                                            <p class="text-sm text-gray-500">Recommendation from Katiwala</p>
+                                            <p class="font-medium text-gray-900 dark:text-gray-100">Patotoo ng Katiwala</p>
+                                            <p class="text-sm text-gray-500 dark:text-gray-400">Recommendation from Katiwala</p>
                                         </div>
                                     </div>
-                                    <span x-show="requestData?.has_patotoo_katiwala" class="text-green-600">
+                                    <span x-show="requestData?.has_patotoo_katiwala" class="text-green-600 dark:text-green-400">
                                         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                                             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
                                         </svg>
@@ -958,18 +959,18 @@ ob_start();
                                 </div>
                                 
                                 <!-- Patotoo ng Kapisanan -->
-                                <div class="flex items-center justify-between p-4 bg-white dark:bg-gray-800 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
+                                <div class="flex items-center justify-between p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-blue-300 dark:hover:border-blue-600 transition-colors">
                                     <div class="flex items-center space-x-3">
                                         <input type="checkbox" 
                                                :checked="requestData?.has_patotoo_kapisanan" 
                                                @change="toggleRequirement('has_patotoo_kapisanan', $event.target.checked)"
                                                class="w-5 h-5 text-blue-600 rounded">
                                         <div>
-                                            <p class="font-medium text-gray-900">Patotoo ng Kapisanan</p>
-                                            <p class="text-sm text-gray-500">Recommendation from Organization</p>
+                                            <p class="font-medium text-gray-900 dark:text-gray-100">Patotoo ng Kapisanan</p>
+                                            <p class="text-sm text-gray-500 dark:text-gray-400">Recommendation from Organization</p>
                                         </div>
                                     </div>
-                                    <span x-show="requestData?.has_patotoo_kapisanan" class="text-green-600">
+                                    <span x-show="requestData?.has_patotoo_kapisanan" class="text-green-600 dark:text-green-400">
                                         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                                             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
                                         </svg>
@@ -977,18 +978,18 @@ ob_start();
                                 </div>
                                 
                                 <!-- Salaysay ng Magulang -->
-                                <div class="flex items-center justify-between p-4 bg-white dark:bg-gray-800 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
+                                <div class="flex items-center justify-between p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-blue-300 dark:hover:border-blue-600 transition-colors">
                                     <div class="flex items-center space-x-3">
                                         <input type="checkbox" 
                                                :checked="requestData?.has_salaysay_magulang" 
                                                @change="toggleRequirement('has_salaysay_magulang', $event.target.checked)"
                                                class="w-5 h-5 text-blue-600 rounded">
                                         <div>
-                                            <p class="font-medium text-gray-900">Salaysay ng Magulang</p>
-                                            <p class="text-sm text-gray-500">Parent's Statement (if applicable)</p>
+                                            <p class="font-medium text-gray-900 dark:text-gray-100">Salaysay ng Magulang</p>
+                                            <p class="text-sm text-gray-500 dark:text-gray-400">Parent's Statement (if applicable)</p>
                                         </div>
                                     </div>
-                                    <span x-show="requestData?.has_salaysay_magulang" class="text-green-600">
+                                    <span x-show="requestData?.has_salaysay_magulang" class="text-green-600 dark:text-green-400">
                                         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                                             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
                                         </svg>
@@ -996,18 +997,18 @@ ob_start();
                                 </div>
                                 
                                 <!-- Salaysay ng Pagtanggap -->
-                                <div class="flex items-center justify-between p-4 bg-white dark:bg-gray-800 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
+                                <div class="flex items-center justify-between p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-blue-300 dark:hover:border-blue-600 transition-colors">
                                     <div class="flex items-center space-x-3">
                                         <input type="checkbox" 
                                                :checked="requestData?.has_salaysay_pagtanggap" 
                                                @change="toggleRequirement('has_salaysay_pagtanggap', $event.target.checked)"
                                                class="w-5 h-5 text-blue-600 rounded">
                                         <div>
-                                            <p class="font-medium text-gray-900">Salaysay ng Pagtanggap</p>
-                                            <p class="text-sm text-gray-500">Acceptance Statement</p>
+                                            <p class="font-medium text-gray-900 dark:text-gray-100">Salaysay ng Pagtanggap</p>
+                                            <p class="text-sm text-gray-500 dark:text-gray-400">Acceptance Statement</p>
                                         </div>
                                     </div>
-                                    <span x-show="requestData?.has_salaysay_pagtanggap" class="text-green-600">
+                                    <span x-show="requestData?.has_salaysay_pagtanggap" class="text-green-600 dark:text-green-400">
                                         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                                             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
                                         </svg>
@@ -1015,23 +1016,23 @@ ob_start();
                                 </div>
                                 
                                 <!-- R5-13 Seminar (Auto-complete) -->
-                                <div class="flex items-center justify-between p-4 bg-white dark:bg-gray-800 border border-gray-200 rounded-lg"
-                                     :class="requestData?.status === 'seminar_completed' || requestData?.status === 'requested_to_oath' || requestData?.status === 'ready_to_oath' || requestData?.status === 'oath_taken' ? 'border-green-300 bg-green-50' : 'border-gray-200'">
+                                <div class="flex items-center justify-between p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg"
+                                     :class="requestData?.status === 'seminar_completed' || requestData?.status === 'requested_to_oath' || requestData?.status === 'ready_to_oath' || requestData?.status === 'oath_taken' ? 'border-green-300 dark:border-green-600 bg-green-50 dark:bg-green-900/20' : 'border-gray-200 dark:border-gray-700'">
                                     <div class="flex items-center space-x-3">
                                         <input type="checkbox" 
                                                :checked="requestData?.status === 'seminar_completed' || requestData?.status === 'requested_to_oath' || requestData?.status === 'ready_to_oath' || requestData?.status === 'oath_taken'" 
                                                disabled
                                                class="w-5 h-5 text-blue-600 rounded cursor-not-allowed">
                                         <div>
-                                            <p class="font-medium text-gray-900">R5-13 Seminar Certificate</p>
+                                            <p class="font-medium text-gray-900 dark:text-gray-100">R5-13 Seminar Certificate</p>
                                             <p class="text-sm" 
-                                               :class="requestData?.status === 'seminar_completed' || requestData?.status === 'requested_to_oath' || requestData?.status === 'ready_to_oath' || requestData?.status === 'oath_taken' ? 'text-green-600' : 'text-gray-500'">
+                                               :class="requestData?.status === 'seminar_completed' || requestData?.status === 'requested_to_oath' || requestData?.status === 'ready_to_oath' || requestData?.status === 'oath_taken' ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'">
                                                 <span x-show="requestData?.status === 'seminar_completed' || requestData?.status === 'requested_to_oath' || requestData?.status === 'ready_to_oath' || requestData?.status === 'oath_taken'">✓ Auto-completed when seminar is finished</span>
                                                 <span x-show="!(requestData?.status === 'seminar_completed' || requestData?.status === 'requested_to_oath' || requestData?.status === 'ready_to_oath' || requestData?.status === 'oath_taken')">Will be auto-checked when seminar is completed</span>
                                             </p>
                                         </div>
                                     </div>
-                                    <span x-show="requestData?.status === 'seminar_completed' || requestData?.status === 'requested_to_oath' || requestData?.status === 'ready_to_oath' || requestData?.status === 'oath_taken'" class="text-green-600">
+                                    <span x-show="requestData?.status === 'seminar_completed' || requestData?.status === 'requested_to_oath' || requestData?.status === 'ready_to_oath' || requestData?.status === 'oath_taken'" class="text-green-600 dark:text-green-400">
                                         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                                             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
                                         </svg>
@@ -1039,18 +1040,18 @@ ob_start();
                                 </div>
                                 
                                 <!-- 2x2 Picture -->
-                                <div class="flex items-center justify-between p-4 bg-white dark:bg-gray-800 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
+                                <div class="flex items-center justify-between p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-blue-300 dark:hover:border-blue-600 transition-colors">
                                     <div class="flex items-center space-x-3">
                                         <input type="checkbox" 
                                                :checked="requestData?.has_picture" 
                                                @change="toggleRequirement('has_picture', $event.target.checked)"
                                                class="w-5 h-5 text-blue-600 rounded">
                                         <div>
-                                            <p class="font-medium text-gray-900">2x2 Picture</p>
-                                            <p class="text-sm text-gray-500">Recent 2x2 ID photo</p>
+                                            <p class="font-medium text-gray-900 dark:text-gray-100">2x2 Picture</p>
+                                            <p class="text-sm text-gray-500 dark:text-gray-400">Recent 2x2 ID photo</p>
                                         </div>
                                     </div>
-                                    <span x-show="requestData?.has_picture" class="text-green-600">
+                                    <span x-show="requestData?.has_picture" class="text-green-600 dark:text-green-400">
                                         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                                             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
                                         </svg>
@@ -1058,12 +1059,12 @@ ob_start();
                                 </div>
                             </div>
                             
-                            <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 mt-6">
+                            <div class="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-4 mt-6">
                                 <div class="flex items-center justify-between">
-                                    <span class="text-sm font-medium text-gray-700">Progress</span>
-                                    <span class="text-sm font-semibold" :class="getCompletedRequirements() === 7 ? 'text-green-600' : 'text-gray-900'" x-text="getCompletedRequirements() + ' / 7 Complete'"></span>
+                                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Progress</span>
+                                    <span class="text-sm font-semibold" :class="getCompletedRequirements() === 7 ? 'text-green-600 dark:text-green-400' : 'text-gray-900 dark:text-gray-100'" x-text="getCompletedRequirements() + ' / 7 Complete'"></span>
                                 </div>
-                                <div class="mt-2 w-full bg-gray-200 rounded-full h-2">
+                                <div class="mt-2 w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
                                     <div class="bg-blue-600 h-2 rounded-full transition-all duration-300" 
                                          :style="`width: ${(getCompletedRequirements() / 7) * 100}%`"></div>
                                 </div>
@@ -1072,8 +1073,8 @@ ob_start();
                         
                         <!-- History Tab -->
                         <div x-show="activeTab === 'history'" class="space-y-4">
-                            <div class="text-center py-8 text-gray-500">
-                                <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <div class="text-center py-8 text-gray-500 dark:text-gray-400">
+                                <svg class="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                 </svg>
                                 <p class="font-medium">Activity history coming soon</p>
@@ -1086,7 +1087,7 @@ ob_start();
         </div>
     </div>
 
-    <script>
+    <script nonce="<?php echo $csp_nonce; ?>">
     function requestModalData() {
         return {
             showModal: false,
@@ -1160,15 +1161,15 @@ ob_start();
     </script>
 
     <!-- Call-Up Slips Section -->
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 p-6">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
         <div class="flex items-center justify-between mb-6">
             <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
-                    <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="w-10 h-10 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
                     </svg>
                 </div>
-                <h3 class="text-xl font-semibold text-gray-900">Call-Up Slips (Tawag-Pansin)</h3>
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100">Call-Up Slips (Tawag-Pansin)</h3>
             </div>
             <a href="<?php echo BASE_URL; ?>/officers/call-up.php?officer_uuid=<?php echo urlencode($officerUuid); ?>" 
                class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-yellow-600 rounded-lg hover:bg-yellow-700 transition-colors">
@@ -1203,28 +1204,28 @@ ob_start();
         
         <?php if (empty($callUpSlips)): ?>
             <div class="text-center py-12">
-                <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                 </svg>
-                <p class="text-gray-500 font-medium">No call-up slips issued</p>
-                <p class="text-sm text-gray-400 mt-1">This officer has no call-up notices</p>
+                <p class="text-gray-500 dark:text-gray-400 font-medium">No call-up slips issued</p>
+                <p class="text-sm text-gray-400 dark:text-gray-500 mt-1">This officer has no call-up notices</p>
             </div>
         <?php else: ?>
             <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
+                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead class="bg-gray-50 dark:bg-gray-700">
                         <tr>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">File Number</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reason</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Issue Date</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deadline</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prepared By</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">File Number</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Department</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Reason</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Issue Date</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Deadline</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Prepared By</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
-                    <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200">
+                    <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                         <?php foreach ($callUpSlips as $slip): 
                             // Determine status styling
                             $statusConfig = [
@@ -1241,27 +1242,27 @@ ob_start();
                                 $statusInfo = ['color' => 'red', 'label' => 'Expired', 'icon' => false];
                             }
                         ?>
-                            <tr class="hover:bg-gray-50">
+                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
                                 <td class="px-4 py-3">
-                                    <span class="text-sm font-medium text-gray-900"><?php echo Security::escape($slip['file_number']); ?></span>
+                                    <span class="text-sm font-medium text-gray-900 dark:text-gray-100"><?php echo Security::escape($slip['file_number']); ?></span>
                                 </td>
                                 <td class="px-4 py-3">
-                                    <span class="text-sm text-gray-900"><?php echo Security::escape($slip['department']); ?></span>
+                                    <span class="text-sm text-gray-900 dark:text-gray-100"><?php echo Security::escape($slip['department']); ?></span>
                                 </td>
                                 <td class="px-4 py-3">
-                                    <div class="text-sm text-gray-700 max-w-xs truncate" title="<?php echo Security::escape($slip['reason']); ?>">
+                                    <div class="text-sm text-gray-700 dark:text-gray-300 max-w-xs truncate" title="<?php echo Security::escape($slip['reason']); ?>">
                                         <?php echo Security::escape($slip['reason']); ?>
                                     </div>
                                 </td>
-                                <td class="px-4 py-3 text-sm text-gray-700"><?php echo formatDate($slip['issue_date']); ?></td>
+                                <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300"><?php echo formatDate($slip['issue_date']); ?></td>
                                 <td class="px-4 py-3">
-                                    <span class="text-sm text-gray-700"><?php echo formatDate($slip['deadline_date']); ?></span>
+                                    <span class="text-sm text-gray-700 dark:text-gray-300"><?php echo formatDate($slip['deadline_date']); ?></span>
                                     <?php if ($isExpired): ?>
-                                        <span class="ml-1 text-xs text-red-600 font-medium">(Overdue)</span>
+                                        <span class="ml-1 text-xs text-red-600 dark:text-red-400 font-medium">(Overdue)</span>
                                     <?php endif; ?>
                                 </td>
                                 <td class="px-4 py-3">
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-<?php echo $statusInfo['color']; ?>-100 text-<?php echo $statusInfo['color']; ?>-800">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-<?php echo $statusInfo['color']; ?>-100 dark:bg-<?php echo $statusInfo['color']; ?>-900/30 text-<?php echo $statusInfo['color']; ?>-800 dark:text-<?php echo $statusInfo['color']; ?>-400">
                                         <?php if ($statusInfo['icon']): ?>
                                             <svg class="animate-pulse h-3 w-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
                                                 <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
@@ -1270,7 +1271,7 @@ ob_start();
                                         <?php echo $statusInfo['label']; ?>
                                     </span>
                                 </td>
-                                <td class="px-4 py-3 text-sm text-gray-700"><?php echo Security::escape($slip['prepared_by_name']); ?></td>
+                                <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300"><?php echo Security::escape($slip['prepared_by_name']); ?></td>
                                 <td class="px-4 py-3">
                                     <a href="<?php echo BASE_URL; ?>/officers/generate-call-up-pdf.php?slip_id=<?php echo $slip['slip_id']; ?>" 
                                        target="_blank"
@@ -1461,7 +1462,7 @@ ob_start();
     </div>
 </div>
 
-<script>
+<script nonce="<?php echo $csp_nonce; ?>">
 function openDeleteDutyModal(deptId, deptName) {
     window.dispatchEvent(new CustomEvent('open-delete-duty-modal', { 
         detail: { deptId: deptId, deptName: deptName }

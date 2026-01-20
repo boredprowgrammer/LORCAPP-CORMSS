@@ -234,11 +234,11 @@ ob_start();
 
     <!-- Statistics Cards -->
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 no-print">
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Total Officers</p>
-                    <p class="text-2xl font-bold text-gray-900 mt-1"><?php echo number_format(count($officers)); ?></p>
+                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Total Officers</p>
+                    <p class="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-1"><?php echo number_format(count($officers)); ?></p>
                 </div>
                 <div class="p-3 bg-blue-100 rounded-full">
                     <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -248,11 +248,11 @@ ob_start();
             </div>
         </div>
 
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm font-medium text-gray-600">With Control #</p>
-                    <p class="text-2xl font-bold text-green-600 mt-1"><?php echo number_format(count($officers) - count($missingControlNumbers)); ?></p>
+                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">With Control #</p>
+                    <p class="text-2xl font-bold text-green-600 dark:text-green-400 mt-1"><?php echo number_format(count($officers) - count($missingControlNumbers)); ?></p>
                 </div>
                 <div class="p-3 bg-green-100 rounded-full">
                     <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -262,11 +262,11 @@ ob_start();
             </div>
         </div>
 
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Missing Control #</p>
-                    <p class="text-2xl font-bold text-red-600 mt-1"><?php echo number_format(count($missingControlNumbers)); ?></p>
+                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Missing Control #</p>
+                    <p class="text-2xl font-bold text-red-600 dark:text-red-400 mt-1"><?php echo number_format(count($missingControlNumbers)); ?></p>
                 </div>
                 <div class="p-3 bg-red-100 rounded-full">
                     <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -301,7 +301,7 @@ ob_start();
     </div>
 
     <!-- Officers Table -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
         <div class="px-4 sm:px-6 py-4 border-b border-gray-200 bg-gray-50">
             <h2 class="text-lg font-semibold text-gray-900 flex items-center">
                 <svg class="w-5 h-5 mr-2 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -320,7 +320,7 @@ ob_start();
                         <th scope="col" class="px-3 py-1.5 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" style="width: 20%;">Oath Date</th>
                     </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
+                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                     <?php foreach ($officers as $officer): ?>
                     <tr class="hover:bg-gray-50 transition-colors">
                         <td class="px-3 py-1.5 text-center">
@@ -513,6 +513,59 @@ $extraStyles = <<<'STYLES'
 /* Custom DataTables Styling */
 .dataTables_wrapper {
     padding: 0.5rem;
+}
+
+/* DataTables Dark Mode */
+.dark .dataTables_wrapper .dataTables_length,
+.dark .dataTables_wrapper .dataTables_filter,
+.dark .dataTables_wrapper .dataTables_info,
+.dark .dataTables_wrapper .dataTables_processing,
+.dark .dataTables_wrapper .dataTables_paginate {
+    color: #e5e7eb !important;
+}
+.dark .dataTables_wrapper .dataTables_filter input,
+.dark .dataTables_wrapper .dataTables_length select {
+    background-color: #374151 !important;
+    border: 1px solid #4b5563 !important;
+    color: #f3f4f6 !important;
+    padding: 0.375rem 0.75rem;
+    border-radius: 0.5rem;
+}
+.dark table.dataTable thead th,
+.dark table.dataTable thead td {
+    background-color: #1f2937 !important;
+    border-bottom: 2px solid #374151 !important;
+    color: #f3f4f6 !important;
+}
+.dark table.dataTable tbody tr {
+    background-color: #111827 !important;
+}
+.dark table.dataTable tbody tr:hover {
+    background-color: #1f2937 !important;
+}
+.dark table.dataTable tbody td {
+    border-top: 1px solid #374151 !important;
+    color: #e5e7eb !important;
+}
+.dark .dataTables_wrapper .dataTables_paginate .paginate_button {
+    color: #e5e7eb !important;
+    background: transparent !important;
+    border: 1px solid #4b5563 !important;
+}
+.dark .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+    background: #374151 !important;
+    border: 1px solid #4b5563 !important;
+    color: #f3f4f6 !important;
+}
+.dark .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+    background: #3b82f6 !important;
+    border: 1px solid #3b82f6 !important;
+    color: white !important;
+}
+.dark .dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
+    color: #6b7280 !important;
+    background: transparent !important;
+    border: 1px solid #374151 !important;
 }
 
 .dataTables_filter input {

@@ -46,7 +46,7 @@ if (!Security::isLoggedIn() && isset($_COOKIE['remember_me'])) {
                     $_SERVER['HTTP_USER_AGENT'] ?? ''
                 ]);
                 
-                redirect(BASE_URL . '/dashboard.php');
+                redirect(BASE_URL . '/launchpad.php');
             }
         } catch (Exception $e) {
             error_log("Auto-login error: " . $e->getMessage());
@@ -57,7 +57,7 @@ if (!Security::isLoggedIn() && isset($_COOKIE['remember_me'])) {
 
 // Redirect if already logged in
 if (Security::isLoggedIn()) {
-    redirect(BASE_URL . '/dashboard.php');
+    redirect(BASE_URL . '/launchpad.php');
 }
 
 $error = '';
@@ -182,7 +182,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     $_SERVER['HTTP_USER_AGENT'] ?? ''
                                 ]);
                                 
-                                redirect(BASE_URL . '/dashboard.php');
+                                redirect(BASE_URL . '/launchpad.php');
                             }
                         } else {
                             Security::recordFailedLogin($username, $_SERVER['REMOTE_ADDR']);
@@ -217,10 +217,10 @@ ob_start();
 </style>
 
 <div class="w-full max-w-sm">
-    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden">
         <!-- Header -->
         <div class="text-center pt-12 pb-8 px-8">
-            <h1 class="text-3xl font-bold text-gray-900 mb-2"><?php echo APP_NAME; ?></h1>
+            <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2"><?php echo APP_NAME; ?></h1>
             <p class="text-sm text-gray-500" id="subtitle">
                 <?php echo $show2FA ? 'Two-Factor Authentication' : 'Sign in to continue'; ?>
             </p>
@@ -470,8 +470,8 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // Redirect to dashboard
-                window.location.href = data.redirect || '<?php echo BASE_URL; ?>/dashboard.php';
+                // Redirect to launchpad
+                window.location.href = data.redirect || '<?php echo BASE_URL; ?>/launchpad.php';
             } else {
                 showError(data.message || 'Invalid code. Please try again.');
                 if (isBackup) {

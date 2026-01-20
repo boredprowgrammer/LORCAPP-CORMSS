@@ -404,10 +404,10 @@ ob_start();
 
 <div class="space-y-6">
     <!-- Header -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
         <div class="flex items-center justify-between">
             <div>
-                <h1 class="text-2xl font-semibold text-gray-900">Import Purok-Grupo Data</h1>
+                <h1 class="text-2xl font-semibold text-gray-900 dark:text-gray-100">Import Purok-Grupo Data</h1>
                 <p class="text-sm text-gray-500 mt-1">Update existing CFO records with purok-grupo information</p>
             </div>
             <a href="cfo-registry.php" class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
@@ -433,9 +433,9 @@ ob_start();
 
     <?php if ($columnMappingData): ?>
         <!-- Column Mapping Screen -->
-        <div class="bg-white rounded-lg shadow-sm border border-purple-300 border-2 p-6">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-purple-300 dark:border-purple-700 border-2 p-6">
             <div class="flex items-center justify-between mb-4">
-                <h2 class="text-xl font-bold text-purple-900">🔗 Map CSV Columns</h2>
+                <h2 class="text-xl font-bold text-purple-900 dark:text-purple-100">🔗 Map CSV Columns</h2>
                 <span class="px-3 py-1 bg-purple-100 text-purple-800 text-sm font-semibold rounded-full">STEP 1: MAPPING</span>
             </div>
             
@@ -517,9 +517,9 @@ ob_start();
         
     <?php elseif ($previewData): ?>
         <!-- Preview -->
-        <div class="bg-white rounded-lg shadow-sm border border-blue-300 border-2 p-6">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-blue-300 dark:border-blue-700 border-2 p-6">
             <div class="flex items-center justify-between mb-4">
-                <h2 class="text-xl font-bold text-blue-900">📋 Import Preview</h2>
+                <h2 class="text-xl font-bold text-blue-900 dark:text-blue-100">📋 Import Preview</h2>
                 <span class="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-semibold rounded-full">PREVIEW MODE</span>
             </div>
 
@@ -745,8 +745,8 @@ ob_start();
 
     <?php else: ?>
         <!-- Upload Form -->
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h2 class="text-xl font-semibold text-gray-900 mb-4">Upload CSV File</h2>
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">Upload CSV File</h2>
 
             <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
                 <h3 class="text-sm font-semibold text-blue-900 mb-2">📄 CSV Format Requirements:</h3>

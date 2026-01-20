@@ -122,7 +122,7 @@ if (!validateRecordId($id)) {
         'id' => $id,
         'user' => $_SESSION['admin_username'] ?? 'unknown'
     ]);
-    header('Location: dashboard.php');
+    header('Location: ../launchpad.php');
     exit();
 }
 
@@ -136,7 +136,7 @@ if (!recordExists($conn, $id)) {
         'id' => $id,
         'user' => $_SESSION['admin_username'] ?? 'unknown'
     ]);
-    header('Location: dashboard.php');
+    header('Location: ../launchpad.php');
     exit();
 }
 
@@ -147,7 +147,7 @@ $stmt->execute();
 $result = $stmt->get_result();
 
 if ($result->num_rows === 0) {
-    header('Location: dashboard.php');
+    header('Location: ../launchpad.php');
     exit();
 }
 

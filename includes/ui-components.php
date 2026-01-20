@@ -7,12 +7,12 @@
 // Page Header Component
 function renderPageHeader($title, $subtitle = '', $actionButton = null) {
     ?>
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
         <div class="flex items-center justify-between">
             <div>
-                <h1 class="text-2xl font-semibold text-gray-900"><?php echo Security::escape($title); ?></h1>
+                <h1 class="text-2xl font-semibold text-gray-900 dark:text-gray-100"><?php echo Security::escape($title); ?></h1>
                 <?php if ($subtitle): ?>
-                    <p class="text-sm text-gray-500 mt-1"><?php echo Security::escape($subtitle); ?></p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1"><?php echo Security::escape($subtitle); ?></p>
                 <?php endif; ?>
             </div>
             <?php if ($actionButton): ?>
@@ -26,13 +26,13 @@ function renderPageHeader($title, $subtitle = '', $actionButton = null) {
 // Card Component
 function renderCard($content, $title = '', $icon = '', $padding = 'p-5') {
     ?>
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 <?php echo $padding; ?>">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 <?php echo $padding; ?>">
         <?php if ($title): ?>
             <div class="flex items-center space-x-2 mb-4">
                 <?php if ($icon): ?>
                     <?php echo $icon; ?>
                 <?php endif; ?>
-                <h3 class="font-semibold text-gray-900"><?php echo Security::escape($title); ?></h3>
+                <h3 class="font-semibold text-gray-900 dark:text-gray-100"><?php echo Security::escape($title); ?></h3>
             </div>
         <?php endif; ?>
         <?php echo $content; ?>
@@ -46,10 +46,10 @@ function renderInput($name, $label, $value = '', $type = 'text', $required = fal
     $placeholderAttr = $placeholder ? 'placeholder="' . Security::escape($placeholder) . '"' : '';
     ?>
     <div>
-        <label for="<?php echo $name; ?>" class="block text-sm font-medium text-gray-700 mb-2">
+        <label for="<?php echo $name; ?>" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             <?php echo Security::escape($label); ?>
             <?php if ($required): ?>
-                <span class="text-red-500">*</span>
+                <span class="text-red-500 dark:text-red-400">*</span>
             <?php endif; ?>
         </label>
         <input 
@@ -57,7 +57,7 @@ function renderInput($name, $label, $value = '', $type = 'text', $required = fal
             id="<?php echo $name; ?>"
             name="<?php echo $name; ?>"
             value="<?php echo Security::escape($value); ?>"
-            class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+            class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
             <?php echo $requiredAttr; ?>
             <?php echo $placeholderAttr; ?>
             <?php echo $attributes; ?>
@@ -71,16 +71,16 @@ function renderSelect($name, $label, $options, $selected = '', $required = false
     $requiredAttr = $required ? 'required' : '';
     ?>
     <div>
-        <label for="<?php echo $name; ?>" class="block text-sm font-medium text-gray-700 mb-2">
+        <label for="<?php echo $name; ?>" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             <?php echo Security::escape($label); ?>
             <?php if ($required): ?>
-                <span class="text-red-500">*</span>
+                <span class="text-red-500 dark:text-red-400">*</span>
             <?php endif; ?>
         </label>
         <select 
             id="<?php echo $name; ?>"
             name="<?php echo $name; ?>"
-            class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white"
+            class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
             <?php echo $requiredAttr; ?>
             <?php echo $attributes; ?>
         >
@@ -99,17 +99,17 @@ function renderTextarea($name, $label, $value = '', $required = false, $rows = 3
     $requiredAttr = $required ? 'required' : '';
     ?>
     <div>
-        <label for="<?php echo $name; ?>" class="block text-sm font-medium text-gray-700 mb-2">
+        <label for="<?php echo $name; ?>" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             <?php echo Security::escape($label); ?>
             <?php if ($required): ?>
-                <span class="text-red-500">*</span>
+                <span class="text-red-500 dark:text-red-400">*</span>
             <?php endif; ?>
         </label>
         <textarea 
             id="<?php echo $name; ?>"
             name="<?php echo $name; ?>"
             rows="<?php echo $rows; ?>"
-            class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+            class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
             <?php echo $requiredAttr; ?>
             <?php echo $attributes; ?>
         ><?php echo Security::escape($value); ?></textarea>
@@ -121,7 +121,7 @@ function renderTextarea($name, $label, $value = '', $required = false, $rows = 3
 function renderButton($text, $type = 'button', $style = 'primary', $icon = '', $attributes = '') {
     $styles = [
         'primary' => 'bg-blue-500 text-white hover:bg-blue-600',
-        'secondary' => 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50',
+        'secondary' => 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600',
         'success' => 'bg-green-500 text-white hover:bg-green-600',
         'danger' => 'bg-red-500 text-white hover:bg-red-600',
         'warning' => 'bg-yellow-500 text-white hover:bg-yellow-600',
@@ -223,25 +223,25 @@ function renderEmptyState($message, $icon = '', $action = '') {
 // Stat Card Component
 function renderStatCard($title, $value, $icon, $color = 'blue', $trend = '') {
     $colors = [
-        'blue' => ['bg' => 'bg-blue-100', 'text' => 'text-blue-600'],
-        'green' => ['bg' => 'bg-green-100', 'text' => 'text-green-600'],
-        'red' => ['bg' => 'bg-red-100', 'text' => 'text-red-600'],
-        'yellow' => ['bg' => 'bg-yellow-100', 'text' => 'text-yellow-600'],
-        'purple' => ['bg' => 'bg-purple-100', 'text' => 'text-purple-600'],
-        'cyan' => ['bg' => 'bg-cyan-100', 'text' => 'text-cyan-600'],
+        'blue' => ['bg' => 'bg-blue-100 dark:bg-blue-900', 'text' => 'text-blue-600 dark:text-blue-400'],
+        'green' => ['bg' => 'bg-green-100 dark:bg-green-900', 'text' => 'text-green-600 dark:text-green-400'],
+        'red' => ['bg' => 'bg-red-100 dark:bg-red-900', 'text' => 'text-red-600 dark:text-red-400'],
+        'yellow' => ['bg' => 'bg-yellow-100 dark:bg-yellow-900', 'text' => 'text-yellow-600 dark:text-yellow-400'],
+        'purple' => ['bg' => 'bg-purple-100 dark:bg-purple-900', 'text' => 'text-purple-600 dark:text-purple-400'],
+        'cyan' => ['bg' => 'bg-cyan-100 dark:bg-cyan-900', 'text' => 'text-cyan-600 dark:text-cyan-400'],
     ];
     $style = $colors[$color] ?? $colors['blue'];
     ?>
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md transition-shadow">
         <div class="flex items-center space-x-3">
             <div class="w-12 h-12 rounded-lg <?php echo $style['bg']; ?> flex items-center justify-center flex-shrink-0">
                 <?php echo $icon; ?>
             </div>
             <div>
-                <p class="text-2xl font-bold text-gray-900"><?php echo $value; ?></p>
-                <p class="text-xs text-gray-500"><?php echo Security::escape($title); ?></p>
+                <p class="text-2xl font-bold text-gray-900 dark:text-gray-100"><?php echo $value; ?></p>
+                <p class="text-xs text-gray-500 dark:text-gray-400"><?php echo Security::escape($title); ?></p>
                 <?php if ($trend): ?>
-                    <p class="text-xs <?php echo $trend > 0 ? 'text-green-600' : 'text-red-600'; ?> mt-1">
+                    <p class="text-xs <?php echo $trend > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'; ?> mt-1">
                         <?php echo $trend > 0 ? '↑' : '↓'; ?> <?php echo abs($trend); ?>%
                     </p>
                 <?php endif; ?>

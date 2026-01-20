@@ -131,6 +131,7 @@ if (hasPermission('can_view_officers')) {
     $pageActions[] = '<a href="' . BASE_URL . '/officers/bulk-update.php" class="inline-flex items-center justify-center px-3 sm:px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors shadow-sm text-xs sm:text-sm"><svg class="w-4 h-4 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg><span class="hidden sm:inline">Bulk Update</span></a>';
 }
 
+$csp_nonce = base64_encode(random_bytes(16));
 ob_start();
 ?>
 
@@ -140,7 +141,7 @@ ob_start();
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
             <div>
                 <h1 class="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-gray-100">Officers Registry</h1>
-                <p class="text-xs sm:text-sm text-gray-500 mt-1">Total: <?php echo number_format($totalRecords); ?> officers</p>
+                <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">Total: <?php echo number_format($totalRecords); ?> officers</p>
             </div>
             <!-- Actions moved to navbar for desktop; mobile shows compact icons in header -->
         </div>
@@ -150,26 +151,26 @@ ob_start();
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-5">
         <form method="GET" action="" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
             <div>
-                <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Search</label>
+                <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Search</label>
                 <input 
                     type="text" 
                     name="search" 
                     placeholder="Search officers..." 
-                    class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                    class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                     value="<?php echo Security::escape($searchQuery); ?>"
                 >
             </div>
             
             <div>
-                <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Department</label>
+                <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Department</label>
                 <div class="relative">
                     <input 
                         type="text" 
                         id="department-display"
-                        class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white dark:bg-gray-800 cursor-pointer"
+                        class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 cursor-pointer"
                         placeholder="All Departments"
                         readonly
-                        onclick="openDepartmentModal()"
+                        id="openDepartmentModalBtn"
                         value="<?php echo $filterDepartment ? Security::escape($filterDepartment) : 'All Departments'; ?>"
                     >
                     <input type="hidden" name="department" id="department-value" value="<?php echo Security::escape($filterDepartment); ?>">
@@ -182,8 +183,8 @@ ob_start();
             </div>
             
             <div>
-                <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">CFO Classification</label>
-                <select name="cfo_classification" class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white dark:bg-gray-800">
+                <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">CFO Classification</label>
+                <select name="cfo_classification" class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                     <option value="">All Classifications</option>
                     <option value="Buklod" <?php echo $filterCfoClassification === 'Buklod' ? 'selected' : ''; ?>>Buklod</option>
                     <option value="Kadiwa" <?php echo $filterCfoClassification === 'Kadiwa' ? 'selected' : ''; ?>>Kadiwa</option>
@@ -192,8 +193,8 @@ ob_start();
             </div>
             
             <div>
-                <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Status</label>
-                <select name="status" class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white dark:bg-gray-800">
+                <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Status</label>
+                <select name="status" class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                     <option value="all" <?php echo $filterStatus === 'all' ? 'selected' : ''; ?>>All Status</option>
                     <option value="active" <?php echo $filterStatus === 'active' ? 'selected' : ''; ?>>Active</option>
                     <option value="inactive" <?php echo $filterStatus === 'inactive' ? 'selected' : ''; ?>>Inactive</option>
@@ -201,7 +202,7 @@ ob_start();
             </div>
             
             <div>
-                <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">&nbsp;</label>
+                <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">&nbsp;</label>
                 <button type="submit" class="w-full inline-flex items-center justify-center px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors shadow-sm text-sm">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
@@ -215,26 +216,26 @@ ob_start();
     <!-- Officers Table - Desktop -->
     <div class="hidden md:block bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
         <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
+            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead class="bg-gray-50 dark:bg-gray-700">
                     <tr>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Officer Name</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Purok / Grupo / Control #</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CFO</th>
-                        <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Data Verified</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Officer Name</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Location</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Purok / Grupo / Control #</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">CFO</th>
+                        <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Data Verified</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200">
+                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                     <?php if (empty($officers)): ?>
                         <tr>
                             <td colspan="8" class="px-6 py-12 text-center">
-                                <svg class="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg class="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
                                 </svg>
-                                <p class="text-sm text-gray-500">No officers found</p>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">No officers found</p>
                             </td>
                         </tr>
                     <?php else: ?>
@@ -248,33 +249,33 @@ ob_start();
                                 $officer['district_code']
                             );
                             ?>
-                            <tr class="hover:bg-gray-50 transition-colors">
+                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="flex items-center">
                                         <div class="flex-shrink-0 h-10 w-10">
-                                            <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                                                <span class="text-sm font-medium text-blue-600"><?php echo strtoupper(substr($fullName, 0, 1)); ?></span>
+                                            <div class="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                                                <span class="text-sm font-medium text-blue-600 dark:text-blue-400"><?php echo strtoupper(substr($fullName, 0, 1)); ?></span>
                                             </div>
                                         </div>
                                         <div class="ml-4">
-                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100 cursor-pointer" 
+                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100 cursor-pointer officer-name" 
                                                  title="<?php echo Security::escape($fullName); ?>"
-                                                 ondblclick="this.textContent='<?php echo Security::escape($fullName); ?>'">
+                                                 data-full-name="<?php echo Security::escape($fullName); ?>">
                                                 <?php echo Security::escape(obfuscateName($fullName)); ?>
                                             </div>
-                                            <div class="text-xs text-gray-500">ID: <?php echo Security::escape(substr($officer['officer_uuid'], 0, 8)); ?></div>
+                                            <div class="text-xs text-gray-500 dark:text-gray-400">ID: <?php echo Security::escape(substr($officer['officer_uuid'], 0, 8)); ?></div>
                                         </div>
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="text-sm text-gray-900 dark:text-gray-100"><?php echo Security::escape($officer['local_name']); ?></div>
-                                    <div class="text-xs text-gray-500"><?php echo Security::escape($officer['district_name']); ?></div>
+                                    <div class="text-xs text-gray-500 dark:text-gray-400"><?php echo Security::escape($officer['district_name']); ?></div>
                                 </td>
                                 <td class="px-6 py-4">
                                     <div class="text-sm space-y-1">
                                         <?php if (!empty($officer['purok'])): ?>
-                                            <div class="flex items-center text-gray-700">
-                                                <svg class="w-3 h-3 mr-1.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <div class="flex items-center text-gray-700 dark:text-gray-300">
+                                                <svg class="w-3 h-3 mr-1.5 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
                                                 </svg>
@@ -282,23 +283,23 @@ ob_start();
                                             </div>
                                         <?php endif; ?>
                                         <?php if (!empty($officer['grupo'])): ?>
-                                            <div class="flex items-center text-gray-700">
-                                                <svg class="w-3 h-3 mr-1.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <div class="flex items-center text-gray-700 dark:text-gray-300">
+                                                <svg class="w-3 h-3 mr-1.5 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
                                                 </svg>
                                                 <span class="text-xs">Grupo: <span class="font-medium"><?php echo Security::escape($officer['grupo']); ?></span></span>
                                             </div>
                                         <?php endif; ?>
                                         <?php if (!empty($officer['control_number'])): ?>
-                                            <div class="flex items-center text-gray-700">
-                                                <svg class="w-3 h-3 mr-1.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <div class="flex items-center text-gray-700 dark:text-gray-300">
+                                                <svg class="w-3 h-3 mr-1.5 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"></path>
                                                 </svg>
                                                 <span class="text-xs">Control: <span class="font-medium"><?php echo Security::escape($officer['control_number']); ?></span></span>
                                             </div>
                                         <?php endif; ?>
                                         <?php if (empty($officer['purok']) && empty($officer['grupo']) && empty($officer['control_number'])): ?>
-                                            <span class="text-xs text-gray-400 italic">Not set</span>
+                                            <span class="text-xs text-gray-400 dark:text-gray-500 italic">Not set</span>
                                         <?php endif; ?>
                                     </div>
                                 </td>
@@ -307,20 +308,20 @@ ob_start();
                                         <?php
                                         $cfoClass = $officer['cfo_classification'];
                                         $cfoBadgeColors = [
-                                            'Buklod' => 'bg-purple-100 text-purple-800',
-                                            'Kadiwa' => 'bg-blue-100 text-blue-800',
-                                            'Binhi' => 'bg-pink-100 text-pink-800'
+                                            'Buklod' => 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300',
+                                            'Kadiwa' => 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+                                            'Binhi' => 'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-300'
                                         ];
-                                        $badgeClass = $cfoBadgeColors[$cfoClass] ?? 'bg-gray-100 text-gray-800';
+                                        $badgeClass = $cfoBadgeColors[$cfoClass] ?? 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
                                         ?>
                                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <?php echo $badgeClass; ?>">
                                             <?php echo Security::escape($cfoClass); ?>
                                         </span>
                                         <?php if ($officer['cfo_status'] === 'transferred-out'): ?>
-                                            <span class="block text-xs text-gray-500 mt-1">(Transferred Out)</span>
+                                            <span class="block text-xs text-gray-500 dark:text-gray-400 mt-1">(Transferred Out)</span>
                                         <?php endif; ?>
                                     <?php else: ?>
-                                        <span class="text-xs text-gray-400 italic">Not in CFO</span>
+                                        <span class="text-xs text-gray-400 dark:text-gray-500 italic">Not in CFO</span>
                                     <?php endif; ?>
                                 </td>
                                 <td class="px-6 py-4 text-center">
@@ -329,7 +330,7 @@ ob_start();
                                 <td class="px-6 py-4 whitespace-nowrap" style="display:none;">
                                     <div class="space-y-1">
                                         <?php if ($officer['dept_count'] > 0): ?>
-                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400">
                                                 <?php echo $officer['dept_count']; ?> dept(s)
                                             </span>
                                         <?php else: ?>
@@ -338,7 +339,7 @@ ob_start();
                                         
                                         <div class="flex flex-wrap gap-1 mt-1">
                                             <?php if (!empty($officer['registry_number_encrypted'])): ?>
-                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-800" title="Registry number from Tarheta Control is linked">
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-400" title="Registry number from Tarheta Control is linked">
                                                     <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
                                                         <path fill-rule="evenodd" d="M6 6V5a3 3 0 013-3h2a3 3 0 013 3v1h2a2 2 0 012 2v3.57A22.952 22.952 0 0110 13a22.95 22.95 0 01-8-1.43V8a2 2 0 012-2h2zm2-1a1 1 0 011-1h2a1 1 0 011 1v1H8V5zm1 5a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clip-rule="evenodd"></path>
                                                         <path d="M2 13.692V16a2 2 0 002 2h12a2 2 0 002-2v-2.308A24.974 24.974 0 0110 15c-2.796 0-5.487-.46-8-1.308z"></path>
@@ -348,7 +349,7 @@ ob_start();
                                             <?php endif; ?>
                                             
                                             <?php if ($officer['is_imported']): ?>
-                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800" title="Imported from LORCAPP">
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400" title="Imported from LORCAPP">
                                                     <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
                                                         <path d="M3 12v3c0 1.657 3.134 3 7 3s7-1.343 7-3v-3c0 1.657-3.134 3-7 3s-7-1.343-7-3z"/>
                                                         <path d="M3 7v3c0 1.657 3.134 3 7 3s7-1.343 7-3V7c0 1.657-3.134 3-7 3S3 8.657 3 7z"/>
@@ -363,19 +364,19 @@ ob_start();
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <?php 
                                     if ($officer['is_active']) {
-                                        echo '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Active</span>';
+                                        echo '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400">Active</span>';
                                     } else {
                                         // Smart logic to determine inactive type
                                         if ($officer['latest_transfer_type'] === 'out' && !empty($officer['latest_transfer_date'])) {
-                                            echo '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">TRANSFERRED-OUT</span>';
+                                            echo '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400">TRANSFERRED-OUT</span>';
                                         } elseif ($officer['latest_removal_code'] === 'C') {
-                                            echo '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">SUSPENDIDO (CODE-C)</span>';
+                                            echo '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400">SUSPENDIDO (CODE-C)</span>';
                                         } elseif ($officer['latest_removal_code'] === 'D') {
-                                            echo '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">LIPAT-KAPISANAN (CODE-D)</span>';
+                                            echo '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-400">LIPAT-KAPISANAN (CODE-D)</span>';
                                         } elseif (!empty($officer['latest_removal_reason']) && stripos($officer['latest_removal_reason'], 'transfer') !== false) {
-                                            echo '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">TRANSFERRED-OUT</span>';
+                                            echo '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400">TRANSFERRED-OUT</span>';
                                         } else {
-                                            echo '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Inactive</span>';
+                                            echo '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300">Inactive</span>';
                                         }
                                     }
                                     ?>
@@ -392,7 +393,7 @@ ob_start();
                                         </a>
                                         <?php if (hasPermission('can_edit_officers')): ?>
                                         <a href="<?php echo BASE_URL; ?>/officers/edit.php?id=<?php echo urlencode($officer['officer_uuid']); ?>" 
-                                           class="text-gray-600 hover:text-gray-900 dark:text-gray-100" 
+                                           class="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200" 
                                            title="Edit"
                                            target="_blank"
                                            rel="noopener noreferrer">
@@ -403,8 +404,9 @@ ob_start();
                                         <?php endif; ?>
                                         <?php if (hasPermission('can_delete_officers')): ?>
                                         <button 
-                                           onclick="confirmDelete('<?php echo Security::escape($officer['officer_uuid']); ?>', '<?php echo Security::escape(obfuscateName($fullName)); ?>')" 
-                                           class="text-red-600 hover:text-red-900" 
+                                           data-officer-id="<?php echo Security::escape($officer['officer_uuid']); ?>" 
+                                           data-officer-name="<?php echo Security::escape(obfuscateName($fullName)); ?>"
+                                           class="delete-officer-btn text-red-600 hover:text-red-900" 
                                            title="Delete">
                                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
@@ -421,12 +423,12 @@ ob_start();
         
         <!-- Pagination -->
         <?php if ($pagination['total_pages'] > 1): ?>
-            <div class="bg-gray-50 px-6 py-3 border-t border-gray-200 dark:border-gray-700">
+            <div class="bg-gray-50 dark:bg-gray-700 px-6 py-3 border-t border-gray-200 dark:border-gray-700">
                 <div class="flex items-center justify-center">
                     <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
                         <?php if ($pagination['has_prev']): ?>
                             <a href="?page=<?php echo $pagination['current_page'] - 1; ?><?php echo $searchQuery ? '&search=' . urlencode($searchQuery) : ''; ?><?php echo $filterDepartment ? '&department=' . urlencode($filterDepartment) : ''; ?><?php echo $filterStatus ? '&status=' . urlencode($filterStatus) : ''; ?>" 
-                               class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white dark:bg-gray-800 text-sm font-medium text-gray-500 hover:bg-gray-50">
+                               class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700">
                                 <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd"></path>
                                 </svg>
@@ -435,14 +437,14 @@ ob_start();
                         
                         <?php for ($i = 1; $i <= $pagination['total_pages']; $i++): ?>
                             <a href="?page=<?php echo $i; ?><?php echo $searchQuery ? '&search=' . urlencode($searchQuery) : ''; ?><?php echo $filterDepartment ? '&department=' . urlencode($filterDepartment) : ''; ?><?php echo $filterStatus ? '&status=' . urlencode($filterStatus) : ''; ?>" 
-                               class="relative inline-flex items-center px-4 py-2 border border-gray-300 <?php echo $i === $pagination['current_page'] ? 'bg-blue-500 text-white' : 'bg-white dark:bg-gray-800 text-gray-700 hover:bg-gray-50'; ?> text-sm font-medium">
+                               class="relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 <?php echo $i === $pagination['current_page'] ? 'bg-blue-500 dark:bg-blue-600 text-white' : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'; ?> text-sm font-medium">
                                 <?php echo $i; ?>
                             </a>
                         <?php endfor; ?>
                         
                         <?php if ($pagination['has_next']): ?>
                             <a href="?page=<?php echo $pagination['current_page'] + 1; ?><?php echo $searchQuery ? '&search=' . urlencode($searchQuery) : ''; ?><?php echo $filterDepartment ? '&department=' . urlencode($filterDepartment) : ''; ?><?php echo $filterStatus ? '&status=' . urlencode($filterStatus) : ''; ?>" 
-                               class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white dark:bg-gray-800 text-sm font-medium text-gray-500 hover:bg-gray-50">
+                               class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700">
                                 <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
                                 </svg>
@@ -459,10 +461,10 @@ ob_start();
     <div class="md:hidden space-y-3">
         <?php if (empty($officers)): ?>
             <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-8 text-center">
-                <svg class="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
                 </svg>
-                <p class="text-sm text-gray-500">No officers found</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400">No officers found</p>
             </div>
         <?php else: ?>
             <?php foreach ($officers as $officer): ?>
@@ -477,35 +479,35 @@ ob_start();
                 ?>
                 <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
                     <!-- Header with Avatar and Name -->
-                    <div class="flex items-start gap-3 mb-3 pb-3 border-b border-gray-100">
+                    <div class="flex items-start gap-3 mb-3 pb-3 border-b border-gray-100 dark:border-gray-700">
                         <div class="flex-shrink-0">
-                            <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
-                                <span class="text-base font-medium text-blue-600"><?php echo strtoupper(substr($fullName, 0, 1)); ?></span>
+                            <div class="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                                <span class="text-base font-medium text-blue-600 dark:text-blue-400"><?php echo strtoupper(substr($fullName, 0, 1)); ?></span>
                             </div>
                         </div>
                         <div class="flex-1 min-w-0">
-                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100 cursor-pointer mb-1" 
+                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100 cursor-pointer mb-1 officer-name" 
                                  title="<?php echo Security::escape($fullName); ?>"
-                                 ondblclick="this.textContent='<?php echo Security::escape($fullName); ?>'">
+                                 data-full-name="<?php echo Security::escape($fullName); ?>">
                                 <?php echo Security::escape(obfuscateName($fullName)); ?>
                             </div>
-                            <div class="text-xs text-gray-500">ID: <?php echo Security::escape(substr($officer['officer_uuid'], 0, 8)); ?></div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400">ID: <?php echo Security::escape(substr($officer['officer_uuid'], 0, 8)); ?></div>
                             <div class="mt-1">
                                 <?php 
                                 if ($officer['is_active']) {
-                                    echo '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Active</span>';
+                                    echo '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400">Active</span>';
                                 } else {
                                     // Smart logic to determine inactive type
                                     if ($officer['latest_transfer_type'] === 'out' && !empty($officer['latest_transfer_date'])) {
-                                        echo '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">TRANSFERRED-OUT</span>';
+                                        echo '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400">TRANSFERRED-OUT</span>';
                                     } elseif ($officer['latest_removal_code'] === 'C') {
-                                        echo '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">SUSPENDIDO (CODE-C)</span>';
+                                        echo '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400">SUSPENDIDO (CODE-C)</span>';
                                     } elseif ($officer['latest_removal_code'] === 'D') {
-                                        echo '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">LIPAT-KAPISANAN (CODE-D)</span>';
+                                        echo '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-400">LIPAT-KAPISANAN (CODE-D)</span>';
                                     } elseif (!empty($officer['latest_removal_reason']) && stripos($officer['latest_removal_reason'], 'transfer') !== false) {
-                                        echo '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">TRANSFERRED-OUT</span>';
+                                        echo '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400">TRANSFERRED-OUT</span>';
                                     } else {
-                                        echo '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Inactive</span>';
+                                        echo '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300">Inactive</span>';
                                     }
                                 }
                                 ?>
@@ -516,18 +518,18 @@ ob_start();
                     <!-- Officer Details -->
                     <div class="space-y-2 text-xs mb-3">
                         <div>
-                            <span class="text-gray-500">Local:</span>
+                            <span class="text-gray-500 dark:text-gray-400">Local:</span>
                             <span class="text-gray-900 dark:text-gray-100 font-medium ml-1"><?php echo Security::escape($officer['local_name']); ?></span>
                         </div>
                         <div>
-                            <span class="text-gray-500">District:</span>
+                            <span class="text-gray-500 dark:text-gray-400">District:</span>
                             <span class="text-gray-900 dark:text-gray-100 ml-1"><?php echo Security::escape($officer['district_name']); ?></span>
                         </div>
                         
                         <?php if (!empty($officer['purok']) || !empty($officer['grupo']) || !empty($officer['control_number'])): ?>
-                            <div class="pt-2 border-t border-gray-100">
+                            <div class="pt-2 border-t border-gray-100 dark:border-gray-700">
                                 <?php if (!empty($officer['purok'])): ?>
-                                    <div class="flex items-center text-gray-700 mb-1">
+                                    <div class="flex items-center text-gray-700 dark:text-gray-300 mb-1">
                                         <svg class="w-3 h-3 mr-1.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
@@ -536,7 +538,7 @@ ob_start();
                                     </div>
                                 <?php endif; ?>
                                 <?php if (!empty($officer['grupo'])): ?>
-                                    <div class="flex items-center text-gray-700 mb-1">
+                                    <div class="flex items-center text-gray-700 dark:text-gray-300 mb-1">
                                         <svg class="w-3 h-3 mr-1.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
                                         </svg>
@@ -544,7 +546,7 @@ ob_start();
                                     </div>
                                 <?php endif; ?>
                                 <?php if (!empty($officer['control_number'])): ?>
-                                    <div class="flex items-center text-gray-700">
+                                    <div class="flex items-center text-gray-700 dark:text-gray-300">
                                         <svg class="w-3 h-3 mr-1.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"></path>
                                         </svg>
@@ -554,37 +556,37 @@ ob_start();
                             </div>
                         <?php endif; ?>
                         
-                        <div class="pt-2 border-t border-gray-100">
-                            <span class="text-gray-500">Departments:</span>
+                        <div class="pt-2 border-t border-gray-100 dark:border-gray-700">
+                            <span class="text-gray-500 dark:text-gray-400">Departments:</span>
                             <?php if ($officer['dept_count'] > 0): ?>
-                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 ml-1">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400 ml-1">
                                     <?php echo $officer['dept_count']; ?> dept(s)
                                 </span>
                             <?php else: ?>
-                                <span class="text-gray-400 ml-1">None</span>
+                                <span class="text-gray-400 dark:text-gray-500 ml-1">None</span>
                             <?php endif; ?>
                         </div>
                         
                         <div>
-                            <span class="text-gray-500">CFO Classification:</span>
+                            <span class="text-gray-500 dark:text-gray-400">CFO Classification:</span>
                             <?php if (!empty($officer['cfo_classification'])): ?>
                                 <?php
                                 $cfoClass = $officer['cfo_classification'];
                                 $cfoBadgeColors = [
-                                    'Buklod' => 'bg-purple-100 text-purple-800',
-                                    'Kadiwa' => 'bg-blue-100 text-blue-800',
-                                    'Binhi' => 'bg-pink-100 text-pink-800'
+                                    'Buklod' => 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400',
+                                    'Kadiwa' => 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400',
+                                    'Binhi' => 'bg-pink-100 dark:bg-pink-900/30 text-pink-800 dark:text-pink-400'
                                 ];
-                                $badgeClass = $cfoBadgeColors[$cfoClass] ?? 'bg-gray-100 text-gray-800';
+                                $badgeClass = $cfoBadgeColors[$cfoClass] ?? 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300';
                                 ?>
                                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium <?php echo $badgeClass; ?> ml-1">
                                     <?php echo Security::escape($cfoClass); ?>
                                 </span>
                                 <?php if ($officer['cfo_status'] === 'transferred-out'): ?>
-                                    <span class="text-gray-500 ml-1">(Transferred Out)</span>
+                                    <span class="text-gray-500 dark:text-gray-400 ml-1">(Transferred Out)</span>
                                 <?php endif; ?>
                             <?php else: ?>
-                                <span class="text-gray-400 ml-1">Not in CFO</span>
+                                <span class="text-gray-400 dark:text-gray-500 ml-1">Not in CFO</span>
                             <?php endif; ?>
                         </div>
                         
@@ -625,7 +627,7 @@ ob_start();
                         </a>
                         <?php if (hasPermission('can_edit_officers')): ?>
                         <a href="<?php echo BASE_URL; ?>/officers/edit.php?id=<?php echo urlencode($officer['officer_uuid']); ?>" 
-                           class="inline-flex items-center justify-center px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                           class="inline-flex items-center justify-center px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                            title="Edit"
                            target="_blank"
                            rel="noopener noreferrer">
@@ -637,7 +639,7 @@ ob_start();
                         <?php if (hasPermission('can_delete_officers')): ?>
                         <button 
                            onclick="confirmDelete('<?php echo Security::escape($officer['officer_uuid']); ?>', '<?php echo Security::escape(obfuscateName($fullName)); ?>')" 
-                           class="inline-flex items-center justify-center px-3 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
+                           class="inline-flex items-center justify-center px-3 py-2 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors"
                            title="Delete">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
@@ -656,20 +658,20 @@ ob_start();
                     <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
                         <?php if ($pagination['has_prev']): ?>
                             <a href="?page=<?php echo $pagination['current_page'] - 1; ?><?php echo $searchQuery ? '&search=' . urlencode($searchQuery) : ''; ?><?php echo $filterDepartment ? '&department=' . urlencode($filterDepartment) : ''; ?><?php echo $filterStatus ? '&status=' . urlencode($filterStatus) : ''; ?>" 
-                               class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white dark:bg-gray-800 text-sm font-medium text-gray-500 hover:bg-gray-50">
+                               class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700">
                                 <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd"></path>
                                 </svg>
                             </a>
                         <?php endif; ?>
                         
-                        <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white dark:bg-gray-800 text-sm font-medium text-gray-700">
+                        <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium text-gray-700 dark:text-gray-300">
                             <?php echo $pagination['current_page']; ?> / <?php echo $pagination['total_pages']; ?>
                         </span>
                         
                         <?php if ($pagination['has_next']): ?>
                             <a href="?page=<?php echo $pagination['current_page'] + 1; ?><?php echo $searchQuery ? '&search=' . urlencode($searchQuery) : ''; ?><?php echo $filterDepartment ? '&department=' . urlencode($filterDepartment) : ''; ?><?php echo $filterStatus ? '&status=' . urlencode($filterStatus) : ''; ?>" 
-                               class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white dark:bg-gray-800 text-sm font-medium text-gray-500 hover:bg-gray-50">
+                               class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700">
                                 <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
                                 </svg>
@@ -682,7 +684,7 @@ ob_start();
     </div>
 </div>
 
-<script>
+<script nonce="<?php echo $csp_nonce; ?>">
 // Department Modal
 function openDepartmentModal() {
     const modal = document.getElementById('department-modal');
@@ -815,17 +817,87 @@ document.addEventListener('keydown', function(event) {
         closeDepartmentModal();
     }
 });
+
+// Add event listener for officer name double-click to reveal full name
+document.addEventListener('dblclick', function(event) {
+    if (event.target.classList.contains('officer-name')) {
+        const fullName = event.target.getAttribute('data-full-name');
+        if (fullName) {
+            event.target.textContent = fullName;
+        }
+    }
+});
+
+// Add event listeners for buttons
+document.addEventListener('DOMContentLoaded', function() {
+    // Open department modal
+    const openDeptBtn = document.getElementById('openDepartmentModalBtn');
+    if (openDeptBtn) {
+        openDeptBtn.addEventListener('click', openDepartmentModal);
+    }
+    
+    // Close department modal buttons
+    const closeDeptBtn = document.getElementById('closeDepartmentModalBtn');
+    if (closeDeptBtn) {
+        closeDeptBtn.addEventListener('click', closeDepartmentModal);
+    }
+    
+    const deptBackdrop = document.getElementById('departmentModalBackdrop');
+    if (deptBackdrop) {
+        deptBackdrop.addEventListener('click', closeDepartmentModal);
+    }
+    
+    // Delete officer buttons
+    document.querySelectorAll('.delete-officer-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const officerId = this.getAttribute('data-officer-id');
+            const officerName = this.getAttribute('data-officer-name');
+            confirmDelete(officerId, officerName);
+        });
+    });
+    
+    // Close delete modal buttons
+    const closeDelBtn = document.getElementById('closeDeleteModalBtn');
+    if (closeDelBtn) {
+        closeDelBtn.addEventListener('click', closeDeleteModal);
+    }
+    
+    const cancelDelBtn = document.getElementById('cancelDeleteBtn');
+    if (cancelDelBtn) {
+        cancelDelBtn.addEventListener('click', closeDeleteModal);
+    }
+    
+    const delBackdrop = document.getElementById('deleteModalBackdrop');
+    if (delBackdrop) {
+        delBackdrop.addEventListener('click', closeDeleteModal);
+    }
+    
+    // Confirm delete button
+    const confirmDelBtn = document.getElementById('confirm-delete-btn');
+    if (confirmDelBtn) {
+        confirmDelBtn.addEventListener('click', confirmDeleteOfficer);
+    }
+    
+    // Department selection
+    document.querySelectorAll('.department-option').forEach(option => {
+        option.addEventListener('click', function() {
+            const dept = this.getAttribute('data-department');
+            const deptName = this.getAttribute('data-department-name');
+            selectDepartment(dept, deptName);
+        });
+    });
+});
 </script>
 
 <!-- Department Modal -->
 <div id="department-modal" class="hidden fixed inset-0 z-50 overflow-y-auto">
     <div class="flex items-center justify-center min-h-screen p-4">
-        <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" onclick="closeDepartmentModal()"></div>
+        <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" id="departmentModalBackdrop"></div>
         <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full max-h-[80vh] flex flex-col">
             <!-- Header -->
-            <div class="flex items-center justify-between p-4 border-b">
+            <div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Select Department</h3>
-                <button type="button" onclick="closeDepartmentModal()" class="text-gray-400 hover:text-gray-500">
+                <button type="button" id="closeDepartmentModalBtn" class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                     </svg>
@@ -833,11 +905,11 @@ document.addEventListener('keydown', function(event) {
             </div>
             
             <!-- Search -->
-            <div class="p-4 border-b">
+            <div class="p-4 border-b border-gray-200 dark:border-gray-700">
                 <input 
                     type="text" 
                     id="department-search"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                     placeholder="Search departments..."
                     oninput="filterDepartments()"
                 >
@@ -845,12 +917,12 @@ document.addEventListener('keydown', function(event) {
             
             <!-- List -->
             <div class="overflow-y-auto flex-1">
-                <div class="department-item px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100"
+                <div class="department-item px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer border-b border-gray-100 dark:border-gray-700"
                      onclick="selectDepartment('', 'All Departments')">
                     <span class="text-gray-900 dark:text-gray-100 font-medium">All Departments</span>
                 </div>
                 <?php foreach (getDepartments() as $dept): ?>
-                    <div class="department-item px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100"
+                    <div class="department-item px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer border-b border-gray-100 dark:border-gray-700"
                          onclick="selectDepartment('<?php echo Security::escape($dept); ?>', '<?php echo Security::escape($dept); ?>')">
                         <span class="text-gray-900 dark:text-gray-100"><?php echo Security::escape($dept); ?></span>
                     </div>
@@ -863,7 +935,7 @@ document.addEventListener('keydown', function(event) {
 <!-- Delete Confirmation Modal -->
 <div id="delete-modal" class="hidden fixed inset-0 z-50 overflow-y-auto">
     <div class="flex items-center justify-center min-h-screen p-4">
-        <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" onclick="closeDeleteModal()"></div>
+        <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" id="deleteModalBackdrop"></div>
         <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-lg w-full">
             <!-- Header -->
             <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
@@ -875,7 +947,7 @@ document.addEventListener('keydown', function(event) {
                     </div>
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Confirm Delete Officer</h3>
                 </div>
-                <button type="button" onclick="closeDeleteModal()" class="text-gray-400 hover:text-gray-500">
+                <button type="button" id="closeDeleteModalBtn" class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                     </svg>
@@ -884,13 +956,13 @@ document.addEventListener('keydown', function(event) {
             
             <!-- Body -->
             <div class="p-6">
-                <p class="text-sm text-gray-700 mb-4">
+                <p class="text-sm text-gray-700 dark:text-gray-300 mb-4">
                     Are you sure you want to permanently delete officer <strong id="delete-officer-name" class="text-gray-900 dark:text-gray-100"></strong>?
                 </p>
-                <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-                    <p class="text-sm font-semibold text-red-800 mb-2">⚠️ Warning: This action cannot be undone!</p>
-                    <p class="text-sm text-red-700 mb-2">Deleting this officer will permanently remove:</p>
-                    <ul class="text-sm text-red-700 list-disc list-inside space-y-1">
+                <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-4">
+                    <p class="text-sm font-semibold text-red-800 dark:text-red-300 mb-2">⚠️ Warning: This action cannot be undone!</p>
+                    <p class="text-sm text-red-700 dark:text-red-400 mb-2">Deleting this officer will permanently remove:</p>
+                    <ul class="text-sm text-red-700 dark:text-red-400 list-disc list-inside space-y-1">
                         <li>Officer's personal information</li>
                         <li>All department assignments</li>
                         <li>Call-up records and history</li>
@@ -898,23 +970,22 @@ document.addEventListener('keydown', function(event) {
                         <li>Request history</li>
                     </ul>
                 </div>
-                <p class="text-sm text-gray-600">
+                <p class="text-sm text-gray-600 dark:text-gray-400">
                     This will be logged in the audit trail for security purposes.
                 </p>
             </div>
             
             <!-- Footer -->
-            <div class="flex items-center justify-end space-x-3 px-6 py-4 bg-gray-50 border-t border-gray-200 dark:border-gray-700 rounded-b-lg">
+            <div class="flex items-center justify-end space-x-3 px-6 py-4 bg-gray-50 dark:bg-gray-700 border-t border-gray-200 dark:border-gray-700 rounded-b-lg">
                 <button 
                     type="button" 
-                    onclick="closeDeleteModal()" 
-                    class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                    id="cancelDeleteBtn"
+                    class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
                     Cancel
                 </button>
                 <button 
                     type="button" 
                     id="confirm-delete-btn"
-                    onclick="confirmDeleteOfficer()" 
                     class="px-4 py-2 border border-transparent rounded-lg text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
                     <span id="delete-btn-text">Delete Officer</span>
                     <span id="delete-btn-loading" class="hidden">
