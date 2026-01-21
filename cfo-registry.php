@@ -638,7 +638,8 @@ function closeAccessRequestModal() {
                     <div class="relative">
                         <input type="text" 
                                x-model="searchQuery" 
-                               @input.debounce.500ms="search()"
+                               @input.debounce.150ms="search()"
+                               @keydown.enter="search()"
                                placeholder="Search members..."
                                class="w-full sm:w-64 pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                         <svg class="absolute left-3 top-2.5 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

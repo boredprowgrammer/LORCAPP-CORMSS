@@ -68,15 +68,9 @@ try {
         $params[] = $filterLocal;
     }
     
-    // Search filter - use indexed search columns
-    if (!empty($searchValue)) {
-        $whereConditions[] = '(t.search_name LIKE ? OR t.search_registry LIKE ? OR d.district_name LIKE ? OR lc.local_name LIKE ?)';
-        $searchParam = '%' . $searchValue . '%';
-        $params[] = $searchParam;
-        $params[] = $searchParam;
-        $params[] = $searchParam;
-        $params[] = $searchParam;
-    }
+    // Search filter - search on district/local names only (encrypted fields searched in PHP)
+    // Note: For exports, we skip search term filter since it requires decryption
+    // The search is applied post-decryption below if needed
     
     $whereClause = !empty($whereConditions) ? 'WHERE ' . implode(' AND ', $whereConditions) : '';
     

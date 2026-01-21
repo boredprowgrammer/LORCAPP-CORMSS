@@ -116,145 +116,102 @@ $pageTitle = 'System Settings';
 ob_start();
 ?>
 
-<div class="max-w-4xl mx-auto space-y-6">
+<div class="max-w-3xl mx-auto space-y-6">
     <!-- Header -->
     <div class="flex items-center justify-between">
         <div>
-            <h2 class="text-3xl font-bold text-gray-900 dark:text-gray-100">System Settings</h2>
-            <p class="text-sm text-gray-600 dark:text-gray-400">Configure system-wide settings and maintenance mode</p>
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">System Settings</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Configure system-wide settings</p>
         </div>
-        <a href="<?php echo BASE_URL; ?>/dashboard.php" class="inline-flex items-center px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
-            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-            </svg>
-            Back to Dashboard
+        <a href="<?php echo BASE_URL; ?>/launchpad.php" class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+            ← Launchpad
         </a>
     </div>
     
-    <!-- Success/Error Messages -->
+    <!-- Messages -->
     <?php if (isset($_SESSION['success'])): ?>
-    <div class="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg p-4">
-        <div class="flex items-center">
-            <svg class="w-5 h-5 text-green-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-            </svg>
-            <p class="text-green-700 dark:text-green-300"><?php echo $_SESSION['success']; unset($_SESSION['success']); ?></p>
-        </div>
+    <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+        <p class="text-sm text-green-700 dark:text-green-300"><?php echo $_SESSION['success']; unset($_SESSION['success']); ?></p>
     </div>
     <?php endif; ?>
     
     <?php if (isset($_SESSION['error'])): ?>
-    <div class="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg p-4">
-        <div class="flex items-center">
-            <svg class="w-5 h-5 text-red-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
-            </svg>
-            <p class="text-red-700 dark:text-red-300"><?php echo $_SESSION['error']; unset($_SESSION['error']); ?></p>
-        </div>
+    <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+        <p class="text-sm text-red-700 dark:text-red-300"><?php echo $_SESSION['error']; unset($_SESSION['error']); ?></p>
     </div>
     <?php endif; ?>
     
-    <!-- Maintenance Mode Section -->
-    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-        <div class="bg-gradient-to-r from-yellow-500 to-orange-500 px-6 py-4">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
-                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                    </svg>
-                </div>
-                <div>
-                    <h3 class="text-xl font-semibold text-white">Maintenance Mode</h3>
-                    <p class="text-white/80 text-sm">Control system availability for users</p>
-                </div>
-            </div>
+    <!-- Maintenance Mode -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Maintenance Mode</h2>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Control system availability for users</p>
         </div>
         
-        <form method="POST" action="" class="p-6 space-y-6">
+        <form method="POST" action="" class="p-6 space-y-5">
             <input type="hidden" name="action" value="update_maintenance">
             
-            <!-- Current Status -->
-            <div class="flex items-center justify-between p-4 rounded-lg <?php echo $maintenanceMode ? 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800' : 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800'; ?>">
+            <!-- Status Indicator -->
+            <div class="flex items-center justify-between p-4 rounded-lg <?php echo $maintenanceMode ? 'bg-red-50 dark:bg-red-900/20' : 'bg-green-50 dark:bg-green-900/20'; ?>">
                 <div class="flex items-center gap-3">
-                    <?php if ($maintenanceMode): ?>
-                    <div class="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
-                    <span class="font-medium text-red-700 dark:text-red-400">Maintenance Mode is ACTIVE</span>
-                    <?php else: ?>
-                    <div class="w-3 h-3 bg-green-500 rounded-full"></div>
-                    <span class="font-medium text-green-700 dark:text-green-400">System is ONLINE</span>
-                    <?php endif; ?>
+                    <div class="w-2.5 h-2.5 rounded-full <?php echo $maintenanceMode ? 'bg-red-500 animate-pulse' : 'bg-green-500'; ?>"></div>
+                    <span class="font-medium <?php echo $maintenanceMode ? 'text-red-700 dark:text-red-300' : 'text-green-700 dark:text-green-300'; ?>">
+                        <?php echo $maintenanceMode ? 'Maintenance Mode Active' : 'System Online'; ?>
+                    </span>
                 </div>
                 <span class="text-sm <?php echo $maintenanceMode ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'; ?>">
-                    <?php echo $maintenanceMode ? 'Non-admin users cannot access the system' : 'All users can access the system'; ?>
+                    <?php echo $maintenanceMode ? 'Non-admin users blocked' : 'All users can access'; ?>
                 </span>
             </div>
             
-            <!-- Enable/Disable Toggle -->
-            <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+            <!-- Toggle -->
+            <div class="flex items-center justify-between">
                 <div>
                     <label for="maintenance_mode" class="font-medium text-gray-900 dark:text-gray-100">Enable Maintenance Mode</label>
-                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">When enabled, only administrators can access the system. All other users will see the maintenance page.</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Only administrators can access the system when enabled</p>
                 </div>
                 <label class="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" name="maintenance_mode" id="maintenance_mode" class="sr-only peer" <?php echo $maintenanceMode ? 'checked' : ''; ?>>
-                    <div class="w-14 h-7 bg-gray-200 dark:bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-yellow-300 dark:peer-focus:ring-yellow-800 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-yellow-500"></div>
+                    <div class="w-11 h-6 bg-gray-200 dark:bg-gray-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                 </label>
             </div>
             
-            <!-- Maintenance Message -->
+            <!-- Message -->
             <div>
-                <label for="maintenance_message" class="block font-medium text-gray-900 dark:text-gray-100 mb-2">Maintenance Message</label>
+                <label for="maintenance_message" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Maintenance Message</label>
                 <textarea 
                     id="maintenance_message" 
                     name="maintenance_message" 
                     rows="3" 
-                    class="w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 dark:text-gray-100"
-                    placeholder="Enter the message to display during maintenance..."
+                    class="w-full px-4 py-2.5 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Enter message to display during maintenance..."
                 ><?php echo Security::escape($maintenanceMessage); ?></textarea>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">This message will be displayed to users during maintenance.</p>
             </div>
             
-            <!-- Estimated End Time -->
+            <!-- End Time -->
             <div>
-                <label for="maintenance_end_time" class="block font-medium text-gray-900 dark:text-gray-100 mb-2">Estimated End Time (Optional)</label>
+                <label for="maintenance_end_time" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Estimated End Time</label>
                 <input 
                     type="text" 
                     id="maintenance_end_time" 
                     name="maintenance_end_time" 
                     value="<?php echo Security::escape($maintenanceEndTime); ?>"
-                    class="w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 dark:text-gray-100"
-                    placeholder="e.g., January 20, 2026 at 5:00 PM"
+                    class="w-full px-4 py-2.5 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="e.g., January 21, 2026 at 5:00 PM"
                 >
-                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Displayed to users so they know when to check back.</p>
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Displayed to users so they know when to check back</p>
             </div>
             
             <!-- Preview Link -->
-            <div class="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                <div class="flex items-start gap-3">
-                    <svg class="w-5 h-5 text-blue-500 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
-                    </svg>
-                    <div>
-                        <p class="text-blue-700 dark:text-blue-300 font-medium">Preview Maintenance Page</p>
-                        <p class="text-sm text-blue-600 dark:text-blue-400 mt-1">
-                            <a href="<?php echo BASE_URL; ?>/maintenance.php" target="_blank" class="underline hover:no-underline">
-                                Click here to preview how the maintenance page looks
-                            </a>
-                        </p>
-                    </div>
-                </div>
+            <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+                <a href="<?php echo BASE_URL; ?>/maintenance.php" target="_blank" class="text-sm text-blue-600 dark:text-blue-400 hover:underline">
+                    Preview maintenance page →
+                </a>
             </div>
             
-            <!-- Submit Button -->
-            <div class="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-                <button 
-                    type="submit" 
-                    class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-medium rounded-lg hover:from-yellow-600 hover:to-orange-600 focus:ring-4 focus:ring-yellow-300 transition-all shadow-lg shadow-yellow-500/25"
-                >
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                    </svg>
+            <!-- Submit -->
+            <div class="flex justify-end pt-4 border-t border-gray-200 dark:border-gray-700">
+                <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors">
                     Save Settings
                 </button>
             </div>
@@ -270,20 +227,20 @@ ob_start();
                 </svg>
             </div>
             <div>
-                <p class="font-medium text-gray-900 dark:text-gray-100">User Management</p>
-                <p class="text-sm text-gray-500 dark:text-gray-400">Manage system users</p>
+                <p class="font-medium text-gray-900 dark:text-gray-100">Users</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">Manage users</p>
             </div>
         </a>
         
         <a href="<?php echo BASE_URL; ?>/admin/audit.php" class="flex items-center gap-3 p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-green-400 dark:hover:border-green-500 transition-colors">
             <div class="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
                 <svg class="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
                 </svg>
             </div>
             <div>
                 <p class="font-medium text-gray-900 dark:text-gray-100">Audit Log</p>
-                <p class="text-sm text-gray-500 dark:text-gray-400">View system activity</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">View activity</p>
             </div>
         </a>
         
@@ -295,7 +252,7 @@ ob_start();
             </div>
             <div>
                 <p class="font-medium text-gray-900 dark:text-gray-100">Announcements</p>
-                <p class="text-sm text-gray-500 dark:text-gray-400">Manage announcements</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">Manage news</p>
             </div>
         </a>
     </div>

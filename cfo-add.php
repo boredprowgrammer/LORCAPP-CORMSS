@@ -213,10 +213,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                 }
                 
-                // Create search index values
-                $searchName = trim($firstName . ' ' . $middleName . ' ' . $lastName);
-                $searchRegistry = $registryNumber;
-                
                 // Insert record
                 $stmt = $db->prepare("
                     INSERT INTO tarheta_control (
@@ -225,9 +221,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         district_code, local_code, birthday_encrypted,
                         cfo_classification, cfo_classification_auto, cfo_status, cfo_notes,
                         registration_type, registration_date, registration_others_specify,
-                        search_name, search_registry,
                         imported_by, imported_at, cfo_updated_by, cfo_updated_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, NOW())
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, NOW())
                 ");
                 
                 $stmt->execute([
@@ -247,8 +242,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     !empty($registrationType) ? $registrationType : null,
                     !empty($registrationDate) ? $registrationDate : null,
                     !empty($registrationOthersSpecify) ? $registrationOthersSpecify : null,
-                    $searchName,
-                    $searchRegistry,
                     $currentUser['user_id'],
                     $currentUser['user_id']
                 ]);

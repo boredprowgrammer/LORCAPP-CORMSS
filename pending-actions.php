@@ -1641,10 +1641,6 @@ function executeAddCfo($data, $db) {
         }
     }
     
-    // Create search index values
-    $searchName = trim($firstName . ' ' . $middleName . ' ' . $lastName);
-    $searchRegistry = $registryNumber;
-    
     // Insert record
     $stmt = $db->prepare("
         INSERT INTO tarheta_control (
@@ -1653,9 +1649,8 @@ function executeAddCfo($data, $db) {
             district_code, local_code, birthday_encrypted,
             cfo_classification, cfo_classification_auto, cfo_status, cfo_notes,
             registration_type, registration_date, registration_others_specify,
-            search_name, search_registry,
             imported_by, imported_at, cfo_updated_by, cfo_updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, NOW())
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, NOW())
     ");
     
     $stmt->execute([
@@ -1675,8 +1670,6 @@ function executeAddCfo($data, $db) {
         !empty($registrationType) ? $registrationType : null,
         !empty($registrationDate) ? $registrationDate : null,
         !empty($registrationOthersSpecify) ? $registrationOthersSpecify : null,
-        $searchName,
-        $searchRegistry,
         $currentUser['user_id'],
         $currentUser['user_id']
     ]);
@@ -1743,15 +1736,6 @@ function executeEditCfo($data, $recordId, $db) {
     if (isset($data['cfo_notes'])) {
         $updateFields[] = 'cfo_notes = ?';
         $updateParams[] = $data['cfo_notes'];
-    }
-    
-    // Update search index
-    if (isset($data['first_name']) || isset($data['middle_name']) || isset($data['last_name'])) {
-        $firstName = $data['first_name'] ?? '';
-        $middleName = $data['middle_name'] ?? '';
-        $lastName = $data['last_name'] ?? '';
-        $updateFields[] = 'search_name = ?';
-        $updateParams[] = trim($firstName . ' ' . $middleName . ' ' . $lastName);
     }
     
     $updateFields[] = 'cfo_updated_by = ?';

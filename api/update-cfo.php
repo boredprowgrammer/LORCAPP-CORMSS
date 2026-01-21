@@ -177,35 +177,11 @@ try {
         
         $updateFields[] = 'registry_number_encrypted = ?';
         $updateFields[] = 'registry_number_hash = ?';
-        $updateFields[] = 'search_registry = ?';
         $params[] = Encryption::encrypt($registryNumber, $record['district_code']);
         $params[] = $registryNumberHash;
-        $params[] = $normalizedRegNum;
     }
     
-    // Update search_name if any name fields were updated
-    if ($nameFieldsUpdated) {
-        // Get current values if not all provided
-        if ($firstName === null || $middleName === null || $lastName === null) {
-            $stmtNames = $db->prepare("SELECT first_name_encrypted, middle_name_encrypted, last_name_encrypted FROM tarheta_control WHERE id = ?");
-            $stmtNames->execute([$id]);
-            $currentNames = $stmtNames->fetch();
-            
-            if ($firstName === null) {
-                $firstName = Encryption::decrypt($currentNames['first_name_encrypted'], $record['district_code']);
-            }
-            if ($middleName === null && $currentNames['middle_name_encrypted']) {
-                $middleName = Encryption::decrypt($currentNames['middle_name_encrypted'], $record['district_code']);
-            }
-            if ($lastName === null) {
-                $lastName = Encryption::decrypt($currentNames['last_name_encrypted'], $record['district_code']);
-            }
-        }
-        
-        $searchName = trim($firstName . ' ' . $middleName . ' ' . $lastName);
-        $updateFields[] = 'search_name = ?';
-        $params[] = $searchName;
-    }
+    // Name fields updated - no additional action needed since we encrypt directly
     
     if ($cfoClassification !== null) {
         $updateFields[] = 'cfo_classification = ?';

@@ -255,7 +255,8 @@ ob_start();
                     <div class="relative">
                         <input type="text" 
                                x-model="searchQuery" 
-                               @input.debounce.500ms="search()"
+                               @input.debounce.150ms="search()"
+                               @keydown.enter="search()"
                                placeholder="Search members..."
                                class="w-full sm:w-64 pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                         <svg class="absolute left-3 top-2.5 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -504,8 +505,8 @@ ob_start();
                     </div>
                     <div class="grid grid-cols-3 gap-3">
                         <div>
-                            <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Registry Number</label>
-                            <input type="text" id="edit_registry" readonly class="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm">
+                            <label class="block text-xs font-medium text-gray-700 mb-1">Registry Number <span class="text-red-600">*</span></label>
+                            <input type="text" id="edit_registry" name="registry_number" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-gray-700 mb-1">Birthday</label>
