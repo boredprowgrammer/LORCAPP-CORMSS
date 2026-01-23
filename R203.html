@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="fil">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Records Form R2-03</title>
+    <meta name="author" content="Lowell Nucum">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        @page {
+            size: A4 landscape;
+            margin: 8mm 10mm;
+        }
+        
+        body {
+            font-family: Verdana, sans-serif;
+            font-size: 8pt;
+            padding: 8px 12px;
+            background: white;
+            margin: 0;
+        }
+        
+        .container {
+            width: 100%;
+        }
+        
+        /* Header Section */
+        .header-row {
+            display: flex;
+            align-items: flex-end;
+            margin-bottom: 8px;
+        }
+        
+        .header-left {
+            text-align: left;
+        }
+        
+        .form-label-text {
+            font-size: 9pt;
+            color: black;
+            display: block;
+        }
+        
+        .form-number {
+            font-family: Cambria, serif;
+            font-size: 28pt;
+            font-weight: bold;
+            color: black;
+            line-height: 1;
+            margin-top: -2px;
+        }
+        
+        .header-center {
+            flex: 1;
+            text-align: center;
+            padding-bottom: 8px;
+        }
+        
+        .main-title {
+            font-family: Verdana, sans-serif;
+            font-size: 16pt;
+            font-weight: bold;
+            color: black;
+            letter-spacing: 0.5px;
+        }
+        
+        /* Officer Info Section - using table for precise alignment */
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+        
+        .officer-table {
+            border-collapse: collapse;
+        }
+        
+        .officer-table td {
+            border: 1pt solid black;
+            padding: 6px 10px;
+            min-height: 42px;
+            height: 42px;
+            font-size: 9pt;
+            vertical-align: top;
+        }
+        
+        .officer-table td.officer-cell {
+            min-width: 230px;
+            width: 230px;
+        }
+        
+        .location-wrapper {
+            margin-left: auto;
+            border-top: 1pt solid black;
+            padding-top: 0;
+        }
+        
+        .location-table {
+            border-collapse: collapse;
+        }
+        
+        .location-table td {
+            border: 1pt solid black;
+            border-top: none;
+            padding: 4px 12px;
+            font-size: 9pt;
+            font-weight: bold;
+            text-align: center;
+            min-width: 70px;
+            vertical-align: top;
+        }
+        
+        .location-table .label-row td {
+            border-bottom: 1pt solid black;
+            padding: 3px 12px;
+            height: 20px;
+        }
+        
+        .location-table .data-row td {
+            border-top: none;
+            height: 25px;
+            font-weight: normal;
+        }
+        
+        /* Main Table */
+        .main-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 6.5pt;
+            table-layout: fixed;
+        }
+        
+        .main-table th,
+        .main-table td {
+            border: 0.5pt solid black;
+            padding: 1px 1px;
+            text-align: center;
+            vertical-align: middle;
+        }
+        
+        .main-table thead th {
+            background-color: white;
+            font-weight: normal;
+            font-size: 6.5pt;
+        }
+        
+        .main-table thead tr:first-child th {
+            font-size: 7pt;
+        }
+        
+        /* Specific column widths - narrower for A4 */
+        .col-samb { width: 20px; font-size: 5pt !important; }
+        .col-pangalan { width: 150px; text-align: left !important; padding-left: 3px !important; }
+        .col-id-digit { width: 6px !important; min-width: 6px !important; max-width: 6px !important; font-size: 5pt !important; padding: 0 !important; }
+        .col-cs { width: 22px; }
+        .col-petsa-bautismo { width: 50px; font-size: 4.5pt !important; white-space: nowrap; overflow: hidden; }
+        .col-petsa-kapanganakan { width: 60px; font-size: 4.5pt !important; white-space: nowrap; overflow: hidden; }
+        .col-relasyon { width: 45px; font-size: 5pt !important; }
+        .col-kap { width: 20px; }
+        .col-tirahan { width: 110px; text-align: left !important; padding-left: 3px !important; }
+        .col-code { width: 25px; }
+        .col-pansin { width: 65px; text-align: left !important; padding-left: 3px !important; }
+        
+        /* Data rows */
+        .main-table tbody td {
+            height: 14px;
+            font-size: 6.5pt;
+        }
+        
+        /* Header row styling */
+        .main-table thead th {
+            padding: 2px 1px;
+            line-height: 1.1;
+        }
+        
+        .header-petsa {
+            font-size: 7pt !important;
+        }
+        
+        .sub-header {
+            font-size: 6pt !important;
+        }
+        
+        /* Footer */
+        .footer {
+            text-align: left;
+            font-size: 7pt;
+            font-style: italic;
+            margin-top: 8px;
+            padding-left: 2px;
+        }
+        
+        @media print {
+            body {
+                padding: 5px 10px;
+            }
+            .main-table tbody td {
+                height: 12px;
+            }
+            .main-table tbody td {
+                height: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header-row">
+            <div class="header-left">
+                <span class="form-label-text">Records Form</span>
+                <span class="form-number">R2-03</span>
+            </div>
+            <div class="header-center">
+                <p class="main-title">TALAAN NG KAANIB NG SAMBAHAYAN SA GRUPO</p>
+            </div>
+        </div>
+        
+        <!-- Officer and Location Section -->
+        <div class="info-row">
+            <table class="officer-table">
+                <tr>
+                    <td class="officer-cell">Katiwala</td>
+                    <td class="officer-cell">II Katiwala</td>
+                    <td class="officer-cell">Kalihim</td>
+                </tr>
+            </table>
+            <div class="location-wrapper">
+                <table class="location-table">
+                    <tr class="label-row">
+                        <td>PUROK</td>
+                        <td>GRUPO</td>
+                    </tr>
+                    <tr class="data-row">
+                        <td></td>
+                        <td></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Main Data Table -->
+        <table class="main-table">
+            <thead>
+                <tr>
+                    <th rowspan="2" class="col-samb">Samb<br>Big</th>
+                    <th rowspan="2" class="col-pangalan">BUONG PANGALAN</th>
+                    <th colspan="10">ID NUMBER</th>
+                    <th rowspan="2" class="col-cs">CS</th>
+                    <th colspan="2" class="header-petsa">Petsa</th>
+                    <th rowspan="2" class="col-relasyon">Relasyon sa<br>Pangulo</th>
+                    <th rowspan="2" class="col-kap">Kap</th>
+                    <th rowspan="2" class="col-tirahan">Tirahan</th>
+                    <th rowspan="2" class="col-code">Code</th>
+                    <th rowspan="2" class="col-pansin">Pansin</th>
+                </tr>
+                <tr>
+                    <!-- ID Number sub-columns (10 digits) -->
+                    <th class="col-id-digit"></th>
+                    <th class="col-id-digit"></th>
+                    <th class="col-id-digit"></th>
+                    <th class="col-id-digit"></th>
+                    <th class="col-id-digit"></th>
+                    <th class="col-id-digit"></th>
+                    <th class="col-id-digit"></th>
+                    <th class="col-id-digit"></th>
+                    <th class="col-id-digit"></th>
+                    <th class="col-id-digit"></th>
+                    <!-- Petsa sub-columns -->
+                    <th class="col-petsa-bautismo sub-header">Bautismo</th>
+                    <th class="col-petsa-kapanganakan sub-header">Kapanganakan</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+            </tbody>
+        </table>
+        
+        <!-- Footer -->
+        <p class="footer">Revised Sept 2009</p>
+    </div>
+</body>
+</html>

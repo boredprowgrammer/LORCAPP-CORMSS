@@ -59,7 +59,7 @@ $currentAppContext = detectAppContext();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline' 'unsafe-eval' 'unsafe-hashes' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://code.jquery.com https://cdn.datatables.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.datatables.net https://site-assets.fontawesome.com; font-src 'self' https://fonts.gstatic.com https://site-assets.fontawesome.com; img-src 'self' data: https:; connect-src 'self';">
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline' 'unsafe-eval' 'unsafe-hashes' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://code.jquery.com https://cdn.datatables.net https://cdnjs.cloudflare.com https://js.puter.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.datatables.net https://site-assets.fontawesome.com; font-src 'self' https://fonts.gstatic.com https://site-assets.fontawesome.com; img-src 'self' data: https:; connect-src 'self' https://api.puter.com https://*.puter.com wss://api.puter.com wss://*.puter.com;">
 
     <title><?php echo isset($pageTitle) ? Security::escape($pageTitle) . ' - LORCAPP' : 'LORCAPP - Church Officers Registry'; ?></title>
     

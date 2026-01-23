@@ -116,7 +116,7 @@ function getBaseUrl() {
     $basePath = rtrim($basePath, '/');
     
     // Remove common subdirectories from path if script is in a subdirectory
-    $basePath = preg_replace('#/(includes|config|api|officers|admin|requests|lorcapp|transfers|reports|tarheta|legacy|cfo-app|callup-app|officers-app|registry-app|reports-app|requests-app|masterlist-form|palasumpaan_template|R5-13).*$#', '', $basePath);
+    $basePath = preg_replace('#/(includes|config|api|officers|admin|requests|lorcapp|transfers|reports|tarheta|legacy|cfo-app|callup-app|officers-app|registry-app|reports-app|requests-app|masterlist-form|palasumpaan_template|R5-13|family).*$#', '', $basePath);
     
     return $protocol . '://' . $host . $basePath;
 }

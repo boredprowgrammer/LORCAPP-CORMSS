@@ -300,6 +300,25 @@ ob_start();
                     </a>
                     <?php endif; ?>
 
+                    <!-- Family Registry App - Show for users who can add officers -->
+                    <?php if (hasPermission('can_add_officers')): ?>
+                    <a href="family/index.php" class="group flex flex-col p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl hover:border-indigo-500 dark:hover:border-indigo-500 hover:shadow-lg transition-all duration-200">
+                        <div class="w-12 h-12 mb-4 text-indigo-600 dark:text-indigo-400 group-hover:scale-110 transition-transform duration-200">
+                            <svg class="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                            </svg>
+                        </div>
+                        <h3 class="font-semibold text-lg mb-1">Family Registry</h3>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Manage household registrations</p>
+                        <div class="mt-4 flex items-center text-xs text-indigo-600 dark:text-indigo-400 font-medium">
+                            <span>Open App</span>
+                            <svg class="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                        </div>
+                    </a>
+                    <?php endif; ?>
+
                 </div>
             </div>
 

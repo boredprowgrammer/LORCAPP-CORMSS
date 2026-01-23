@@ -1,0 +1,336 @@
+{
+    "version": "2.0",
+    "created_at": "2026-01-23 14:45:52",
+    "updated_at": "2026-01-23 15:04:05",
+    "statistics": {
+        "total_families": 7,
+        "total_members": 22,
+        "total_suggestions_shown": 0,
+        "total_suggestions_accepted": 7,
+        "total_suggestions_rejected": 27,
+        "total_suggestions_modified": 0,
+        "overall_accuracy": 0,
+        "total_patterns": 4
+    },
+    "match_type_stats": {
+        "selected_asawa": {
+            "shown": 0,
+            "accepted": 0,
+            "rejected": 3,
+            "modified": 0,
+            "accuracy": 0
+        },
+        "middle_name_mother_match": {
+            "shown": 0,
+            "accepted": 7,
+            "rejected": 10,
+            "modified": 0,
+            "accuracy": 41.2
+        },
+        "lastname": {
+            "shown": 0,
+            "accepted": 0,
+            "rejected": 11,
+            "modified": 0,
+            "accuracy": 0
+        },
+        "lastname_same_location": {
+            "shown": 0,
+            "accepted": 0,
+            "rejected": 3,
+            "modified": 0,
+            "accuracy": 0
+        }
+    },
+    "relationship_accuracy": {
+        "Anak": {
+            "correct": 7,
+            "incorrect": 0,
+            "corrections": []
+        }
+    },
+    "naming_patterns": {
+        "L__": {
+            "pangulo_lastname": "quiambao",
+            "asawa_lastname": "",
+            "member_lastname": "quiambao",
+            "member_middlename": "venice cayanan",
+            "relationships": {
+                "Anak": 1
+            },
+            "success_count": 1,
+            "total_count": 1,
+            "accuracy": 100
+        },
+        "___": {
+            "pangulo_lastname": "quiambao",
+            "asawa_lastname": "",
+            "member_lastname": "cayanan",
+            "member_middlename": "garay",
+            "relationships": {
+                "Asawa": 1
+            },
+            "success_count": 1,
+            "total_count": 1,
+            "accuracy": 100
+        },
+        "__A": {
+            "pangulo_lastname": "perez",
+            "asawa_lastname": "padolina",
+            "member_lastname": "padolina",
+            "member_middlename": "lyn legaspi",
+            "relationships": {
+                "Asawa": 6
+            },
+            "success_count": 6,
+            "total_count": 6,
+            "accuracy": 100
+        },
+        "LM_": {
+            "pangulo_lastname": "perez",
+            "asawa_lastname": "padolina",
+            "member_lastname": "perez",
+            "member_middlename": "padolina",
+            "relationships": {
+                "Anak": 14
+            },
+            "success_count": 14,
+            "total_count": 14,
+            "accuracy": 100
+        }
+    },
+    "kapisanan_patterns": {
+        "Kadiwa": {
+            "Anak": {
+                "count": 9,
+                "success": 9
+            }
+        },
+        "Buklod": {
+            "Asawa": {
+                "count": 7,
+                "success": 7
+            },
+            "Anak": {
+                "count": 1,
+                "success": 1
+            }
+        },
+        "Binhi": {
+            "Anak": {
+                "count": 5,
+                "success": 5
+            }
+        }
+    },
+    "confirmed_relationships": {
+        "c760225521351f2816b6f3da260b9bf4": {
+            "pangulo": "Ramil Dulu Quiambao",
+            "member": "Joy Venice Cayanan Quiambao",
+            "relasyon": "Anak",
+            "kapisanan": "Kadiwa",
+            "confirmed_at": "2026-01-23 14:18:11"
+        },
+        "b3e8fe96fb01f0653bd877eea2c51e9e": {
+            "pangulo": "Ramil Dulu Quiambao",
+            "member": "Erlinda Garay Cayanan",
+            "relasyon": "Asawa",
+            "kapisanan": "Buklod",
+            "confirmed_at": "2026-01-23 14:18:11"
+        },
+        "f1e41fac335d5b21e80e36a4b0887458": {
+            "pangulo": "Dennis Canlas Perez",
+            "member": "Norie Lyn Legaspi Padolina",
+            "relasyon": "Asawa",
+            "kapisanan": "Buklod",
+            "confirmed_at": "2026-01-23 14:22:37"
+        },
+        "f8a1e28fd1a563f381b39ff7c343ea3b": {
+            "pangulo": "Dennis Canlas Perez",
+            "member": "Bambie Padolina Perez",
+            "relasyon": "Anak",
+            "kapisanan": "Binhi",
+            "confirmed_at": "2026-01-23 14:22:37"
+        },
+        "14c17cba393f5840721e4ea5ebe2c02b": {
+            "pangulo": "Dennis Canlas Perez",
+            "member": "ANGELA PADOLINA PEREZ",
+            "relasyon": "Anak",
+            "kapisanan": "Binhi",
+            "confirmed_at": "2026-01-23 14:22:37"
+        },
+        "09f41bf276629c39f63b0843bcf3f65f": {
+            "pangulo": "Eduardo Grajo Lascano",
+            "member": "Johna Briones Bondoc",
+            "relasyon": "Asawa",
+            "kapisanan": "Buklod",
+            "confirmed_at": "2026-01-23 14:28:34"
+        },
+        "1ee8c31dc74714fb9aed84cce64b80f6": {
+            "pangulo": "Eduardo Grajo Lascano",
+            "member": "Nicollete Bondoc Lascano",
+            "relasyon": "Anak",
+            "kapisanan": "Kadiwa",
+            "confirmed_at": "2026-01-23 14:28:34"
+        },
+        "7d5c498eef2c78b03cfd64f13cc91782": {
+            "pangulo": "Eduardo Grajo Lascano",
+            "member": "Niezer Bondoc Lascano",
+            "relasyon": "Anak",
+            "kapisanan": "Kadiwa",
+            "confirmed_at": "2026-01-23 14:28:34"
+        },
+        "499f7e04293142601cd999d1616bca4d": {
+            "pangulo": "Eduardo Grajo Lascano",
+            "member": "Nicollene Bondoc Lascano",
+            "relasyon": "Anak",
+            "kapisanan": "Kadiwa",
+            "confirmed_at": "2026-01-23 14:28:34"
+        },
+        "1648ced9ad738a028f3eea28950c454b": {
+            "pangulo": "Jerry Pineda Pineda",
+            "member": "Cecile Laxamana Yutuc",
+            "relasyon": "Asawa",
+            "kapisanan": "Buklod",
+            "confirmed_at": "2026-01-23 14:31:36"
+        },
+        "cf7bf4bcde38352371174332716622e5": {
+            "pangulo": "Jerry Pineda Pineda",
+            "member": "Jercy Yutuc Pineda",
+            "relasyon": "Anak",
+            "kapisanan": "Binhi",
+            "confirmed_at": "2026-01-23 14:31:36"
+        },
+        "6bdec51523c9dc7c5df6406cc3c4b47b": {
+            "pangulo": "Jerry Pineda Pineda",
+            "member": "CEDRIC YUTUC PINEDA",
+            "relasyon": "Anak",
+            "kapisanan": "Binhi",
+            "confirmed_at": "2026-01-23 14:31:36"
+        },
+        "63e717d855c641f5d69e5636675e053b": {
+            "pangulo": "Roger Martin Tanhueco",
+            "member": "Jenny Pineda Guinto",
+            "relasyon": "Asawa",
+            "kapisanan": "Buklod",
+            "confirmed_count": 1,
+            "last_confirmed": "2026-01-23 14:45:52"
+        },
+        "e90ea839a9e1639097488acc2744d707": {
+            "pangulo": "Roger Martin Tanhueco",
+            "member": "Jero Guinto Tanhueco",
+            "relasyon": "Anak",
+            "kapisanan": "Binhi",
+            "confirmed_count": 1,
+            "last_confirmed": "2026-01-23 14:45:52"
+        },
+        "814e31465f840f9152ebec1583736d1c": {
+            "pangulo": "Roger Martin Tanhueco",
+            "member": "Jenna Guinto Tanhueco",
+            "relasyon": "Anak",
+            "kapisanan": "Kadiwa",
+            "confirmed_count": 1,
+            "last_confirmed": "2026-01-23 14:45:52"
+        },
+        "e11ccc9b5dc3e1aa9dcbfe854dd4a321": {
+            "pangulo": "Carlos Dulu Quiambao",
+            "member": "Hilda Mercado Garcia",
+            "relasyon": "Asawa",
+            "kapisanan": "Buklod",
+            "confirmed_count": 1,
+            "last_confirmed": "2026-01-23 14:58:30"
+        },
+        "ef5c0327b18c5a0180fc8eb28dc1964f": {
+            "pangulo": "Carlos Dulu Quiambao",
+            "member": "Barbie Doll Garcia Quiambao",
+            "relasyon": "Anak",
+            "kapisanan": "Buklod",
+            "confirmed_count": 1,
+            "last_confirmed": "2026-01-23 14:58:30"
+        },
+        "9a7575cb4ee8da9176fbfd30d3204b9a": {
+            "pangulo": "Carlos Dulu Quiambao",
+            "member": "Angelica Garcia Quiambao",
+            "relasyon": "Anak",
+            "kapisanan": "Kadiwa",
+            "confirmed_count": 1,
+            "last_confirmed": "2026-01-23 14:58:30"
+        },
+        "468537afbfa459f026191cb39ad1b034": {
+            "pangulo": "Jennie Canlas Guinto",
+            "member": "Loida David Tuazon",
+            "relasyon": "Asawa",
+            "kapisanan": "Buklod",
+            "confirmed_count": 1,
+            "last_confirmed": "2026-01-23 15:04:05"
+        },
+        "a5bf157fbd89d3d2949a5f7fb4fee54e": {
+            "pangulo": "Jennie Canlas Guinto",
+            "member": "Kim Tuazon Guinto",
+            "relasyon": "Anak",
+            "kapisanan": "Kadiwa",
+            "confirmed_count": 1,
+            "last_confirmed": "2026-01-23 15:04:05"
+        },
+        "211bddd0f2829922be8cade89daf2197": {
+            "pangulo": "Jennie Canlas Guinto",
+            "member": "Kyel Tuazon Guinto",
+            "relasyon": "Anak",
+            "kapisanan": "Kadiwa",
+            "confirmed_count": 1,
+            "last_confirmed": "2026-01-23 15:04:05"
+        },
+        "67a3ab6fdf67117abf5686654c8d1895": {
+            "pangulo": "Jennie Canlas Guinto",
+            "member": "KARLO TUAZON GUINTO",
+            "relasyon": "Anak",
+            "kapisanan": "Kadiwa",
+            "confirmed_count": 1,
+            "last_confirmed": "2026-01-23 15:04:05"
+        }
+    },
+    "behavior_log": [],
+    "correction_patterns": [],
+    "derived_rules": [
+        {
+            "type": "naming_pattern",
+            "pattern_key": "__A",
+            "suggested_relasyon": "Asawa",
+            "accuracy": 100,
+            "occurrences": 6,
+            "confidence": "high"
+        },
+        {
+            "type": "naming_pattern",
+            "pattern_key": "LM_",
+            "suggested_relasyon": "Anak",
+            "accuracy": 100,
+            "occurrences": 14,
+            "confidence": "high"
+        },
+        {
+            "type": "kapisanan_relation",
+            "kapisanan": "Kadiwa",
+            "suggested_relasyon": "Anak",
+            "correlation": 100,
+            "occurrences": 9,
+            "confidence": "high"
+        },
+        {
+            "type": "kapisanan_relation",
+            "kapisanan": "Buklod",
+            "suggested_relasyon": "Asawa",
+            "correlation": 87.5,
+            "occurrences": 7,
+            "confidence": "high"
+        },
+        {
+            "type": "kapisanan_relation",
+            "kapisanan": "Binhi",
+            "suggested_relasyon": "Anak",
+            "correlation": 100,
+            "occurrences": 5,
+            "confidence": "high"
+        }
+    ]
+}
